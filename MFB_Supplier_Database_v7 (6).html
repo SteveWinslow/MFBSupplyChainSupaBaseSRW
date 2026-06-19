@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MFB Supply Chain DB</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F2F1EE;--border:#E4E2DC;--border2:#D0CEC7;
+  --text:#1C1B18;--text2:#6B6861;--text3:#9B9890;--hover:#FAFAF8;
+  --accent:#2563EB;--accent-bg:#EEF3FD;
+  --green:#16A34A;--green-bg:#DCFCE7;
+  --amber:#D97706;--amber-bg:#FEF3C7;
+  --red:#DC2626;--red-bg:#FEE2E2;
+  --purple:#7C3AED;--purple-bg:#EDE9FE;
+  --teal:#0D9488;--teal-bg:#CCFBF1;
+  --orange:#C2410C;--orange-bg:#FFEDD5;
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 20px rgba(0,0,0,.1),0 1px 4px rgba(0,0,0,.04);
+}
+:root{--sb:220px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:'DM Sans',system-ui,sans-serif;font-size:14px;color:var(--text);background:var(--bg);min-height:100vh}
+.shell{display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:var(--sb);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto;overflow-x:hidden;transition:width .2s ease}
+.sidebar.collapsed{width:52px}
+.main{margin-left:var(--sb);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .2s ease}
+.sidebar.collapsed~.main,.body-collapsed .main{margin-left:52px}
+.sidebar-logo{padding:14px 14px 12px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;min-height:52px}
+.logo-mark{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;transition:opacity .15s}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.03em;white-space:nowrap;overflow:hidden;transition:opacity .15s}
+.logo-text{display:flex;flex-direction:column;overflow:hidden}
+.sidebar.collapsed .logo-mark,.sidebar.collapsed .logo-sub{opacity:0;width:0}
+.sidebar.collapsed .logo-text{width:0;opacity:0}
+.sidebar.collapsed .sidebar-logo{justify-content:center;padding-left:0;padding-right:0}
+.sidebar-toggle{width:24px;height:24px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text3);transition:all .12s}
+.sidebar-toggle:hover{background:var(--border);color:var(--text)}
+.nav{flex:1;padding:8px 6px;overflow-y:auto;overflow-x:hidden}
+.nav-section{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:12px 10px 5px;white-space:nowrap;overflow:hidden;transition:opacity .15s}
+.sidebar.collapsed .nav-section{opacity:0;height:0;padding:0;margin:0}
+.nav-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:7px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:400;border:none;background:none;width:100%;text-align:left;margin-bottom:1px;transition:all .12s;white-space:nowrap;overflow:hidden;position:relative;gap:8px}
+.sidebar.collapsed .nav-item{padding:9px;justify-content:center}
+.sidebar.collapsed .nav-item .nav-item-l span,.sidebar.collapsed .nav-count{display:none}
+.nav-item-l{display:flex;align-items:center;gap:9px}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.65;transition:opacity .12s}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.nav-item.active svg{opacity:1}
+/* Tooltip for collapsed nav */
+.sidebar.collapsed .nav-item::after{content:attr(data-label);position:absolute;left:54px;top:50%;transform:translateY(-50%);background:var(--text);color:#fff;font-size:12px;padding:4px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .1s;z-index:200}
+.sidebar.collapsed .nav-item:hover::after{opacity:1}
+.nav-count{font-family:'DM Mono',monospace;font-size:10px;background:var(--surface2);color:var(--text3);padding:1px 6px;border-radius:99px;flex-shrink:0}
+.nav-item.active .nav-count{background:rgba(37,99,235,.12);color:var(--accent)}
+.sidebar-footer{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+.sync-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0;transition:background .3s}
+.sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}.sync-dot.spin{background:var(--amber);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* Topbar */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:600;flex:1}
+.content{padding:20px 24px;flex:1}
+/* Tabs */
+.tab{display:none}.tab.active{display:block;animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+/* Page header */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.page-header h1{font-size:21px;font-weight:600;letter-spacing:-.3px}
+.page-header p{font-size:13px;color:var(--text2);margin-top:3px}
+/* Metrics */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:20px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.metric-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
+.metric-value{font-size:22px;font-weight:600;letter-spacing:-.5px;line-height:1}
+.metric-sub{font-size:12px;color:var(--text2);margin-top:3px}
+.metric.green{border-color:rgba(22,163,74,.3);background:var(--green-bg)}.metric.green .metric-label,.metric.green .metric-value{color:var(--green)}
+.metric.amber{border-color:rgba(217,119,6,.3);background:var(--amber-bg)}.metric.amber .metric-label,.metric.amber .metric-value{color:var(--amber)}
+.metric.red{border-color:rgba(220,38,38,.3);background:var(--red-bg)}.metric.red .metric-label,.metric.red .metric-value{color:var(--red)}
+.metric.blue{border-color:rgba(37,99,235,.3);background:var(--accent-bg)}.metric.blue .metric-label,.metric.blue .metric-value{color:var(--accent)}
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-header h2{font-size:13px;font-weight:600}
+.card-body{padding:16px}.card-scroll{overflow-x:auto}
+/* Table */
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--text3);padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;background:var(--surface2);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--text)}th.sorted{color:var(--accent)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;background:var(--surface);font-size:13px;line-height:1.5}
+tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:background .08s}
+tbody tr:hover td{background:var(--hover)}
+.td-clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.bg-green{background:var(--green-bg);color:var(--green)}.bg-amber{background:var(--amber-bg);color:var(--amber)}
+.bg-red{background:var(--red-bg);color:var(--red)}.bg-neutral{background:var(--surface2);color:var(--text3)}
+.bg-blue{background:var(--accent-bg);color:var(--accent)}.bg-purple{background:var(--purple-bg);color:var(--purple)}
+.bg-teal{background:var(--teal-bg);color:var(--teal)}.bg-orange{background:var(--orange-bg);color:var(--orange)}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all .12s;font-family:inherit;white-space:nowrap}
+.btn:hover{background:var(--surface2)}.btn-primary{background:var(--text);color:#fff;border-color:var(--text)}.btn-primary:hover{background:#333}
+.btn-danger{color:var(--red);border-color:transparent;background:none;padding:4px 8px}.btn-danger:hover{background:var(--red-bg)}
+.btn-sm{padding:3px 9px;font-size:12px;border-radius:6px}
+.btn-icon{padding:4px 8px;border-radius:6px;font-size:13px;border:1px solid transparent;background:none;cursor:pointer;font-family:inherit;transition:all .1s}
+.btn-icon:hover{background:var(--surface2)}
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tlabel{font-size:12px;color:var(--text3);font-weight:500}
+.sel{font-size:13px;padding:4px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);height:30px;font-family:inherit;cursor:pointer}
+.sel:focus{outline:2px solid var(--accent);outline-offset:1px}
+.s-wrap{position:relative}
+.s-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.search-inp{font-size:13px;padding:4px 10px 4px 30px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);height:30px;font-family:inherit;min-width:180px}
+.search-inp:focus{outline:2px solid var(--accent);outline-offset:1px}
+.chip{font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:2px 7px;color:var(--text2)}
+/* Forms */
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select,.field textarea{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;transition:border-color .12s;width:100%}
+.field input,.field select{height:34px}
+.field textarea{resize:vertical;min-height:70px;line-height:1.55}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.field input::placeholder,.field textarea::placeholder{color:var(--text3)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.fg4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center;padding:24px 32px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:min(96vw,700px);box-shadow:var(--shadow-md);max-height:92vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-body{padding:20px 24px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(92vh - 120px)}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-head h3{font-size:16px;font-weight:600}
+.modal-body{padding:20px 24px;display:flex;flex-direction:column;gap:12px}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface)}
+/* Progress bar */
+.prog{position:fixed;top:0;left:0;height:2px;background:var(--accent);transition:width .3s;z-index:999;border-radius:0 1px 1px 0}
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;z-index:999;opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none;display:flex;align-items:center;gap:8px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.toast-dot.err{background:var(--red)}
+/* Sum bars */
+.sum-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sum-label{width:160px;font-size:12px;color:var(--text2);flex-shrink:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sum-track{flex:1;height:8px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.sum-fill{height:100%;border-radius:99px;transition:width .4s}
+.sum-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);width:24px;text-align:right;flex-shrink:0}
+/* AI */
+.ai-theme{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.ai-theme-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--surface2)}
+.ai-theme-title{font-size:14px;font-weight:600}
+.ai-theme-body{padding:14px 16px}
+.ai-rec{font-size:13px;line-height:1.7;padding:12px 14px;background:var(--green-bg);border-radius:8px;border-left:3px solid var(--green);margin-bottom:12px}
+.ai-rec-label{font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.ai-sources{display:flex;flex-direction:column;gap:5px}
+.ai-source{font-size:12px;color:var(--text2);display:flex;gap:8px;padding:6px 10px;background:var(--surface2);border-radius:6px;line-height:1.5}
+.ai-source-ref{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0;white-space:nowrap}
+/* Edit pill */
+.edit-pill{font-size:11px;font-weight:500;font-family:inherit;padding:3px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .12s}
+.edit-pill:hover{background:var(--accent-bg);color:var(--accent);border-color:rgba(37,99,235,.3)}
+/* Comments thread */
+.comments-thread{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.comment{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px}
+.comment.sales{background:var(--accent-bg);border-color:rgba(37,99,235,.2)}
+.comment-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.comment-author{font-size:11px;font-weight:600;color:var(--text)}
+.comment-tag{font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--accent);color:#fff;letter-spacing:.03em}
+.comment-time{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);margin-left:auto}
+.comment-text{font-size:13px;color:var(--text2);line-height:1.6}
+.comment-add{border-top:1px solid var(--border);padding-top:12px;margin-top:4px}
+.comment-add-row{display:flex;gap:8px;align-items:flex-start}
+.comment-name-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.comment-role-sel{font-size:12px;padding:4px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;height:30px;cursor:pointer}
+.comment-role-sel:focus{outline:2px solid var(--accent);outline-offset:1px}
+.empty-state{padding:40px 20px;text-align:center;color:var(--text3);font-size:13px}
+/* Mobile */
+.mob-btn{display:none;width:34px;height:34px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;align-items:center;justify-content:center}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99}
+.mob-overlay.open{display:block}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .22s}.sidebar.open{transform:translateX(0)}
+  .main{margin-left:0!important}.topbar{padding:0 14px}.content{padding:14px}
+  .mob-btn{display:flex!important}.fg4,.fg3{grid-template-columns:1fr 1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+}
+
+
+/* ── Supplier DB additions to LFE design system ── */
+.star-btn{background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:2px 5px;border-radius:4px;transition:all .1s;color:var(--text3);font-family:inherit}
+.star-btn.on{color:#F59E0B}
+.star-btn:hover{background:var(--surface2)}
+.type-tag{display:inline-flex;align-items:center;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.03em}
+.type-sc{background:var(--purple-bg);color:var(--purple)}.type-sup{background:var(--teal-bg);color:var(--teal)}.type-hire{background:var(--amber-bg);color:var(--amber)}
+.trade-cat{display:inline-flex;padding:1px 8px;border-radius:4px;font-size:10px;font-weight:600;background:var(--accent-bg);color:var(--accent)}
+.trade-sub{display:inline-flex;padding:1px 8px;border-radius:4px;font-size:10px;font-weight:500;background:var(--surface2);color:var(--text2)}
+.rating-pill{display:inline-flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;min-width:28px;padding:2px 7px;border-radius:6px}
+.r-na{background:var(--surface2);color:var(--text3)}.r-low{background:var(--red-bg);color:var(--red)}.r-mid{background:var(--amber-bg);color:var(--amber)}.r-good{background:var(--green-bg);color:var(--green)}
+.ins-expired{color:var(--red);font-weight:500}.ins-soon{color:var(--amber);font-weight:500}
+.dnu-banner{background:var(--red-bg);border:1px solid rgba(220,38,38,.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--red);font-weight:500;display:flex;gap:8px;align-items:flex-start}
+.pending-banner{background:var(--amber-bg);border:1px solid rgba(217,119,6,.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--amber);font-weight:500;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+/* Drawer */
+.drawer{position:fixed;top:0;right:0;height:100vh;width:540px;max-width:100vw;background:var(--surface);border-left:1px solid var(--border);z-index:201;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column;box-shadow:var(--shadow-md)}
+.drawer.open{transform:translateX(0)}
+.drawer-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:sticky;top:0;background:var(--surface);z-index:2}
+.drawer-title{font-size:15px;font-weight:600;line-height:1.3}
+.drawer-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.drawer-bd{padding:20px;flex:1}
+/* Detail grid */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.detail-field{display:flex;flex-direction:column;gap:3px}
+.detail-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.detail-val{font-size:13px;color:var(--text);line-height:1.4}
+.detail-val.mono{font-family:'DM Mono',monospace;font-size:12px}
+.section-hd{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.detail-section{margin-bottom:20px}
+/* Rating rows */
+.r-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px}
+.r-row-label{flex:1;color:var(--text2)}
+.r-row-note{flex:2;color:var(--text3);font-size:11px}
+/* Quick-update inline box */
+.quick-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:8px}
+.quick-box-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:block}
+.quick-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.quick-row span{font-size:12px;color:var(--text2);width:20px;flex-shrink:0}
+.quick-row input[type=date]{padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace;background:var(--surface);color:var(--text);outline:none;flex:1;height:32px}
+.quick-row input[type=date]:focus{border-color:var(--accent)}
+/* Shortlist compare cards */
+.compare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}
+.compare-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:all .12s}
+.compare-card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.cc-name{font-size:13px;font-weight:600;margin-bottom:3px}
+.cc-trade{font-size:11px;color:var(--text3);margin-bottom:8px}
+.cc-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px;align-items:center}
+/* Comparison table */
+.cmp-tbl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
+.cmp-tbl th,.cmp-tbl td{padding:9px 12px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle}
+.cmp-lbl-hdr{width:140px}.cmp-lbl{text-align:left!important;font-size:12px;color:var(--text3);font-weight:400;width:140px;white-space:nowrap}
+.cmp-hdr{font-weight:500;vertical-align:top!important;padding:12px 10px}
+.cmp-sel{background:var(--accent-bg)!important}
+.cmp-sec-row{background:var(--surface2)!important;font-size:11px;color:var(--text3);font-weight:600;text-align:left!important;padding:5px 12px!important;border-top:1px solid var(--border2)!important}
+.sl-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:99px;font-size:12px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s}
+.sl-chip.sl-chip-on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.sl-chip button{background:none;border:none;cursor:pointer;padding:0 2px;font-size:14px;line-height:1;color:inherit;opacity:.55}
+.sl-chip button:hover{opacity:1}
+/* Performance review */
+.rq-row{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.rq-row:last-of-type{border-bottom:none}
+.rq-label{font-size:13px;color:var(--text);font-weight:500}
+.rq-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.rq-btns{display:flex;gap:6px;flex-shrink:0;margin-left:12px;align-items:center}
+.rq-btn{padding:5px 14px;border:1px solid var(--border2);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text2);transition:all .1s;font-family:inherit}
+.rq-btn:hover{background:var(--surface2)}
+.rq-btn.yes-on{background:var(--green);color:#fff;border-color:var(--green)}
+.rq-btn.no-on{background:var(--red);color:#fff;border-color:var(--red)}
+.rq-score-input{width:60px;height:32px;padding:5px 8px;border:1px solid var(--border2);border-radius:7px;font-size:13px;font-family:'DM Mono',monospace;background:var(--surface);color:var(--text);text-align:center}
+.rq-score-input:focus{outline:none;border-color:var(--accent)}
+.rq-score-sub{font-size:11px;color:var(--text3)}
+.perf-row{display:flex;gap:8px}
+.perf-btn{flex:1;padding:8px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text2);transition:all .1s;text-align:center;font-family:inherit}
+.perf-btn:hover{background:var(--surface2)}
+.perf-poor.on{background:var(--red);color:#fff;border-color:var(--red)}
+.perf-ok.on{background:var(--amber);color:#fff;border-color:var(--amber)}
+.perf-good.on{background:var(--green);color:#fff;border-color:var(--green)}
+/* Review card */
+.review-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.review-hd{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.review-score{display:inline-flex;align-items:center;padding:1px 9px;border-radius:99px;font-size:11px;font-weight:700}
+.rs-good{background:var(--green-bg);color:var(--green)}.rs-ok{background:var(--amber-bg);color:var(--amber)}.rs-poor{background:var(--red-bg);color:var(--red)}
+/* Analytics chart */
+.chart-area{display:flex;gap:28px;align-items:center;padding:20px;flex-wrap:wrap}
+.chart-legend{display:flex;flex-direction:column;gap:10px}
+.legend-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+/* Page header */
+.page-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.page-hd h1{font-size:21px;font-weight:600;letter-spacing:-.3px}
+.page-hd p{font-size:13px;color:var(--text2);margin-top:3px}
+/* Metrics */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:20px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.metric-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
+.metric-value{font-size:22px;font-weight:600;letter-spacing:-.5px;line-height:1}
+.metric.green{border-color:rgba(22,163,74,.3);background:var(--green-bg)}.metric.green .metric-label,.metric.green .metric-value{color:var(--green)}
+.metric.amber{border-color:rgba(217,119,6,.3);background:var(--amber-bg)}.metric.amber .metric-label,.metric.amber .metric-value{color:var(--amber)}
+.metric.red{border-color:rgba(220,38,38,.3);background:var(--red-bg)}.metric.red .metric-label,.metric.red .metric-value{color:var(--red)}
+.metric.blue{border-color:rgba(37,99,235,.3);background:var(--accent-bg)}.metric.blue .metric-label,.metric.blue .metric-value{color:var(--accent)}
+.metric.purple{border-color:rgba(124,58,237,.3);background:var(--purple-bg)}.metric.purple .metric-label,.metric.purple .metric-value{color:var(--purple)}
+/* Added-new tag */
+.tag-new{display:inline-flex;align-items:center;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;background:var(--green-bg);color:var(--green);margin-left:6px;vertical-align:middle}
+/* Auth overlay */
+.auth-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 40px;width:360px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.auth-logo{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--text3);margin-bottom:28px}
+.auth-lbl{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.auth-input{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:14px}
+.auth-input:focus{outline:none;border-color:var(--accent)}
+.auth-btn{width:100%;padding:9px;background:var(--text);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px}
+.auth-btn:hover{background:#333}
+.auth-err{font-size:12px;color:var(--red);margin-top:10px;min-height:18px}
+.auth-loading{font-size:13px;color:var(--text3);text-align:center;margin-top:10px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<!-- ── Supabase config ── fill in your project URL and anon key ── -->
+<script>
+const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
+const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let _sbUser = null;
+</script>
+<!-- ── Login overlay ── -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">MFB Supply Chain DB</div>
+    <div class="auth-sub">Supplier Database &mdash; sign in to continue</div>
+    <div class="auth-lbl">Email</div>
+    <input class="auth-input" type="email" id="auth-email" placeholder="you@mfb55.co.uk" autocomplete="email">
+    <div class="auth-lbl">Password</div>
+    <input class="auth-input" type="password" id="auth-pass" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="auth-btn" onclick="doLogin()">Sign in</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+<div class="prog" id="prog" style="width:0"></div>
+<div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+<div class="shell">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text"><div class="logo-mark">MFB Supply Chain</div><div class="logo-sub">DB</div></div>
+    <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path id="sb-toggle-icon" d="M8 2L4 6l4 4"/></svg></button>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Views</div>
+    <button class="nav-item active" id="nav-all" data-label="All Suppliers" onclick="switchTab('all')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M5 5h6M5 11h3"/></svg><span>All Suppliers</span></div><span class="nav-count" id="nc-all">—</span>
+    </button>
+    <button class="nav-item" id="nav-sc" data-label="Subcontractors" onclick="switchTab('sc')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a3 3 0 110 6A3 3 0 018 2zM3 14a5 5 0 0110 0"/></svg><span>Subcontractors</span></div><span class="nav-count" id="nc-sc">—</span>
+    </button>
+    <button class="nav-item" id="nav-suppliers" data-label="Suppliers" onclick="switchTab('suppliers')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg><span>Suppliers</span></div><span class="nav-count" id="nc-sup">—</span>
+    </button>
+    <button class="nav-item" id="nav-shortlist" data-label="Shortlist" onclick="switchTab('shortlist')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.8 3.6 4 .6-2.9 2.8.7 4L8 11 4.4 13l.7-4L2.2 6.2l4-.6z"/></svg><span>Shortlist</span></div><span class="nav-count" id="nc-sl">—</span>
+    </button>
+    <button class="nav-item" id="nav-pending" data-label="Pending Approval" onclick="switchTab('pending')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg><span>Pending Approval</span></div><span class="nav-count" id="nc-pending">—</span>
+    </button>
+    <button class="nav-item" id="nav-dnu" data-label="Do Not Use" onclick="switchTab('dnu')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5 5l6 6"/></svg><span>Do Not Use</span></div><span class="nav-count" id="nc-dnu">—</span>
+    </button>
+    <button class="nav-item" id="nav-ins" data-label="Insurance" onclick="switchTab('ins')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l5 2v4c0 3-2 6-5 7C5 14 3 11 3 8V4l5-2z"/></svg><span>Insurance</span></div><span class="nav-count" id="nc-ins">—</span>
+    </button>
+    <button class="nav-item" id="nav-analytics" data-label="Analytics" onclick="switchTab('analytics')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="8" width="3" height="6"/><rect x="6.5" y="5" width="3" height="9"/><rect x="11" y="2" width="3" height="12"/></svg><span>Analytics</span></div>
+    </button>
+    <div class="nav-section">Actions</div>
+    <button class="nav-item" data-label="Add Supplier" onclick="openAddModal()"><div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg><span>Add Supplier</span></div></button>
+    <button class="nav-item" data-label="Performance Review" onclick="openReviewModal(null)"><div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h10v8H3z"/><path d="M6 7h4M6 5h2"/></svg><span>Performance Review</span></div></button>
+    <button class="nav-item" id="nav-roles-btn" data-label="Manage Roles" onclick="openRolesModal()" style="display:none"><div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M3 14a5 5 0 0110 0"/></svg><span>Manage Roles</span></div></button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sync-row"><span id="local-count" style="font-size:11px;color:var(--text3)"></span></div>
+    <div style="font-size:11px;font-weight:500;margin-top:6px" id="my-role-badge"></div>
+    <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:6px">
+      <span id="sb-user-email" style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"></span>
+      <button onclick="doLogout()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:4px;white-space:nowrap" title="Sign out">Sign out</button>
+    </div>
+  </div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="mob-btn" onclick="openSidebar()"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h11M2 7.5h11M2 11h11"/></svg></button>
+    <div class="topbar-title" id="topbar-title">All Suppliers</div>
+    <div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="openReviewModal(null)">&#128196; Review</button><button class="btn btn-sm btn-primary" onclick="openAddModal()">+ Add Supplier</button></div>
+  </header>
+  <div class="content">
+    <div class="tab active" id="tab-all">
+      <div class="metrics" id="metrics-all"></div>
+      <div class="card"><div class="card-header"><h2>Supplier Register</h2><span id="result-count" style="font-size:12px;color:var(--text3)"></span></div>
+        <div class="card-body"><div class="toolbar">
+          <div class="s-wrap"><span class="s-icon">&#128269;</span><input class="search-inp" type="text" id="f-search" placeholder="Search name, trade, city&hellip;" oninput="applyFilters()"></div>
+          <span class="tlabel">Category</span><select class="sel" id="f-cat" onchange="cascadeSub('f-cat','f-sub');applyFilters()"><option value="">All</option>
+<option value="Enabling Works & Demolition">Enabling Works & Demolition</option>
+<option value="Groundworks & Civil">Groundworks & Civil</option>
+<option value="Structure">Structure</option>
+<option value="Envelope & Façade">Envelope & Façade</option>
+<option value="Internal Fit-Out">Internal Fit-Out</option>
+<option value="Finishes">Finishes</option>
+<option value="Mechanical">Mechanical</option>
+<option value="Electrical">Electrical</option>
+<option value="Plumbing">Plumbing</option>
+<option value="Data & Low Voltage">Data & Low Voltage</option>
+<option value="Fire Protection">Fire Protection</option>
+<option value="Vertical Transport">Vertical Transport</option>
+<option value="Specialist / Laboratory">Specialist / Laboratory</option>
+<option value="Building & Structure">Building & Structure</option>
+<option value="External Works & Sundry">External Works & Sundry</option>
+<option value="Hire & Logistics">Hire & Logistics</option>
+<option value="Materials & Supply">Materials & Supply</option>
+<option value="Furniture & FF&E">Furniture & FF&E</option>
+<option value="Professional Services">Professional Services</option>
+<option value="Other">Other</option>
+          </select>
+          <span class="tlabel">Sub-trade</span><select class="sel" id="f-sub" onchange="applyFilters()"><option value="">All</option></select>
+          <span class="tlabel">Region</span><select class="sel" id="f-region" onchange="applyFilters()"><option value="">All</option><option value="ALL">ALL</option><option value="UKI">UKI &ndash; London</option><option value="UKJ">UKJ &ndash; SE</option><option value="UKK">UKK &ndash; SW</option><option value="UKL">UKL &ndash; Wales</option><option value="UKH">UKH &ndash; East</option><option value="UKF">UKF &ndash; E Mids</option><option value="UKG">UKG &ndash; W Mids</option><option value="UKD">UKD &ndash; NW</option><option value="NIR">NIR &ndash; N Ireland</option><option value="SCT">SCT &ndash; Scotland</option></select>
+          <span class="tlabel">Status</span><select class="sel" id="f-status" onchange="applyFilters()"><option value="">All</option><option value="active">Active</option><option value="dnu">DNU</option></select>
+          <button class="btn btn-sm" onclick="clearFilters()">Clear</button>
+        </div></div>
+        <div class="card-scroll"><table><thead><tr>
+          <th style="width:36px"></th>
+          <th onclick="sortBy('name')" data-col="name">Company</th>
+          <th onclick="sortBy('trade_category')" data-col="trade_category">Category</th>
+          <th onclick="sortBy('trade_sub')" data-col="trade_sub">Trade</th>
+          <th onclick="sortBy('city')" data-col="city">City</th>
+          <th>Type</th><th>Last Review</th><th>Status</th><th style="width:48px"></th>
+        </tr></thead><tbody id="supplier-tbody"></tbody></table></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)"><span id="page-info" style="flex:1"></span><div style="display:flex;gap:4px" id="page-btns"></div></div>
+      </div>
+    </div>
+    <div class="tab" id="tab-sc"><div class="metrics" id="metrics-sc"></div>
+      <div class="card"><div class="card-header"><h2>Subcontractors</h2></div><div class="card-scroll"><table><thead><tr>
+        <th style="width:36px"></th><th>Company</th><th>Category</th><th>Trade</th><th>City</th><th>Overall</th><th>Last Review</th><th>Insurance</th><th>Status</th><th style="width:48px"></th>
+      </tr></thead><tbody id="sc-tbody"></tbody></table></div></div></div>
+    <div class="tab" id="tab-suppliers"><div class="card"><div class="card-header"><h2>Suppliers / Manufacturers / Hire</h2></div><div class="card-scroll"><table><thead><tr>
+      <th>Company</th><th>Category</th><th>Trade</th><th>City</th><th>Status</th>
+    </tr></thead><tbody id="sup-tbody"></tbody></table></div></div></div>
+    <div class="tab" id="tab-shortlist"><div class="page-hd"><div><h1>Shortlist</h1><p>Star suppliers to compare and tender</p></div><div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="copyShortlist()">Copy</button><button class="btn btn-sm" onclick="window.print()">Print</button><button class="btn btn-sm" onclick="clearShortlist()">Clear all</button></div></div><div id="shortlist-content"></div></div>
+    <div class="tab" id="tab-pending"><div class="page-hd"><div><h1>Pending Approval</h1><p>New suppliers awaiting Finance sign-off</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>City</th><th>Added by</th><th>Added</th><th style="width:120px">Approval</th></tr></thead><tbody id="pending-tbody"></tbody></table></div></div></div>
+    <div class="tab" id="tab-dnu"><div class="page-hd"><div><h1>Do Not Use</h1><p>Do not engage without clearance</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>Reason</th><th>Last Used</th></tr></thead><tbody id="dnu-tbody"></tbody></table></div></div></div>
+    <div class="tab" id="tab-ins"><div class="page-hd"><div><h1>Insurance Monitor</h1><p>Open a row to update expiry dates inline</p></div></div><div class="metrics" id="metrics-ins"></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>EL Expiry</th><th>PL Expiry</th><th>PI Expiry</th><th>Issue</th></tr></thead><tbody id="ins-tbody"></tbody></table></div></div></div>
+    <div class="tab" id="tab-analytics"><div class="page-hd"><div><h1>Analytics</h1><p>Contractor performance overview</p></div></div><div id="analytics-content"></div></div>
+  </div>
+</div>
+</div>
+<div id="overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none;cursor:pointer" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer"><div class="drawer-hd"><div><div class="drawer-title" id="drawer-title"></div><div class="drawer-sub" id="drawer-sub"></div></div><div style="display:flex;gap:6px;align-items:center"><button class="btn btn-sm" id="drawer-review-btn" onclick="openReviewModal(drawerIdx)">Add Review</button><button class="btn btn-sm" onclick="editCurrent()">Edit</button><button class="btn-icon" onclick="closeDrawer()">&#10005;</button></div></div><div class="drawer-bd" id="drawer-bd"></div></div>
+<div class="modal-overlay" id="supplier-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal"><div class="modal-head"><h3 id="modal-title">Add Supplier</h3><button class="btn-icon" onclick="closeModal()">&#10005;</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="modal-idx">
+    <div class="field"><label>Business Name *</label><input id="m-name" placeholder="Full company name"></div>
+    <div class="fg2"><div class="field"><label>Category *</label><select id="m-cat" onchange="cascadeModalSub()"><option value="">Select&hellip;</option><option value="Enabling Works & Demolition">Enabling Works & Demolition</option>
+<option value="Groundworks & Civil">Groundworks & Civil</option>
+<option value="Structure">Structure</option>
+<option value="Envelope & Façade">Envelope & Façade</option>
+<option value="Internal Fit-Out">Internal Fit-Out</option>
+<option value="Finishes">Finishes</option>
+<option value="Mechanical">Mechanical</option>
+<option value="Electrical">Electrical</option>
+<option value="Plumbing">Plumbing</option>
+<option value="Data & Low Voltage">Data & Low Voltage</option>
+<option value="Fire Protection">Fire Protection</option>
+<option value="Vertical Transport">Vertical Transport</option>
+<option value="Specialist / Laboratory">Specialist / Laboratory</option>
+<option value="Building & Structure">Building & Structure</option>
+<option value="External Works & Sundry">External Works & Sundry</option>
+<option value="Hire & Logistics">Hire & Logistics</option>
+<option value="Materials & Supply">Materials & Supply</option>
+<option value="Furniture & FF&E">Furniture & FF&E</option>
+<option value="Professional Services">Professional Services</option>
+<option value="Other">Other</option></select></div>
+    <div class="field"><label>Sub-trade *</label><select id="m-sub"><option value="">Select category first&hellip;</option></select></div></div>
+    <div class="fg2"><div class="field"><label>City</label><input id="m-city"></div><div class="field"><label>Regions</label><input id="m-regions" placeholder="e.g. UKK, ALL"></div></div>
+    <div class="field"><label>Type</label><div style="display:flex;gap:16px;margin-top:4px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-subbie"> Subcontractor</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-supplier"> Supplier</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-hire"> Hire</label></div></div>
+    <div class="field"><label>Xero Ref</label><input id="m-xero"></div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Contact</div>
+    <div class="fg2"><div class="field"><label>Contact Name</label><input id="m-cname"></div><div class="field"><label>Email</label><input id="m-cemail" type="email"></div></div>
+    <div class="fg2"><div class="field"><label>Phone</label><input id="m-cphone"></div><div class="field"><label>Office</label><input id="m-office"></div></div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Status</div>
+    <div class="fg2"><div class="field"><label>Status</label><select id="m-dnu"><option value="false">Active</option><option value="true">Do Not Use</option></select></div><div class="field"><label>DNU Reason</label><input id="m-dnu-notes"></div></div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Added by</div>
+    <div class="fg2"><div class="field"><label>Your Name *</label><input id="m-by-name"></div><div class="field"><label>Department *</label><select id="m-by-dept"><option value="">Select&hellip;</option><option value="Design">Design</option><option value="Operations">Operations</option><option value="Finance">Finance</option><option value="Sales / Pre-Con">Sales / Pre-Con</option><option value="Senior Management">Senior Management</option><option value="Other">Other</option></select></div></div>
+    <div class="field"><label>Initial Note (optional)</label><textarea id="m-init-note" rows="2" placeholder="Added to the comments thread"></textarea></div>
+  </div><div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSupplier()">Save</button></div></div></div>
+<div class="modal-overlay" id="review-modal" onclick="if(event.target===this)closeReviewModal()">
+  <div class="modal"><div class="modal-head"><h3>Contractor Performance Review</h3><button class="btn-icon" onclick="closeReviewModal()">&#10005;</button></div>
+  <div class="modal-body">
+    <div class="fg2"><div class="field"><label>Date</label><input type="date" id="rv-date"></div><div class="field"><label>Contractor *</label><select id="rv-supplier"><option value="">Select contractor&hellip;</option></select></div></div>
+    <div class="fg2"><div class="field"><label>Reviewed by *</label><input id="rv-by" placeholder="Your name"></div><div class="field"><label>Department *</label><select id="rv-dept"><option value="">Select&hellip;</option><option value="Design">Design</option><option value="Operations">Operations</option><option value="Finance">Finance</option><option value="Sales / Pre-Con">Sales / Pre-Con</option><option value="Senior Management">Senior Management</option><option value="Other">Other</option></select></div></div>
+    <div class="field"><label>Project / Contract Reference</label><input id="rv-project" placeholder="e.g. MFB55-Bristol-Q2"></div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Performance Questions</div>
+    <div id="rv-questions"></div>
+    <div id="rv-avg-display" class="ai-rec" style="display:none;align-items:center;justify-content:space-between;padding:14px 16px">
+      <span style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.06em">Average Score</span>
+      <span id="rv-avg-num" style="font-size:28px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace;line-height:1">—</span>
+    </div>
+    <div class="field"><label>Areas for Improvement</label><textarea id="rv-improvements" rows="3" placeholder="Key areas that need attention&hellip;"></textarea></div>
+    <div class="field"><label>Recommendations</label><textarea id="rv-recommendations" rows="2" placeholder="Would you use again? Any caveats?"></textarea></div>
+    <div class="field"><label>Overall Performance *</label><div class="perf-row"><button class="perf-btn perf-poor" id="perf-poor" onclick="setPerf('Poor')">Poor</button><button class="perf-btn perf-ok" id="perf-ok" onclick="setPerf('OK')">OK</button><button class="perf-btn perf-good" id="perf-good" onclick="setPerf('Good')">Good</button></div></div>
+  </div><div class="modal-foot"><button class="btn" onclick="closeReviewModal()">Cancel</button><button class="btn btn-primary" onclick="saveReview()">Save Review</button></div></div></div>
+<div class="modal-overlay" id="roles-modal" onclick="if(event.target===this)closeRolesModal()">
+  <div class="modal"><div class="modal-head"><h3>Manage Roles</h3><button class="btn-icon" onclick="closeRolesModal()">&#10005;</button></div>
+  <div class="modal-body">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Superuser: full control, including who has which role — visible to Superusers only. Finance Director: edit Insurance/Credit/Invoicing ratings, sign off insurance &amp; new suppliers. Operations Director: edit H&amp;S/Quality/Time/Cost ratings. A person can hold more than one role — add each separately below.</div>
+    <div id="roles-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;border-top:1px solid var(--border)">Add a Role by Email</div>
+    <div class="fg2">
+      <div class="field"><label>Email *</label><input id="role-email" placeholder="name@mcfegganbrown.co.uk"></div>
+      <div class="field"><label>Role *</label><select id="role-select"><option value="">Select&hellip;</option><option>Superuser</option><option>Finance Director</option><option>Project Manager</option><option>Design Lead</option><option>Operations Director</option></select></div>
+    </div>
+    <div class="field"><label>Display Name *</label><input id="role-name" placeholder="How their name should appear"></div>
+  </div><div class="modal-foot"><button class="btn" onclick="closeRolesModal()">Close</button><button class="btn btn-primary" onclick="saveRole()">Add Role</button></div></div></div>
+<div class="toast" id="toast"><div class="toast-dot"></div><span class="toast-text"></span></div>
+<script>
+const TAXONOMY = {"Enabling Works & Demolition":["Asbestos Survey & Removal","Soft Strip","Selective Demolition","Full Demolition","M&E Strip-Out","Flooring Removal","Waste Management","Hoarding & Site Setup","Scaffold \u2013 Enabling","Temporary Works \u2013 Propping","Surveys & Investigations"],"Groundworks & Civil":["Groundworks / Excavation","Piling","Concrete Foundations","Ground Slab / Floor","Drainage \u2013 Below Ground","Highways & External Civils","Fencing & Hoarding"],"Structure":["Structural Steel","Structural Concrete / RC Frame","Precast Concrete","Timber Frame / CLT","Temporary Works","Mezzanine Floors"],"Envelope & Fa\u00e7ade":["Curtain Walling","Cladding \u2013 Rainscreen","Cladding \u2013 Composite / Insulated","Roofing \u2013 Flat","Roofing \u2013 Pitched / Metal","Rooflights & Glazed Canopies","Windows & Doors \u2013 Aluminium","Windows & Doors \u2013 Timber / uPVC","Automatic Doors & Entrance","Roller Shutters & Loading Doors","Structural Glazing"],"Internal Fit-Out":["Partitions \u2013 Drylining / SFS","Partitions \u2013 Demountable","Partitions \u2013 Glazed","Suspended Ceilings","Acoustic Panels","Raised Access Floors","Screeds","Flooring \u2013 Hard","Flooring \u2013 Resilient","Flooring \u2013 Carpet","Flooring \u2013 Resin","Joinery \u2013 Fitted","Joinery \u2013 General","Kitchen / Breakout Fitout","Lab Fitout","Washrooms / WC Fitout","Internal Glazing / Mirrors","Signage & Wayfinding","Furniture Supply & Install"],"Finishes":["Plastering","Painting & Decorating","Wall Tiling","Wall Coverings","Ironmongery","Feature / Specialist Finishes"],"Mechanical":["Mechanical \u2013 Main Contractor","HVAC \u2013 Air Handling","HVAC & Ventilation","HVAC \u2013 Chilled Water / Cooling","HVAC \u2013 Heating","Gas Services","Lab Gases & Compressed Air","BMS / Controls","Insulation \u2013 Mechanical"],"Electrical":["Electrical \u2013 Main Contractor","HV / Substation","LV Distribution","Lighting","UPS / Generator","Earthing & Lightning Protection","Solar PV","EV Charging"],"Plumbing":["Plumbing \u2013 Main Contractor","Hot & Cold Water Services","Above-Ground Drainage","Sanitary Ware","Rainwater Harvesting","Specialist Drainage","Insulation \u2013 Plumbing"],"Data & Low Voltage":["Structured Cabling / IT","Audio Visual","Security \u2013 CCTV","Security \u2013 Access Control","Door Entry / Intercom","Public Address / Disabled Refuge"],"Fire Protection":["Sprinklers","Fire Detection & Alarm","Passive Fire Protection","Fire Stopping","Dry / Wet Risers"],"Vertical Transport":["Lifts / Elevators","Escalators","Goods Hoists"],"Specialist / Laboratory":["Laboratory Ventilation","Cleanroom / Controlled Environment","Acoustic Treatment","Vibration Isolation","Diamond Drilling & Cutting","Asbestos Services","Lightning Protection","Lab Furniture","Medical Gas"],"Building & Structure":["Builders / General Works","Groundworks & Civil Engineering","Roofing & Cladding","Scaffolding","Demolition & Strip Out","Waterproofing & Sealant","External Works"],"External Works & Sundry":["External Metalwork","Masonry / Brickwork","Waterproofing / Tanking","Scaffold","Plant Hire","Cleaning","Landscaping / Hard Landscaping"],"Hire & Logistics":["Plant Hire","Equipment Hire / Welfare","Skip Hire & Waste","Crane Hire","Logistics / Removals","Agency / Labour"],"Materials & Supply":["Building Materials","Electrical Materials","Plumbing Materials","Insulation","Paint & Decorating","Ironmongery & Hardware","Panels & Surfaces"],"Furniture & FF&E":["Furniture Supply","Furniture Installation","Lab Furniture","Storage Systems","Kitchen Supply","Soft Furnishings & Blinds"],"Professional Services":["Engineering Consultants","Building Control","Planning","Health & Safety / CDM","Environmental & Surveys","Architecture / Design","Project Management"],"Other":["Other / Miscellaneous"]};
+const SEED = [{"_id":0,"name":"361 Degrees Ltd","trade_category":"Mechanical & Electrical","trade_sub":"HVAC & Ventilation","keywords":"Air Con, heating, ventilation, energy control packages","city":"Leighton Buzzard","regions":"UKI,UKJ","subbie":true,"supplier":false,"hire":false,"xero_ref":"DEG001","cis":"Yes","old_rating":8,"last_used":"2025-05-01","contact_name":"Tim Green","contact_pos":"","contact_email":"tim.green@361degrees.co.uk","contact_phone":"01582471999","contact2_name":"","contact2_email":"accounts@361degrees.co.uk","contact2_phone":"","office_number":"","el_value":10000000,"el_expiry":"2026-08-15","pl_value":10000000,"pl_expiry":"2026-08-15","pi_value":null,"pi_expiry":"","ins_received":"Yes","pqq_design":"YES","pqq_ops":"YES","pqq_finance":"YES","safe_contractor":"YES","constructionline":"NO","certs":"PASMA, Mobile powered access, abrasive wheels, first aid","dnu":false,"dnu_notes":"","ins_rating":5,"credit_rating":5,"invoice_rating":5,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":4,"quality_rating":5,"time_rating":6,"cost_rating":5,"ops_notes":"Generally good, strong on HVAC packages. Responsive.","ops_by":"Patrick Beaumont","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":1,"name":"Eamonn Kilby Decorators","trade_category":"Finishes & Interiors","trade_sub":"Decorating & Painting","keywords":"Painting, decorating, specialist coatings","city":"Newport","regions":"UKL,UKK","subbie":true,"supplier":false,"hire":false,"xero_ref":"EAMON1","cis":"Yes","old_rating":10,"last_used":"2025-06-01","contact_name":"Eamonn Kilby","contact_pos":"Director","contact_email":"info@eamonnkilbydecorators.com","contact_phone":"07889074400","contact2_name":"Catherine","contact2_email":"","contact2_phone":"","office_number":"01633665999","el_value":10000000,"el_expiry":"2026-12-01","pl_value":10000000,"pl_expiry":"2026-12-01","pi_value":null,"pi_expiry":"","ins_received":"Yes","pqq_design":"N/A","pqq_ops":"YES","pqq_finance":"YES","safe_contractor":"YES","constructionline":"YES","certs":"PASMA, Mobile powered access platforms, first aid","dnu":false,"dnu_notes":"","ins_rating":5,"credit_rating":5,"invoice_rating":6,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":5,"quality_rating":6,"time_rating":6,"cost_rating":5,"ops_notes":"Best painters we've used. Eamonn and Graham understand what's required and will do whatever it takes.","ops_by":"Vaughan Hamilton","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":2,"name":"Drillcut (UK) Ltd","trade_category":"Specialist Trades","trade_sub":"Diamond Drilling & Cutting","keywords":"Diamond drilling, sawing, controlled demolition","city":"Chipping Sodbury","regions":"UKK,UKJ,UKI","subbie":true,"supplier":false,"hire":false,"xero_ref":"DRILLCUT","cis":"Yes","old_rating":9,"last_used":"2025-05-01","contact_name":"Lyn Sime","contact_pos":"","contact_email":"info@drillcut.co.uk","contact_phone":"01454324236","contact2_name":"","contact2_email":"accounts@drillcut.co.uk","contact2_phone":"","office_number":"","el_value":10000000,"el_expiry":"2027-03-01","pl_value":10000000,"pl_expiry":"2027-03-01","pi_value":null,"pi_expiry":"","ins_received":"Yes","pqq_design":"","pqq_ops":"","pqq_finance":"","safe_contractor":"","constructionline":"","certs":"","dnu":false,"dnu_notes":"","ins_rating":5,"credit_rating":6,"invoice_rating":6,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":null,"quality_rating":null,"time_rating":null,"cost_rating":null,"ops_notes":"Excellent quality, bit pricey. Very responsive, always there to help.","ops_by":"Nathan Jones","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":3,"name":"All Mastic Ltd","trade_category":"Building & Structure","trade_sub":"Waterproofing & Sealant","keywords":"Concrete repairs, fire protection, rope access, sealant","city":"Portishead","regions":"UKK,UKL","subbie":true,"supplier":false,"hire":false,"xero_ref":"ALLMASTI","cis":"Yes","old_rating":9,"last_used":"2024-11-01","contact_name":"John O'Connor","contact_pos":"","contact_email":"john@allmastic.co.uk","contact_phone":"01275817599","contact2_name":"","contact2_email":"admin@allmastic.co.uk","contact2_phone":"","office_number":"","el_value":10000000,"el_expiry":"2025-10-01","pl_value":10000000,"pl_expiry":"2025-10-01","pi_value":null,"pi_expiry":"","ins_received":"Yes","pqq_design":"N/A","pqq_ops":"YES","pqq_finance":"YES","safe_contractor":"NO","constructionline":"NO","certs":"PASMA, Mobile powered access platforms, first aid","dnu":false,"dnu_notes":"","ins_rating":5,"credit_rating":6,"invoice_rating":5,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":null,"quality_rating":null,"time_rating":null,"cost_rating":null,"ops_notes":"Good rates, responsive, no travel surcharge. Reliable.","ops_by":"Jonty Hamilton","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":4,"name":"ACS Controlled Demolition Ltd","trade_category":"Building & Structure","trade_sub":"Demolition & Strip Out","keywords":"Demolition, diamond drilling, fire stopping, soft strip","city":"Orpington","regions":"UKI,UKJ","subbie":true,"supplier":false,"hire":false,"xero_ref":"ACSCONTR","cis":"Yes","old_rating":1,"last_used":"2024-04-15","contact_name":"David Hannigan","contact_pos":"","contact_email":"acsdiamonddrilling@btconnect.com","contact_phone":"07734214551","contact2_name":"","contact2_email":"","contact2_phone":"","office_number":"01323902692","el_value":10000000,"el_expiry":"","pl_value":2000000,"pl_expiry":"","pi_value":null,"pi_expiry":"","ins_received":"Yes","pqq_design":"","pqq_ops":"","pqq_finance":"","safe_contractor":"","constructionline":"","certs":"","dnu":true,"dnu_notes":"Current insurance cover too low","ins_rating":5,"credit_rating":null,"invoice_rating":null,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":null,"quality_rating":null,"time_rating":null,"cost_rating":null,"ops_notes":"Fire stopping specialist. Quite reasonable. DNU \u2013 insurance cover too low.","ops_by":"Reg Brady","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":5,"name":"Amtico","trade_category":"Finishes & Interiors","trade_sub":"Flooring","keywords":"LVT, luxury vinyl tile, flooring","city":"Solihull","regions":"ALL","subbie":false,"supplier":true,"hire":false,"xero_ref":"AMT001","cis":"","old_rating":null,"last_used":"","contact_name":"Oliver Roberts","contact_pos":"","contact_email":"info@amtico.com","contact_phone":"01217450800","contact2_name":"","contact2_email":"","contact2_phone":"","office_number":"","el_value":null,"el_expiry":"","pl_value":null,"pl_expiry":"","pi_value":null,"pi_expiry":"","ins_received":"No","pqq_design":"","pqq_ops":"","pqq_finance":"","safe_contractor":"","constructionline":"","certs":"","dnu":false,"dnu_notes":"","ins_rating":null,"credit_rating":null,"invoice_rating":null,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":null,"quality_rating":null,"time_rating":null,"cost_rating":null,"ops_notes":"","ops_by":"","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":6,"name":"CCF","trade_category":"Materials & Supply","trade_sub":"Building Materials","keywords":"Ceilings, partitions, fire products, insulation, render","city":"Avonmouth","regions":"UKK","subbie":false,"supplier":true,"hire":false,"xero_ref":"CCF","cis":"","old_rating":null,"last_used":"","contact_name":"Colin Mills","contact_pos":"","contact_email":"ccfavonmouth@ccfltd.co.uk","contact_phone":"01179822613","contact2_name":"","contact2_email":"burcp@ccfltd.co.uk","contact2_phone":"","office_number":"01189492534","el_value":null,"el_expiry":"","pl_value":null,"pl_expiry":"","pi_value":null,"pi_expiry":"","ins_received":"No","pqq_design":"","pqq_ops":"","pqq_finance":"","safe_contractor":"","constructionline":"","certs":"","dnu":false,"dnu_notes":"","ins_rating":null,"credit_rating":null,"invoice_rating":null,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":null,"quality_rating":null,"time_rating":null,"cost_rating":null,"ops_notes":"","ops_by":"","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":7,"name":"Dulux Decorator Centres","trade_category":"Materials & Supply","trade_sub":"Paint & Decorating","keywords":"Paint, primers, coatings","city":"Bristol","regions":"UKK","subbie":false,"supplier":true,"hire":false,"xero_ref":"DULUX","cis":"","old_rating":null,"last_used":"","contact_name":"","contact_pos":"","contact_email":"ddc.bristol@akzonobel.com","contact_phone":"01179631161","contact2_name":"","contact2_email":"","contact2_phone":"","office_number":"01179240317","el_value":null,"el_expiry":"","pl_value":null,"pl_expiry":"","pi_value":null,"pi_expiry":"","ins_received":"No","pqq_design":"","pqq_ops":"","pqq_finance":"","safe_contractor":"","constructionline":"","certs":"","dnu":false,"dnu_notes":"","ins_rating":null,"credit_rating":null,"invoice_rating":null,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":null,"quality_rating":null,"time_rating":null,"cost_rating":null,"ops_notes":"","ops_by":"","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":8,"name":"Brandon Hire Ltd","trade_category":"Hire & Logistics","trade_sub":"Equipment Hire / Welfare","keywords":"Tools, plant, welfare units, MEWP","city":"Bristol","regions":"UKK","subbie":false,"supplier":false,"hire":true,"xero_ref":"BRANDONH","cis":"No","old_rating":null,"last_used":"","contact_name":"John Jones","contact_pos":"","contact_email":"info@brandonhire.co.uk","contact_phone":"01179718555","contact2_name":"","contact2_email":"","contact2_phone":"","office_number":"01179719119","el_value":null,"el_expiry":"","pl_value":null,"pl_expiry":"","pi_value":null,"pi_expiry":"","ins_received":"No","pqq_design":"","pqq_ops":"","pqq_finance":"","safe_contractor":"","constructionline":"","certs":"","dnu":false,"dnu_notes":"","ins_rating":null,"credit_rating":null,"invoice_rating":null,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":null,"quality_rating":null,"time_rating":null,"cost_rating":null,"ops_notes":"","ops_by":"","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false},{"_id":9,"name":"ALS Labs Ltd","trade_category":"Furniture & FF&E","trade_sub":"Lab Furniture","keywords":"Laboratory furniture, benching, fume hoods","city":"Pebmarsh","regions":"UKH,UKI","subbie":false,"supplier":true,"hire":false,"xero_ref":"ALSUKLLP","cis":"","old_rating":null,"last_used":"","contact_name":"","contact_pos":"","contact_email":"info@laboratoryfurniture.co.uk","contact_phone":"01376322938","contact2_name":"","contact2_email":"","contact2_phone":"","office_number":"","el_value":null,"el_expiry":"","pl_value":null,"pl_expiry":"","pi_value":null,"pi_expiry":"","ins_received":"No","pqq_design":"","pqq_ops":"","pqq_finance":"","safe_contractor":"","constructionline":"","certs":"","dnu":false,"dnu_notes":"","ins_rating":null,"credit_rating":null,"invoice_rating":null,"finance_notes":"","finance_by":"","response_rating":null,"price_rating":null,"tech_rating":null,"sales_notes":"","sales_by":"","hs_rating":null,"quality_rating":null,"time_rating":null,"cost_rating":null,"ops_notes":"","ops_by":"","ins_notes":"","credit_notes":"","invoice_notes":"","response_notes":"","price_notes":"","tech_notes":"","hs_notes":"","quality_notes":"","time_notes":"","cost_notes":"","_notes":[],"_reviews":[],"_local":false}];
+const DEPTS = ['Design','Operations','Finance','Sales / Pre-Con','Senior Management','Other'];
+const RQ = [
+  {id:'q1',label:'Adherence to Programme',   sub:'Did they meet agreed milestones?'},
+  {id:'q2',label:'Quality of Workmanship',    sub:'Was the standard acceptable, snagging minimal?'},
+  {id:'q3',label:'Health & Safety',           sub:'Did they comply with site H&S requirements and RAMS?'},
+  {id:'q4',label:'Communication',             sub:'Responsive and proactive in communication?'}
+];
+const LS='mfb_sup_v4', SLK='mfb_shortlist';
+
+// ── Roles & permissions ──────────────────────────────────────────────────────
+const ROLES = ['Finance Director','Project Manager','Design Lead','Operations Director'];
+const ALL_ROLE_NAMES = ['Superuser','Finance Director','Project Manager','Design Lead','Operations Director'];
+// Which role(s) may edit which rating fields.
+const RATING_FIELD_ROLES = {
+  ins_rating:     ['Finance Director'],
+  credit_rating:  ['Finance Director'],
+  invoice_rating: ['Finance Director'],
+  hs_rating:      ['Operations Director'],
+  quality_rating: ['Operations Director'],
+  time_rating:    ['Operations Director'],
+  cost_rating:    ['Operations Director']
+};
+const RATING_FIELD_LABELS = {
+  ins_rating:'Insurance', credit_rating:'Credit', invoice_rating:'Invoicing',
+  hs_rating:'H&S', quality_rating:'Quality', time_rating:'Time', cost_rating:'Cost'
+};
+let myRoles=new Set(); // a person can hold multiple roles — set after login from user_roles table
+let myDisplayName=null;
+function hasRole(role){ return myRoles.has(role); }
+function canEditRating(field){ const allowed=RATING_FIELD_ROLES[field]; return allowed && allowed.some(r=>myRoles.has(r)); }
+function isFinance(){ return myRoles.has('Finance Director'); }
+function isSuperuser(){ return myRoles.has('Superuser'); }
+
+let ALL_ROLES_LIST=[]; // [{user_id,email,display_name,role}] — one row PER (person, role), so one person can appear multiple times
+
+let DB, SL=[], drawerIdx=null, perfVal=null, rqState={}, slPref=null;
+let sortCol='name', sortDir=1, page=1, filtered=[];
+const PAGE=50, today=new Date();
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+// ── Supabase helpers ──────────────────────────────────────────────────────────
+function sbToApp(r){ return {...r, _id:r.id, _notes:r.notes||[], _reviews:r.reviews||[], _local:r.is_local||false, rating_meta:r.rating_meta||{}, insurance_signoff_current:r.insurance_signoff_current||{}}; }
+function appToSb(s){ const {_id,_notes,_reviews,_local,...rest}=s; return {...rest, id:_id, notes:_notes, reviews:_reviews, is_local:_local}; }
+
+const _dirty=new Set(); let _syncTimer=null;
+function schedSync(id){ _dirty.add(id); clearTimeout(_syncTimer); _syncTimer=setTimeout(flushSync,800); }
+async function flushSync(){
+  const ids=[..._dirty]; _dirty.clear();
+  const rows=DB.filter(s=>ids.includes(s._id)).map(appToSb);
+  if(!rows.length)return;
+  const {error}=await _sb.from('suppliers').upsert(rows,{onConflict:'id'});
+  if(error){ toast('Sync error: '+error.message,'err'); ids.forEach(id=>_dirty.add(id)); }
+}
+
+async function loadDB(){
+  const {data,error}=await _sb.from('suppliers').select('*').order('name');
+  if(error){ toast('Failed to load data','err'); return; }
+  if(!data||data.length===0){
+    // First run — seed from built-in data
+    const seed=SEED.map(s=>({...s,id:s._id,notes:[],reviews:[],is_local:false}));
+    seed.forEach(s=>{ delete s._id; delete s._notes; delete s._reviews; delete s._local; });
+    const {error:e2}=await _sb.from('suppliers').insert(seed);
+    if(e2){ toast('Seed error: '+e2.message,'err'); return; }
+    DB=SEED.map(s=>({...s,_notes:[],_reviews:[],_local:false}));
+  } else {
+    DB=data.map(sbToApp);
+  }
+  // Load shortlist
+  const {data:prefs}=await _sb.from('user_preferences').select('shortlist').eq('user_id',_sbUser.id).maybeSingle();
+  SL=prefs?.shortlist||[];
+  await loadRoles();
+}
+async function loadRoles(){
+  const {data,error}=await _sb.from('user_roles').select('user_id,email,display_name,role');
+  if(error){ console.warn('Could not load roles',error.message); ALL_ROLES_LIST=[]; myRoles=new Set(); myDisplayName=null; return; }
+  ALL_ROLES_LIST=data||[];
+  const mine=ALL_ROLES_LIST.filter(r=>r.user_id===_sbUser.id);
+  myRoles=new Set(mine.map(r=>r.role));
+  myDisplayName=mine.length?mine[0].display_name:null;
+  renderRoleBadge();
+}
+function myName(){ return myDisplayName||_sbUser.email; }
+function renderRoleBadge(){
+  const el=document.getElementById('my-role-badge');
+  if(el){
+    const list=[...myRoles];
+    el.textContent=list.length?list.join(', '):'No role assigned';
+    el.style.color=list.length?'var(--accent)':'var(--text3)';
+  }
+  // Manage Roles is Superuser-only — Finance Director no longer sees it.
+  const rb=document.getElementById('nav-roles-btn');
+  if(rb) rb.style.display=isSuperuser()?'':'none';
+}
+function saveDB(){ updateLocalCount(); }
+async function saveSL(){
+  updateCounts();
+  await _sb.from('user_preferences').upsert({user_id:_sbUser.id,shortlist:SL,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+}
+
+async function doLogin(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const errEl=document.getElementById('auth-err');
+  errEl.textContent='';
+  if(!email||!pass){errEl.textContent='Please enter email and password.';return;}
+  document.querySelector('.auth-btn').textContent='Signing in…';
+  const {data,error}=await _sb.auth.signInWithPassword({email,password:pass});
+  document.querySelector('.auth-btn').textContent='Sign in';
+  if(error){errEl.textContent=error.message;return;}
+  _sbUser=data.user;
+  document.getElementById('auth-overlay').style.display='none';
+  document.getElementById('sb-user-email').textContent=email;
+  await loadDB(); updateCounts(); renderMetrics(); applyFilters(); runInsuranceChecks();
+}
+async function doLogout(){
+  if(!confirm('Sign out?'))return;
+  await _sb.auth.signOut();
+  location.reload();
+}
+
+// Check existing session on load
+async function initApp(){
+  const {data:{session}}=await _sb.auth.getSession();
+  if(session){
+    _sbUser=session.user;
+    document.getElementById('auth-overlay').style.display='none';
+    document.getElementById('sb-user-email').textContent=session.user.email;
+    await loadDB(); updateCounts(); renderMetrics(); applyFilters(); runInsuranceChecks();
+  }
+  // else: login overlay already visible
+}
+
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function pd(s){ if(!s)return null; const d=new Date(s); return isNaN(d)?null:d; }
+function daysUntil(s){ const d=pd(s); if(!d)return null; return Math.round((d-today)/86400000); }
+function fmtDate(s){ const d=pd(s); if(!d)return'—'; return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}); }
+function fmtTs(ts){ if(!ts)return''; const d=new Date(ts); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function fmtMoney(v){ if(!v)return'—'; return v>=1000000?'£'+(v/1000000).toFixed(0)+'M':v>=1000?'£'+(v/1000).toFixed(0)+'K':'£'+v; }
+function rp(v){ if(v==null||v===''||v===0)return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; return`<span class="rating-pill ${n<=3?'r-low':n<=5?'r-mid':'r-good'}">${n}</span>`; }
+function typetag(s){ const t=[]; if(s.subbie)t.push('<span class="type-tag type-sc">S/C</span>'); if(s.supplier)t.push('<span class="type-tag type-sup">SUP</span>'); if(s.hire)t.push('<span class="type-tag type-hire">HIRE</span>'); return t.join(' ')||'<span class="type-tag" style="background:var(--surface2);color:var(--text3)">—</span>'; }
+function statusBadge(s){ return s.dnu?'<span class="badge bg-red">DNU</span>':'<span class="badge bg-green">Active</span>'; }
+function tradePill(s){ return`<span class="trade-cat">${esc(s.trade_category||'')}</span>`; }
+function subPill(s){ return`<span class="trade-sub">${esc(s.trade_sub||'')}</span>`; }
+function insIssue(s){ const issues=new Set(); [s.el_expiry,s.pl_expiry,s.pi_expiry].filter(Boolean).forEach(d=>{ const x=daysUntil(d); if(x!==null&&x<0)issues.add('Expired'); else if(x!==null&&x<90)issues.add('<90d'); }); return[...issues].join(', '); }
+function insCls(d){ const x=daysUntil(d); if(x===null)return''; return x<0?'ins-expired':x<90?'ins-soon':''; }
+function insStatusBadge(s){ const iss=insIssue(s); if(!iss)return'<span class="badge bg-green">OK</span>'; return`<span class="badge ${iss.includes('Exp')?'bg-red':'bg-amber'}">${esc(iss)}</span>`; }
+function lastReviewBadge(s){ const r=s._reviews||[]; if(!r.length)return'<span class="badge bg-neutral">None</span>'; const p=r[r.length-1].performance; return`<span class="badge ${p==='Good'?'bg-green':p==='OK'?'bg-amber':'bg-red'}">${esc(p)}</span>`; }
+function isStarred(s){ return SL.includes(s._id); }
+function avgArr(arr){ const v=arr.filter(x=>x!=null&&x!==0); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null; }
+// Live "Overall" score — average of every rating that's actually been set
+// across Finance (Insurance/Credit/Invoicing) and Operations (H&S/Quality/
+// Time/Cost). Replaces the old static manually-typed rating field.
+function overallRating(s){ return avgArr([s.ins_rating,s.credit_rating,s.invoice_rating,s.hs_rating,s.quality_rating,s.time_rating,s.cost_rating]); }
+
+// ── Editable, audit-logged ratings ───────────────────────────────────────────
+let _ratingEditField=null; // field currently being edited in the drawer, or null
+function ratingRow(idx,s,field){
+  const label=RATING_FIELD_LABELS[field];
+  const val=s[field];
+  const canEdit=canEditRating(field);
+  const meta=(s.rating_meta||{})[field];
+  const editing=_ratingEditField===field;
+  let row=`<div class="r-row" style="align-items:flex-start;flex-wrap:wrap">
+    <div class="r-row-label" style="padding-top:3px">${esc(label)}</div>
+    <div style="display:flex;align-items:center;gap:6px">${rp(val)}
+      ${canEdit&&!editing?`<button class="edit-pill" onclick="startRatingEdit(${idx},'${field}')">Edit</button>`:''}
+    </div>`;
+  if(meta&&meta.by){
+    row+=`<div class="r-row-note" style="flex-basis:100%;margin-top:2px">Last changed by ${esc(meta.by)}${meta.ts?' · '+fmtTs(meta.ts):''}${meta.why?'<br><span style="font-style:italic">"'+esc(meta.why)+'"</span>':''}</div>`;
+  } else {
+    row+=`<div class="r-row-note"></div>`;
+  }
+  row+=`</div>`;
+  if(editing){
+    row+=`<div class="quick-box" style="margin-top:4px;margin-bottom:8px">
+      <span class="quick-box-label">Update ${esc(label)} Rating</span>
+      <div class="quick-row"><span style="width:auto">Score</span><input type="number" min="0" max="10" id="rt-val-${field}" value="${val!=null?val:''}" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace"></div>
+      <div class="field" style="margin-top:6px"><label>Reason for change *</label><textarea id="rt-reason-${field}" rows="2" placeholder="Required — why is this rating changing?"></textarea></div>
+      <div class="quick-row" style="margin-top:8px">
+        <button class="btn btn-sm btn-primary" onclick="saveRatingEdit(${idx},'${field}')">Save</button>
+        <button class="btn btn-sm" onclick="cancelRatingEdit(${idx})">Cancel</button>
+      </div>
+    </div>`;
+  }
+  return row;
+}
+function startRatingEdit(idx,field){ _ratingEditField=field; buildDrawer(idx); setTimeout(()=>{const el=document.getElementById('rt-val-'+field); if(el)el.focus();},0); }
+function cancelRatingEdit(idx){ _ratingEditField=null; buildDrawer(idx); }
+async function saveRatingEdit(idx,field){
+  const valEl=document.getElementById('rt-val-'+field), reasonEl=document.getElementById('rt-reason-'+field);
+  const raw=valEl.value;
+  if(raw===''){toast('Enter a score 0–10','err');return;}
+  const n=Number(raw);
+  if(isNaN(n)||n<0||n>10){toast('Score must be between 0 and 10','err');return;}
+  const reason=(reasonEl.value||'').trim();
+  if(!reason){toast('Reason is required','err');return;}
+  if(!canEditRating(field)){toast('You do not have permission to edit this rating','err');return;}
+  const s=DB[idx];
+  const oldVal=s[field];
+  const actingRole=RATING_FIELD_ROLES[field].find(r=>myRoles.has(r))||[...myRoles][0]||'';
+  const nowIso=new Date().toISOString();
+  s[field]=n;
+  s.rating_meta=s.rating_meta||{};
+  s.rating_meta[field]={by:myName(),why:reason,ts:nowIso};
+  saveDB(); schedSync(s._id);
+  await _sb.from('rating_history').insert({
+    supplier_id:s._id, field, old_value:oldVal, new_value:n,
+    changed_by_user_id:_sbUser.id, changed_by_name:myName(), changed_by_role:actingRole, reason
+  });
+  _ratingEditField=null;
+  buildDrawer(idx); renderMetrics(); applyFilters();
+  toast(RATING_FIELD_LABELS[field]+' rating updated');
+}
+
+// ── Counts ────────────────────────────────────────────────────────────────────
+function updateCounts(){
+  document.getElementById('nc-all').textContent=DB.length;
+  document.getElementById('nc-sc').textContent=DB.filter(s=>s.subbie).length;
+  document.getElementById('nc-sup').textContent=DB.filter(s=>s.supplier||s.hire).length;
+  document.getElementById('nc-dnu').textContent=DB.filter(s=>s.dnu).length;
+  document.getElementById('nc-ins').textContent=DB.filter(s=>s.subbie&&insIssue(s)).length;
+  document.getElementById('nc-sl').textContent=SL.length;
+  document.getElementById('nc-pending').textContent=DB.filter(s=>s.pending_signoff).length;
+}
+function updateLocalCount(){ const n=DB.filter(s=>s._local).length; document.getElementById('local-count').textContent=n?`${n} local addition${n!==1?'s':''}`:''; }
+
+function renderMetrics(){
+  const sc=DB.filter(s=>s.subbie);
+  const rated=sc.map(s=>overallRating(s)).filter(v=>v!=null);
+  const avg=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length).toFixed(1):'—';
+  const exp=DB.filter(s=>s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<0;}));
+  const soon=DB.filter(s=>!exp.includes(s)&&s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<90;}));
+  document.getElementById('metrics-all').innerHTML=
+    met('blue','Total',DB.length)+met('green','Active',DB.filter(s=>!s.dnu).length)+
+    met('purple','Subcontractors',sc.length)+met('red','DNU',DB.filter(s=>s.dnu).length)+met('amber','Ins Issues',exp.length+soon.length)+met('amber','Pending Sign-off',DB.filter(s=>s.pending_signoff).length);
+  document.getElementById('metrics-sc').innerHTML=
+    met('blue','Subcontractors',sc.length)+met('green','Active',sc.filter(s=>!s.dnu).length)+
+    met('red','DNU',sc.filter(s=>s.dnu).length)+met('amber','Avg Rating',avg)+met('purple','Reviewed',sc.filter(s=>(s._reviews||[]).length>0).length);
+  document.getElementById('metrics-ins').innerHTML=
+    met('red','Expired',exp.length)+met('amber','Expiring <90d',soon.length)+met('green','OK',sc.length-exp.length-soon.length);
+}
+function met(cls,label,val){ return`<div class="metric ${cls}"><div class="metric-label">${label}</div><div class="metric-value">${val}</div></div>`; }
+
+// ── Taxonomy cascade ──────────────────────────────────────────────────────────
+function cascadeSub(catId,subId){
+  const cat=document.getElementById(catId).value, sel=document.getElementById(subId);
+  sel.innerHTML='<option value="">All sub-trades</option>';
+  if(cat&&TAXONOMY[cat]) TAXONOMY[cat].forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+}
+function cascadeModalSub(){
+  const cat=document.getElementById('m-cat').value, sel=document.getElementById('m-sub');
+  sel.innerHTML='<option value="">Select…</option>';
+  if(cat&&TAXONOMY[cat]) TAXONOMY[cat].forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+function sortBy(col){
+  if(sortCol===col)sortDir*=-1; else{sortCol=col;sortDir=1;}
+  document.querySelectorAll('th[data-col]').forEach(th=>th.classList.remove('sorted'));
+  const th=document.querySelector(`th[data-col="${col}"]`); if(th)th.classList.add('sorted');
+  applyFilters();
+}
+function applyFilters(){
+  const q=(document.getElementById('f-search').value||'').toLowerCase();
+  const cat=document.getElementById('f-cat').value;
+  const sub=document.getElementById('f-sub').value;
+  const region=document.getElementById('f-region').value;
+  const dnuF=document.getElementById('f-status').value;
+  filtered=DB.filter(s=>{
+    if(q){const hay=[s.name,s.trade_category,s.trade_sub,s.city,s.contact_name,(s._notes||[]).map(n=>n.text).join(' ')].join(' ').toLowerCase();if(!hay.includes(q))return false;}
+    if(cat&&s.trade_category!==cat)return false;
+    if(sub&&s.trade_sub!==sub)return false;
+    if(region){const r=s.regions||'';if(!r.includes('ALL')&&!r.includes(region))return false;}
+    if(dnuF==='active'&&s.dnu)return false;
+    if(dnuF==='dnu'&&!s.dnu)return false;
+    return true;
+  });
+  filtered.sort((a,b)=>{
+    let av=a[sortCol],bv=b[sortCol];
+    if(av==null)av=sortDir>0?'zzz':''; if(bv==null)bv=sortDir>0?'zzz':'';
+    if(typeof av==='number'&&typeof bv==='number')return(av-bv)*sortDir;
+    return String(av).localeCompare(String(bv))*sortDir;
+  });
+  page=1;
+  document.getElementById('result-count').textContent=`${filtered.length} result${filtered.length!==1?'s':''}`;
+  renderTable();
+}
+function clearFilters(){
+  ['f-search','f-cat','f-sub','f-region','f-status'].forEach(id=>{const el=document.getElementById(id); if(el)el.value='';});
+  document.getElementById('f-sub').innerHTML='<option value="">All sub-trades</option>';
+  applyFilters();
+}
+
+// ── All Suppliers table ───────────────────────────────────────────────────────
+function renderTable(){
+  const start=(page-1)*PAGE, slice=filtered.slice(start,start+PAGE);
+  const tbody=document.getElementById('supplier-tbody');
+  if(!slice.length){
+    tbody.innerHTML='<tr><td colspan="8" class="empty-state">No suppliers match your filters</td></tr>';
+    document.getElementById('page-info').textContent='';
+    document.getElementById('page-btns').innerHTML='';
+    return;
+  }
+  tbody.innerHTML=slice.map(s=>{
+    const idx=DB.indexOf(s); const on=isStarred(s);
+    return`<tr onclick="openDrawer(${idx})">
+      <td style="padding:9px 6px 9px 12px;width:32px"><button class="star-btn${on?' on':''}" onclick="event.stopPropagation();toggleStar(${idx})">${on?'★':'☆'}</button></td>
+      <td><strong>${esc(s.name)}</strong>${s._local?'<span class="tag-new">New</span>':''}${s.pending_signoff?'<span class="tag-new" style="background:var(--amber-bg);color:var(--amber)">Pending sign-off</span>':''}</td>
+      <td>${tradePill(s)}</td>
+      <td>${subPill(s)}</td>
+      <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
+      <td>${typetag(s)}</td>
+      <td>${lastReviewBadge(s)}</td>
+      <td>${statusBadge(s)}</td>
+      <td style="padding:9px 12px 9px 4px"><button class="edit-pill" onclick="event.stopPropagation();openEditModal(${idx})">Edit</button></td>
+    </tr>`;
+  }).join('');
+  const tp=Math.ceil(filtered.length/PAGE);
+  document.getElementById('page-info').textContent=`${start+1}–${Math.min(start+PAGE,filtered.length)} of ${filtered.length}`;
+  let sp=Math.max(1,page-2),ep=Math.min(tp,sp+4); if(ep-sp<4)sp=Math.max(1,ep-4);
+  document.getElementById('page-btns').innerHTML=
+    `<button class="btn btn-sm" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`+
+    Array.from({length:ep-sp+1},(_,i)=>sp+i).map(p=>`<button class="btn btn-sm${p===page?' btn-primary':''}" onclick="goPage(${p})">${p}</button>`).join('')+
+    `<button class="btn btn-sm" onclick="goPage(${page+1})" ${page===tp?'disabled':''}>›</button>`;
+}
+function goPage(p){ page=p; renderTable(); }
+
+// ── Subcontractors table ──────────────────────────────────────────────────────
+function renderSC(){
+  document.getElementById('sc-tbody').innerHTML=DB.filter(s=>s.subbie).sort((a,b)=>(overallRating(b)||0)-(overallRating(a)||0)).map(s=>{
+    const idx=DB.indexOf(s); const on=isStarred(s);
+    return`<tr onclick="openDrawer(${idx})">
+      <td style="padding:9px 6px 9px 12px;width:32px"><button class="star-btn${on?' on':''}" onclick="event.stopPropagation();toggleStar(${idx})">${on?'★':'☆'}</button></td>
+      <td><strong>${esc(s.name)}</strong></td>
+      <td>${tradePill(s)}</td>
+      <td>${subPill(s)}</td>
+      <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
+      <td>${rp(overallRating(s))}</td>
+      <td>${lastReviewBadge(s)}</td>
+      <td>${insStatusBadge(s)}</td>
+      <td>${statusBadge(s)}</td>
+      <td style="padding:9px 12px 9px 4px"><button class="edit-pill" onclick="event.stopPropagation();openEditModal(${idx})">Edit</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Suppliers table ───────────────────────────────────────────────────────────
+function renderSuppliersOnly(){
+  document.getElementById('sup-tbody').innerHTML=DB.filter(s=>s.supplier||s.hire).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong>${esc(s.name)}</strong></td><td>${tradePill(s)}</td><td>${subPill(s)}</td><td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td><td>${statusBadge(s)}</td></tr>`).join('');
+}
+
+// ── DNU table ─────────────────────────────────────────────────────────────────
+function renderDNU(){
+  document.getElementById('dnu-tbody').innerHTML=DB.filter(s=>s.dnu).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong style="color:var(--red)">${esc(s.name)}</strong>${s.pending_signoff?'<span class="tag-new" style="background:var(--amber-bg);color:var(--amber)">Pending sign-off</span>':''}</td><td>${subPill(s)}</td><td style="font-size:12px;color:var(--text3);max-width:240px" class="td-clip">${esc(s.dnu_notes||'—')}</td><td style="font-size:12px;color:var(--text3)">${fmtDate(s.last_used)}</td></tr>`).join('');
+}
+
+// ── Pending Approval table ───────────────────────────────────────────────────
+function renderPending(){
+  const pending=DB.filter(s=>s.pending_signoff).sort((a,b)=>new Date(b.added_ts||0)-new Date(a.added_ts||0));
+  const tbody=document.getElementById('pending-tbody');
+  if(!pending.length){
+    tbody.innerHTML='<tr><td colspan="6" class="empty-state">No suppliers awaiting approval</td></tr>';
+    return;
+  }
+  tbody.innerHTML=pending.map(s=>{
+    const idx=DB.indexOf(s);
+    return`<tr onclick="openDrawer(${idx})">
+      <td><strong>${esc(s.name)}</strong>${s.dnu?' <span class="badge bg-red">DNU</span>':''}</td>
+      <td>${subPill(s)}</td>
+      <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
+      <td style="font-size:12px;color:var(--text3)">${esc(s.added_by||'—')}${s.added_dept?' · '+esc(s.added_dept):''}</td>
+      <td style="font-size:12px;color:var(--text3)">${s.added_ts?fmtTs(s.added_ts):'—'}</td>
+      <td style="padding:9px 12px 9px 4px">${isFinance()?`<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();approveSupplier(${idx});renderPending();">Approve</button>`:'<span style="font-size:11px;color:var(--text3)">Finance only</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Insurance table ───────────────────────────────────────────────────────────
+function renderIns(){
+  document.getElementById('ins-tbody').innerHTML=DB.filter(s=>s.subbie&&insIssue(s)).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong>${esc(s.name)}</strong></td><td>${subPill(s)}</td><td class="${insCls(s.el_expiry)}" style="font-size:12px">${fmtDate(s.el_expiry)}</td><td class="${insCls(s.pl_expiry)}" style="font-size:12px">${fmtDate(s.pl_expiry)}</td><td class="${insCls(s.pi_expiry)}" style="font-size:12px">${fmtDate(s.pi_expiry)}</td><td>${insStatusBadge(s)}</td></tr>`).join('');
+}
+
+// ── Shortlist ─────────────────────────────────────────────────────────────────
+function toggleStar(idx){
+  const id=DB[idx]._id;
+  if(SL.includes(id)) SL=SL.filter(x=>x!==id); else SL.push(id);
+  saveSL(); applyFilters();
+  if(document.getElementById('tab-sc').classList.contains('active')) renderSC();
+  if(document.getElementById('tab-shortlist').classList.contains('active')) renderShortlist();
+  if(drawerIdx!==null) buildDrawer(drawerIdx);
+  toast(SL.includes(id)?'Added to shortlist':'Removed from shortlist');
+}
+function renderShortlist(){
+  const items=DB.filter(s=>SL.includes(s._id));
+  const el=document.getElementById('shortlist-content');
+  if(!items.length){el.innerHTML='<div class="empty-state">No suppliers shortlisted yet — click the star on any row to add them here.</div>';slPref=null;return;}
+  if(slPref===null||!items.find(s=>s._id===slPref)) slPref=items[0]._id;
+  const hasSub=items.some(s=>s.subbie);
+
+  function insCell(d){
+    if(!d)return'<span style="font-size:12px;color:var(--text3)">—</span>';
+    const x=daysUntil(d);
+    if(x===null)return'<span style="font-size:12px;color:var(--text3)">—</span>';
+    if(x<0)return`<span class="badge bg-red" style="font-size:11px">Expired ${fmtDate(d)}</span>`;
+    if(x<90)return`<span class="badge bg-amber" style="font-size:11px">${fmtDate(d)}</span>`;
+    return`<span class="badge bg-green" style="font-size:11px">${fmtDate(d)}</span>`;
+  }
+  function compCell(v){
+    if(!v||v==='NO'||v==='No')return'<span style="color:var(--text3);font-size:16px">—</span>';
+    if(v==='YES'||v==='Yes')return'<span style="color:var(--green);font-size:15px;font-weight:600">✓</span>';
+    if(v==='N/A')return'<span class="badge bg-neutral">N/A</span>';
+    return`<span class="badge bg-neutral">${esc(v)}</span>`;
+  }
+  function secRow(lbl){return`<tr><td class="cmp-sec-row" colspan="${items.length+1}">${lbl}</td></tr>`;}
+  function row(lbl,fn){return`<tr><td class="cmp-lbl">${lbl}</td>${items.map(s=>`<td class="cmp-cell${s._id===slPref?' cmp-sel':''}" style="text-align:center;vertical-align:middle;padding:8px 10px">${fn(s)}</td>`).join('')}</tr>`;}
+
+  const cols=items.map(s=>`<th class="cmp-hdr${s._id===slPref?' cmp-sel':''}" onclick="slPickPref(${s._id})" style="cursor:pointer;text-align:center;min-width:150px">
+    <div style="font-size:13px;font-weight:600;color:var(--text)">${esc(s.name)}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(s.trade_sub||s.trade_category||'—')}</div>
+    ${s._id===slPref?`<div style="margin-top:5px"><span class="badge bg-blue">★ preferred</span></div>`:''}
+    <div style="margin-top:6px"><button class="star-btn on" style="font-size:12px;padding:2px 7px" onclick="event.stopPropagation();slRemove(${s._id})">★ Remove</button></div>
+  </th>`).join('');
+
+  let tb='';
+  tb+=secRow('Overview');
+  tb+=row('Category',s=>`<span style="font-size:12px">${esc(s.trade_category||'—')}</span>`);
+  tb+=row('Trade',s=>`<span style="font-size:12px">${esc(s.trade_sub||'—')}</span>`);
+  tb+=row('Location',s=>`<span style="font-size:12px">${esc(s.city||'—')}</span>`);
+  tb+=row('Contact',s=>`<span style="font-size:12px">${esc(s.contact_name||'—')}</span>`);
+  tb+=row('Last used',s=>`<span style="font-size:12px">${fmtDate(s.last_used)}</span>`);
+  tb+=row('Last review',s=>lastReviewBadge(s));
+  if(hasSub){
+    tb+=secRow('Ratings');
+    tb+=row('Overall',s=>s.subbie?rp(overallRating(s)):'<span style="color:var(--text3)">—</span>');
+    tb+=row('Quality',s=>s.subbie?rp(s.quality_rating):'<span style="color:var(--text3)">—</span>');
+    tb+=row('Programme',s=>s.subbie?rp(s.time_rating):'<span style="color:var(--text3)">—</span>');
+    tb+=row('H&amp;S',s=>s.subbie?rp(s.hs_rating):'<span style="color:var(--text3)">—</span>');
+    tb+=secRow('Insurance');
+    tb+=row('EL expiry',s=>s.subbie?insCell(s.el_expiry):'<span style="color:var(--text3)">—</span>');
+    tb+=row('PL expiry',s=>s.subbie?insCell(s.pl_expiry):'<span style="color:var(--text3)">—</span>');
+    tb+=row('PI expiry',s=>s.subbie?insCell(s.pi_expiry):'<span style="color:var(--text3)">—</span>');
+    tb+=secRow('Compliance');
+    tb+=row('Safe Contractor',s=>s.subbie?compCell(s.safe_contractor):'<span style="color:var(--text3)">—</span>');
+    tb+=row('Constructionline',s=>s.subbie?compCell(s.constructionline):'<span style="color:var(--text3)">—</span>');
+    tb+=row('CIS',s=>s.subbie?compCell(s.cis):'<span style="color:var(--text3)">—</span>');
+  }
+  tb+=secRow('Notes');
+  tb+=row('Ops comment',s=>`<div style="font-size:11px;color:var(--text2);text-align:left;line-height:1.5;max-width:180px">${esc(s.ops_notes||'—')}</div>`);
+
+  el.innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${items.map(s=>`<span class="sl-chip${s._id===slPref?' sl-chip-on':''}" onclick="slPickPref(${s._id})">${esc(s.name)}<button onclick="event.stopPropagation();slRemove(${s._id})" title="Remove">×</button></span>`).join('')}</div>
+    <div style="overflow-x:auto"><table class="cmp-tbl card" style="border-radius:var(--radius-lg)">
+      <thead><tr><th class="cmp-lbl-hdr" style="background:var(--surface2)"></th>${cols}</tr></thead>
+      <tbody>${tb}</tbody>
+    </table></div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text3)"><span class="badge bg-blue">★ Click a column to mark as preferred</span></div>`;
+}
+function slPickPref(id){slPref=id;renderShortlist();}
+function slRemove(id){SL=SL.filter(x=>x!==id);saveSL();if(slPref===id)slPref=null;renderShortlist();applyFilters();}
+function copyShortlist(){
+  const items=DB.filter(s=>SL.includes(s._id));
+  const pref=items.find(s=>s._id===slPref);
+  const lines=['=== Shortlist ===',pref?`Preferred: ${pref.name}`:'',''];
+  items.forEach(s=>{
+    lines.push(`${s.name}${s._id===slPref?' [PREFERRED]':''}`);
+    lines.push(`  Trade: ${s.trade_sub||s.trade_category||'—'} | City: ${s.city||'—'} | Contact: ${s.contact_name||'—'}`);
+    if(s.subbie) lines.push(`  Rating: ${overallRating(s)||'—'} | EL: ${fmtDate(s.el_expiry)} | PL: ${fmtDate(s.pl_expiry)} | PI: ${fmtDate(s.pi_expiry)}`);
+    if(s.ops_notes) lines.push(`  Note: ${s.ops_notes}`);
+    lines.push('');
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Copied to clipboard'));
+}
+function clearShortlist(){ if(confirm('Clear entire shortlist?')){SL=[];slPref=null;saveSL();renderShortlist();} }
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+function renderAnalytics(){
+  const sc=DB.filter(s=>s.subbie);
+  const allR=sc.flatMap(s=>(s._reviews||[]).map(r=>r.performance));
+  const good=allR.filter(r=>r==='Good').length, ok=allR.filter(r=>r==='OK').length, poor=allR.filter(r=>r==='Poor').length;
+  const total=allR.length, pct=n=>total?Math.round(n/total*100):0;
+  const recent=sc.flatMap(s=>(s._reviews||[]).map(r=>({...r,sName:s.name,sIdx:DB.indexOf(s)}))).sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,8);
+  const R=70,cx=90,cy=90;
+  function arc(s,e,col){
+    if(e-s<=0)return'';
+    const sr=s*Math.PI/180,er=e*Math.PI/180;
+    const x1=cx+R*Math.sin(sr),y1=cy-R*Math.cos(sr),x2=cx+R*Math.sin(er),y2=cy-R*Math.cos(er);
+    return`<path d="M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${e-s>180?1:0},1 ${x2},${y2} Z" fill="${col}"/>`;
+  }
+  let d=0;
+  const svgArcs=total?arc(d,d+=pct(good)*3.6,'#16A34A')+arc(d,d+=pct(ok)*3.6,'#D97706')+arc(d,d+=pct(poor)*3.6,'#DC2626'):`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#F2F1EE"/>`;
+  const donut=`<svg width="180" height="180" viewBox="0 0 180 180">${svgArcs}<circle cx="${cx}" cy="${cy}" r="40" fill="white"/><text x="${cx}" y="86" text-anchor="middle" font-size="20" font-weight="600" fill="#1C1B18">${total}</text><text x="${cx}" y="100" text-anchor="middle" font-size="10" fill="#9B9890">reviews</text></svg>`;
+  document.getElementById('analytics-content').innerHTML=`
+    <div class="card"><div class="card-header"><h2>Recent Reviews</h2><button class="btn btn-sm btn-primary" onclick="openReviewModal(null)">+ New Review</button></div>
+      <div style="padding:16px">${recent.length?recent.map(r=>{
+        const cls={Good:'rs-good',OK:'rs-ok',Poor:'rs-poor'}[r.performance]||'rs-ok';
+        return`<div class="review-card" style="cursor:pointer;display:flex;gap:14px;align-items:flex-start" onclick="openDrawer(${r.sIdx})">
+          ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=3?'var(--red-bg)':r.avgScore<=5?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:6px 12px;min-width:56px">
+            <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=3?'var(--red)':r.avgScore<=5?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
+            <div style="font-size:8px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">avg /10</div>
+          </div>`:''}
+          <div style="flex:1;min-width:0">
+          <div class="review-hd"><strong style="font-size:13px">${esc(r.sName)}</strong><span class="review-score ${cls}">${esc(r.performance)}</span><span style="font-size:10px;color:var(--text3);margin-left:auto;font-family:'DM Mono',monospace">${fmtTs(r.ts)}</span></div>
+          <div style="font-size:12px;color:var(--text2)">By ${esc(r.reviewedBy)} · ${esc(r.dept)}${r.project?' · '+esc(r.project):''}</div>
+          ${r.improvements?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${esc(r.improvements)}</div>`:''}
+          </div>
+        </div>`;
+      }).join(''):'<div class="empty-state">No reviews yet. Click "+ New Review" to start.</div>'}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+      <div class="card" style="margin:0"><div class="card-header"><h2>Contractor Performance</h2></div>
+        <div class="chart-area">${donut}
+          <div class="chart-legend">
+            <div class="legend-row"><div class="legend-dot" style="background:#16A34A"></div>Good — ${good} (${pct(good)}%)</div>
+            <div class="legend-row"><div class="legend-dot" style="background:#D97706"></div>OK — ${ok} (${pct(ok)}%)</div>
+            <div class="legend-row"><div class="legend-dot" style="background:#DC2626"></div>Poor — ${poor} (${pct(poor)}%)</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">${total} reviews · ${sc.filter(s=>(s._reviews||[]).length>0).length} subcontractors</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin:0"><div class="card-header"><h2>Subcontractor Summary</h2></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Company</th><th>Overall</th><th>Reviews</th><th>Last</th></tr></thead>
+        <tbody>${sc.map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})" style="cursor:pointer"><td style="font-size:13px">${esc(s.name)}</td><td>${rp(overallRating(s))}</td><td style="font-size:12px;color:var(--text3);text-align:center">${(s._reviews||[]).length}</td><td>${lastReviewBadge(s)}</td></tr>`).join('')}</tbody></table></div>
+      </div>
+    </div>`;
+}
+
+// ── Drawer ────────────────────────────────────────────────────────────────────
+function openDrawer(idx){
+  drawerIdx=idx; const s=DB[idx];
+  document.getElementById('drawer-title').textContent=s.name;
+  document.getElementById('drawer-sub').textContent=[s.trade_category,s.trade_sub,s.city].filter(Boolean).join(' · ');
+  document.getElementById('drawer-review-btn').style.display=s.subbie?'':'none';
+  buildDrawer(idx);
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  drawerIdx=null;
+}
+function editCurrent(){ if(drawerIdx===null)return; openEditModal(drawerIdx); }
+
+function buildDrawer(idx){
+  const s=DB[idx]; const on=isStarred(s); let h='';
+  if(s.dnu) h+=`<div class="dnu-banner">⚠ Do Not Use${s.dnu_notes?': '+esc(s.dnu_notes):''}</div>`;
+  if(s.pending_signoff) h+=`<div class="pending-banner">
+    <span>⏳ Pending Finance Sign-off — not yet approved</span>
+    ${isFinance()?`<button class="btn btn-sm btn-primary" onclick="approveSupplier(${idx})">Approve</button>`:''}
+  </div>`;
+  // Overview
+  h+=`<div class="detail-section">
+    <div class="section-hd">Overview
+      <button class="star-btn${on?' on':''}" style="font-size:14px" onclick="toggleStar(${idx})">${on?'★ Shortlisted':'☆ Add to Shortlist'}</button>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-field"><div class="detail-lbl">Category</div><div class="detail-val">${tradePill(s)}</div></div>
+      <div class="detail-field"><div class="detail-lbl">Trade</div><div class="detail-val">${subPill(s)}</div></div>
+      <div class="detail-field"><div class="detail-lbl">Type</div><div class="detail-val">${typetag(s)}</div></div>
+      <div class="detail-field"><div class="detail-lbl">Xero Ref</div><div class="detail-val mono">${esc(s.xero_ref||'—')}</div></div>
+      <div class="detail-field"><div class="detail-lbl">City</div><div class="detail-val">${esc(s.city||'—')}</div></div>
+      <div class="detail-field" style="grid-column:1/-1">
+        <div class="detail-lbl" style="display:flex;align-items:center;justify-content:space-between">Last Used <button class="btn btn-sm" onclick="toggleBox('lu-${idx}')">Update</button></div>
+        <div class="detail-val">${fmtDate(s.last_used)}</div>
+        <div id="lu-${idx}" class="quick-box" style="display:none">
+          <span class="quick-box-label">Set Last Used Date</span>
+          <div class="quick-row"><input type="date" id="lu-d-${idx}" value="${s.last_used||''}">
+          <button class="btn btn-sm btn-primary" onclick="saveLastUsed(${idx})">Save</button>
+          <button class="btn btn-sm" onclick="toggleBox('lu-${idx}')">Cancel</button></div>
+        </div>
+      </div>
+    </div>
+    </div>`;
+  // Contact
+  if(s.contact_name||s.contact_email||s.contact_phone||s.office_number){
+    h+=`<div class="detail-section"><div class="section-hd">Contact</div><div class="detail-grid">
+    ${s.contact_name?`<div class="detail-field"><div class="detail-lbl">Name</div><div class="detail-val">${esc(s.contact_name)}</div></div>`:''}
+    ${s.contact_phone?`<div class="detail-field"><div class="detail-lbl">Phone</div><div class="detail-val mono"><a href="tel:${esc(s.contact_phone)}" style="color:var(--accent)">${esc(s.contact_phone)}</a></div></div>`:''}
+    ${s.contact_email?`<div class="detail-field" style="grid-column:1/-1"><div class="detail-lbl">Email</div><div class="detail-val"><a href="mailto:${esc(s.contact_email)}" style="color:var(--accent)">${esc(s.contact_email)}</a></div></div>`:''}
+    ${s.office_number?`<div class="detail-field"><div class="detail-lbl">Office</div><div class="detail-val mono">${esc(s.office_number)}</div></div>`:''}
+    </div></div>`;
+  }
+  // Insurance (subcontractors)
+  if(s.subbie){
+    const signoffRow=(type,valField,expField)=>{
+      const so=(s.insurance_signoff_current||{})[type];
+      const signed=so&&so.expiry===s[expField]&&s[expField]; // only valid if matches current expiry
+      let badge=signed
+        ? `<span class="badge bg-green">✓ Checked by ${esc(so.by)} · ${fmtTs(so.ts)}</span>`
+        : `<span class="badge bg-amber">Not yet confirmed</span>`;
+      const btn=isFinance()&&!signed&&s[expField]
+        ? `<button class="btn btn-sm btn-primary" style="margin-left:6px" onclick="signOffInsurance(${idx},'${type}')">Confirm checked</button>`
+        : '';
+      return `<div class="r-row" style="margin-top:2px"><div class="r-row-label" style="flex:none;width:30px;font-weight:600">${type}</div>${badge}${btn}</div>`;
+    };
+    h+=`<div class="detail-section">
+      <div class="section-hd">Insurance <button class="btn btn-sm" onclick="toggleBox('ins-${idx}')">Update dates</button></div>
+      <div class="detail-grid">
+        <div class="detail-field"><div class="detail-lbl">EL Value</div><div class="detail-val">${fmtMoney(s.el_value)}</div></div>
+        <div class="detail-field"><div class="detail-lbl">EL Expiry</div><div class="detail-val ${insCls(s.el_expiry)}">${fmtDate(s.el_expiry)}</div></div>
+        <div class="detail-field"><div class="detail-lbl">PL Value</div><div class="detail-val">${fmtMoney(s.pl_value)}</div></div>
+        <div class="detail-field"><div class="detail-lbl">PL Expiry</div><div class="detail-val ${insCls(s.pl_expiry)}">${fmtDate(s.pl_expiry)}</div></div>
+        <div class="detail-field"><div class="detail-lbl">PI Value</div><div class="detail-val">${fmtMoney(s.pi_value)}</div></div>
+        <div class="detail-field"><div class="detail-lbl">PI Expiry</div><div class="detail-val ${insCls(s.pi_expiry)}">${fmtDate(s.pi_expiry)}</div></div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="detail-lbl" style="margin-bottom:6px">Finance Sign-off</div>
+        ${signoffRow('EL','el_value','el_expiry')}
+        ${signoffRow('PL','pl_value','pl_expiry')}
+        ${signoffRow('PI','pi_value','pi_expiry')}
+      </div>
+      <div id="ins-${idx}" class="quick-box" style="display:none">
+        <span class="quick-box-label">Update Insurance Expiry Dates</span>
+        <div class="quick-row"><span>EL</span><input type="date" id="ins-el-${idx}" value="${s.el_expiry||''}"></div>
+        <div class="quick-row"><span>PL</span><input type="date" id="ins-pl-${idx}" value="${s.pl_expiry||''}"></div>
+        <div class="quick-row"><span>PI</span><input type="date" id="ins-pi-${idx}" value="${s.pi_expiry||''}"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Changing a date clears its Finance sign-off — it will need re-confirming.</div>
+        <div class="quick-row" style="margin-top:6px">
+          <button class="btn btn-sm btn-primary" onclick="saveInsurance(${idx})">Save dates</button>
+          <button class="btn btn-sm" onclick="toggleBox('ins-${idx}')">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  // Ratings — editable, role-gated, with required reason. Always shown for subcontractors.
+  if(s.subbie){
+    const opsA=avgArr([s.hs_rating,s.quality_rating,s.time_rating,s.cost_rating]);
+    const finA=avgArr([s.ins_rating,s.credit_rating,s.invoice_rating]);
+    h+=`<div class="detail-section"><div class="section-hd">Ratings</div>`;
+    h+=`<div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:6px">Finance ${finA!=null?rp(finA):''}</div>`;
+    h+=ratingRow(idx,s,'ins_rating');
+    h+=ratingRow(idx,s,'credit_rating');
+    h+=ratingRow(idx,s,'invoice_rating');
+    h+=`<div style="font-size:11px;font-weight:600;color:var(--text3);margin:12px 0 6px">Operations ${opsA!=null?rp(opsA):''}</div>`;
+    h+=ratingRow(idx,s,'hs_rating');
+    h+=ratingRow(idx,s,'quality_rating');
+    h+=ratingRow(idx,s,'time_rating');
+    h+=ratingRow(idx,s,'cost_rating');
+    if(s.ops_notes)h+=`<div style="font-size:12px;color:var(--text2);padding:8px;background:var(--surface2);border-radius:6px;margin-top:8px;border-left:3px solid var(--border2)">${esc(s.ops_notes)}<br><span style="font-size:11px;color:var(--text3)">${esc(s.ops_by||'')}</span></div>`;
+    h+=`</div>`;
+  }
+  // Performance reviews
+  const reviews=s._reviews||[];
+  h+=`<div class="detail-section">
+    <div class="section-hd">Performance Reviews ${reviews.length?`<span style="font-weight:400;font-size:12px;text-transform:none;letter-spacing:0">(${reviews.length})</span>`:''}
+    <button class="btn btn-sm btn-primary" onclick="openReviewModal(${idx})">+ Add</button></div>`;
+  if(reviews.length){
+    h+=reviews.slice().reverse().map((r,i)=>{
+      const ri=reviews.length-1-i;
+      const cls={Good:'rs-good',OK:'rs-ok',Poor:'rs-poor'}[r.performance]||'rs-ok';
+      const qs=RQ.map(q=>{
+        const v=r.questions?.[q.id];
+        if(v===undefined)return'';
+        if(typeof v==='boolean')return`<span style="font-size:11px;color:var(--text3);margin-right:8px">${esc(q.label)}: <strong style="color:${v?'var(--green)':'var(--red)'}">${v?'Y':'N'}</strong></span>`;
+        return`<span style="font-size:11px;color:var(--text3);margin-right:8px">${esc(q.label)}: <strong style="color:var(--text)">${v}/10</strong></span>`;
+      }).join('');
+      return`<div class="review-card" style="display:flex;gap:14px;align-items:flex-start">
+        ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=3?'var(--red-bg)':r.avgScore<=5?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:8px 14px;min-width:64px">
+          <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=3?'var(--red)':r.avgScore<=5?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
+          <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">avg /10</div>
+        </div>`:''}
+        <div style="flex:1;min-width:0">
+        <div class="review-hd">
+          <span class="review-score ${cls}">${esc(r.performance)}</span>
+          <span style="font-size:12px;color:var(--text2)">${esc(r.reviewedBy)} · ${esc(r.dept)}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:auto;font-family:'DM Mono',monospace">${fmtTs(r.ts)}</span>
+          <button class="btn-danger" onclick="delReview(${idx},${ri},event)">✕</button>
+        </div>
+        ${r.project?`<div style="font-size:11px;color:var(--text3);margin-bottom:4px">${esc(r.project)}</div>`:''}
+        ${qs?`<div style="margin-bottom:5px">${qs}</div>`:''}
+        ${r.improvements?`<div style="font-size:12px;color:var(--text2)"><strong>Improvements:</strong> ${esc(r.improvements)}</div>`:''}
+        ${r.recommendations?`<div style="font-size:12px;color:var(--text2)"><strong>Recommendations:</strong> ${esc(r.recommendations)}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  } else h+='<div class="empty-state" style="padding:16px 0">No reviews yet.</div>';
+  h+=`</div>`;
+  // Comments / Notes — using LFE comment thread pattern
+  const notes=s._notes||[];
+  h+=`<div class="detail-section">
+    <div class="section-hd">Comments ${notes.length?`<span style="font-weight:400;font-size:12px;text-transform:none;letter-spacing:0">(${notes.length})</span>`:''}</div>`;
+  if(notes.length){
+    h+='<div class="comments-thread">'+notes.map((n,i)=>`
+      <div class="comment">
+        <div class="comment-meta">
+          <span class="comment-author">${esc(n.author)}</span>
+          <span class="comment-tag">${esc(n.dept)}</span>
+          <span class="comment-time">${fmtTs(n.ts)}</span>
+          <button class="btn-danger" onclick="delNote(${idx},${i},event)">✕</button>
+        </div>
+        <div class="comment-text">${esc(n.text)}</div>
+      </div>`).join('')+'</div>';
+  } else h+='<div style="font-size:13px;color:var(--text3);margin-bottom:12px">No comments yet.</div>';
+  const la=localStorage.getItem('mfb_last_author')||'', ld=localStorage.getItem('mfb_last_dept')||'';
+  h+=`<div class="comment-add">
+    <div class="comment-name-row">
+      <input id="cmt-name" class="search-inp" placeholder="Your name…" style="max-width:160px;height:30px" value="${esc(la)}">
+      <select id="cmt-role" class="comment-role-sel">
+        <option value="">— Team —</option>
+        ${DEPTS.map(d=>`<option value="${d}"${d===ld?' selected':''}>${d}</option>`).join('')}
+      </select>
+    </div>
+    <div class="comment-add-row">
+      <textarea id="cmt-text" class="search-inp" rows="2" placeholder="Add a comment…" style="flex:1;height:auto;resize:vertical;line-height:1.5;padding:6px 10px"></textarea>
+      <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="addNote(${idx})">Post</button>
+    </div>
+  </div></div>`;
+  document.getElementById('drawer-bd').innerHTML=h;
+}
+
+function toggleBox(id){ const el=document.getElementById(id); if(el)el.style.display=el.style.display==='none'?'block':'none'; }
+function saveInsurance(idx){
+  const s=DB[idx];
+  const newEl=document.getElementById('ins-el-'+idx).value||null;
+  const newPl=document.getElementById('ins-pl-'+idx).value||null;
+  const newPi=document.getElementById('ins-pi-'+idx).value||null;
+  s.insurance_signoff_current=s.insurance_signoff_current||{};
+  // Clear sign-off for any type whose date actually changed — needs re-confirming.
+  if(newEl!==s.el_expiry) delete s.insurance_signoff_current.EL;
+  if(newPl!==s.pl_expiry) delete s.insurance_signoff_current.PL;
+  if(newPi!==s.pi_expiry) delete s.insurance_signoff_current.PI;
+  s.el_expiry=newEl; s.pl_expiry=newPl; s.pi_expiry=newPi;
+  saveDB(); schedSync(s._id); updateCounts(); renderMetrics(); buildDrawer(idx);
+  if(document.getElementById('tab-ins').classList.contains('active')) renderIns();
+  toast('Insurance dates updated');
+}
+async function signOffInsurance(idx,type){
+  if(!isFinance()){toast('Only Finance Director can sign off insurance','err');return;}
+  const s=DB[idx];
+  const fieldMap={EL:'el_expiry',PL:'pl_expiry',PI:'pi_expiry'};
+  const expiry=s[fieldMap[type]];
+  if(!expiry){toast('No expiry date set for '+type,'err');return;}
+  const nowIso=new Date().toISOString();
+  s.insurance_signoff_current=s.insurance_signoff_current||{};
+  s.insurance_signoff_current[type]={by:myName(),ts:nowIso,expiry};
+  saveDB(); schedSync(s._id);
+  await _sb.from('insurance_signoff').insert({
+    supplier_id:s._id, ins_type:type, expiry_date_signed_off:expiry,
+    signed_off_by_user_id:_sbUser.id, signed_off_by_name:myName()
+  });
+  buildDrawer(idx);
+  if(document.getElementById('tab-ins').classList.contains('active')) renderIns();
+  toast(type+' insurance confirmed checked');
+}
+async function approveSupplier(idx){
+  if(!isFinance()){toast('Only Finance Director can approve new suppliers','err');return;}
+  const s=DB[idx];
+  s.pending_signoff=false;
+  s.signoff_by_name=myName();
+  s.signoff_ts=new Date().toISOString();
+  saveDB(); schedSync(s._id);
+  buildDrawer(idx); applyFilters(); updateCounts(); renderMetrics();
+  toast('Supplier approved');
+}
+function saveLastUsed(idx){
+  DB[idx].last_used=document.getElementById('lu-d-'+idx).value||null;
+  saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Last used date updated');
+}
+
+// ── Notes / Comments ──────────────────────────────────────────────────────────
+function addNote(idx){
+  const text=(document.getElementById('cmt-text').value||'').trim();
+  const author=(document.getElementById('cmt-name').value||'').trim();
+  const dept=document.getElementById('cmt-role').value;
+  if(!text){toast('Enter comment text','err');return;}
+  if(!author){toast('Enter your name','err');return;}
+  if(!dept){toast('Select your team','err');return;}
+  DB[idx]._notes=DB[idx]._notes||[];
+  DB[idx]._notes.push({text,author,dept,ts:new Date().toISOString()});
+  localStorage.setItem('mfb_last_author',author); localStorage.setItem('mfb_last_dept',dept);
+  saveDB(); schedSync(DB[idx]._id); applyFilters(); toast('Comment posted'); buildDrawer(idx);
+}
+function delNote(idx,ni,e){ e.stopPropagation(); if(!confirm('Delete this comment?'))return; DB[idx]._notes.splice(ni,1); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Comment deleted'); }
+function delReview(idx,ri,e){
+  e.stopPropagation(); if(!confirm('Delete this review?'))return;
+  DB[idx]._reviews.splice(ri,1); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Review deleted');
+  if(document.getElementById('tab-analytics').classList.contains('active')) renderAnalytics();
+}
+
+// ── Review modal ──────────────────────────────────────────────────────────────
+function openReviewModal(idx){
+  perfVal=null; rqState={};
+  ['perf-poor','perf-ok','perf-good'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  const sel=document.getElementById('rv-supplier');
+  sel.innerHTML='<option value="">Select contractor…</option>'+DB.filter(s=>s.subbie).map(s=>`<option value="${DB.indexOf(s)}">${esc(s.name)}</option>`).join('');
+  if(idx!==null) sel.value=String(idx);
+  const la=localStorage.getItem('mfb_last_author')||'', ld=localStorage.getItem('mfb_last_dept')||'';
+  document.getElementById('rv-by').value=la;
+  if(ld) document.getElementById('rv-dept').value=ld;
+  document.getElementById('rv-date').value=new Date().toISOString().slice(0,10);
+  ['rv-project','rv-improvements','rv-recommendations'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('rv-questions').innerHTML=RQ.map(q=>`
+    <div class="rq-row">
+      <div><div class="rq-label">${esc(q.label)}</div><div class="rq-sub">${esc(q.sub)}</div></div>
+      <div class="rq-btns">
+        <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="10" placeholder="–" oninput="setRQ('${q.id}',this.value)">
+        <span class="rq-score-sub">/10</span>
+      </div>
+    </div>`).join('');
+  updateRvAvgDisplay();
+  document.getElementById('review-modal').classList.add('open');
+}
+function closeReviewModal(){ document.getElementById('review-modal').classList.remove('open'); }
+function setRQ(id,raw){
+  if(raw===''){ delete rqState[id]; updateRvAvgDisplay(); return; }
+  let n=Number(raw);
+  if(isNaN(n))return;
+  if(n<0)n=0; if(n>10)n=10;
+  rqState[id]=n;
+  updateRvAvgDisplay();
+}
+function rvAverage(){
+  const vals=RQ.map(q=>rqState[q.id]).filter(v=>v!=null&&!isNaN(v));
+  if(!vals.length)return null;
+  return Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*10)/10;
+}
+function updateRvAvgDisplay(){
+  const avg=rvAverage();
+  const el=document.getElementById('rv-avg-display');
+  const num=document.getElementById('rv-avg-num');
+  if(!el||!num)return;
+  if(avg==null){ el.style.display='none'; return; }
+  el.style.display='flex';
+  num.textContent=avg+'/10';
+  const color=avg<=3?'var(--red)':avg<=5?'var(--amber)':'var(--green)';
+  el.style.borderLeftColor=color;
+  el.style.background=avg<=3?'var(--red-bg)':avg<=5?'var(--amber-bg)':'var(--green-bg)';
+  num.style.color=color;
+  el.querySelector('span').style.color=color;
+}
+function setPerf(v){
+  perfVal=v;
+  document.getElementById('perf-poor').classList.toggle('on',v==='Poor');
+  document.getElementById('perf-ok').classList.toggle('on',v==='OK');
+  document.getElementById('perf-good').classList.toggle('on',v==='Good');
+}
+async function saveReview(){
+  const suppIdx=parseInt(document.getElementById('rv-supplier').value);
+  if(isNaN(suppIdx)){toast('Select a contractor','err');return;}
+  if(!perfVal){toast('Select overall performance','err');return;}
+  const reviewedBy=(document.getElementById('rv-by').value||'').trim();
+  const dept=document.getElementById('rv-dept').value;
+  if(!reviewedBy){toast('Enter reviewer name','err');return;}
+  if(!dept){toast('Select department','err');return;}
+  const avgScore=rvAverage();
+  const s=DB[suppIdx];
+  s._reviews=s._reviews||[];
+  const project=document.getElementById('rv-project').value.trim();
+  const improvements=document.getElementById('rv-improvements').value.trim();
+  s._reviews.push({ts:new Date().toISOString(),date:document.getElementById('rv-date').value,reviewedBy,dept,project,questions:{...rqState},avgScore,improvements,recommendations:document.getElementById('rv-recommendations').value.trim(),performance:perfVal});
+  localStorage.setItem('mfb_last_author',reviewedBy); localStorage.setItem('mfb_last_dept',dept);
+  saveDB(); schedSync(s._id); closeReviewModal(); toast('Review saved');
+  if(drawerIdx===suppIdx) buildDrawer(suppIdx);
+  applyFilters(); updateCounts(); renderMetrics();
+  if(document.getElementById('tab-analytics').classList.contains('active')) renderAnalytics();
+  if(document.getElementById('tab-sc').classList.contains('active')) renderSC();
+  queueEmail('review_complete',s._id,{supplierName:s.name,reviewedBy,dept,performance:perfVal,avgScore,project,improvements,appUrl:location.href});
+}
+
+// ── Add / Edit supplier modal ─────────────────────────────────────────────────
+function openAddModal(){
+  document.getElementById('modal-idx').value='';
+  document.getElementById('modal-title').textContent='Add Supplier';
+  clearForm(); document.getElementById('supplier-modal').classList.add('open');
+}
+function openEditModal(idx){
+  const s=DB[idx];
+  document.getElementById('modal-idx').value=String(idx);
+  document.getElementById('modal-title').textContent='Edit: '+s.name;
+  document.getElementById('m-name').value=s.name||'';
+  document.getElementById('m-cat').value=s.trade_category||''; cascadeModalSub();
+  setTimeout(()=>{ document.getElementById('m-sub').value=s.trade_sub||''; },0);
+  document.getElementById('m-city').value=s.city||'';
+  document.getElementById('m-regions').value=s.regions||'';
+  document.getElementById('m-subbie').checked=!!s.subbie;
+  document.getElementById('m-supplier').checked=!!s.supplier;
+  document.getElementById('m-hire').checked=!!s.hire;
+  document.getElementById('m-xero').value=s.xero_ref||'';
+  document.getElementById('m-cname').value=s.contact_name||'';
+  document.getElementById('m-cemail').value=s.contact_email||'';
+  document.getElementById('m-cphone').value=s.contact_phone||'';
+  document.getElementById('m-office').value=s.office_number||'';
+  document.getElementById('m-dnu').value=s.dnu?'true':'false';
+  document.getElementById('m-dnu-notes').value=s.dnu_notes||'';
+  document.getElementById('m-by-name').value=localStorage.getItem('mfb_last_author')||'';
+  document.getElementById('m-by-dept').value=localStorage.getItem('mfb_last_dept')||'';
+  document.getElementById('m-init-note').value='';
+  document.getElementById('supplier-modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('supplier-modal').classList.remove('open'); }
+function clearForm(){
+  ['m-name','m-city','m-regions','m-xero','m-cname','m-cemail','m-cphone','m-office','m-dnu-notes','m-init-note'].forEach(id=>{ document.getElementById(id).value=''; });
+  document.getElementById('m-cat').value='';
+  document.getElementById('m-sub').innerHTML='<option value="">Select category first…</option>';
+  ['m-subbie','m-supplier','m-hire'].forEach(id=>{ document.getElementById(id).checked=false; });
+  document.getElementById('m-dnu').value='false';
+  document.getElementById('m-by-name').value=localStorage.getItem('mfb_last_author')||'';
+  document.getElementById('m-by-dept').value=localStorage.getItem('mfb_last_dept')||'';
+}
+function saveSupplier(){
+  const idxStr=document.getElementById('modal-idx').value, isEdit=idxStr!=='';
+  const name=(document.getElementById('m-name').value||'').trim(); if(!name){toast('Name required','err');return;}
+  const cat=document.getElementById('m-cat').value, sub=document.getElementById('m-sub').value;
+  if(!cat){toast('Category required','err');return;} if(!sub){toast('Sub-trade required','err');return;}
+  const byName=(document.getElementById('m-by-name').value||'').trim(), byDept=document.getElementById('m-by-dept').value;
+  if(!byName){toast('Your name required','err');return;} if(!byDept){toast('Department required','err');return;}
+  const noteText=(document.getElementById('m-init-note').value||'').trim();
+  const noteEntry=noteText?[{text:noteText,author:byName,dept:byDept,ts:new Date().toISOString()}]:[];
+  const fields={name,trade_category:cat,trade_sub:sub,city:document.getElementById('m-city').value.trim(),regions:document.getElementById('m-regions').value.trim(),subbie:document.getElementById('m-subbie').checked,supplier:document.getElementById('m-supplier').checked,hire:document.getElementById('m-hire').checked,xero_ref:document.getElementById('m-xero').value.trim(),contact_name:document.getElementById('m-cname').value.trim(),contact_email:document.getElementById('m-cemail').value.trim(),contact_phone:document.getElementById('m-cphone').value.trim(),office_number:document.getElementById('m-office').value.trim(),dnu:document.getElementById('m-dnu').value==='true',dnu_notes:document.getElementById('m-dnu-notes').value.trim()};
+  if(isEdit){const s=DB[parseInt(idxStr)];Object.assign(s,fields);if(noteEntry.length)s._notes=[...(s._notes||[]),...noteEntry];}
+  else{DB.unshift({_id:Date.now(),_local:true,added_by:byName,added_dept:byDept,added_ts:new Date().toISOString(),_notes:noteEntry,_reviews:[],pending_signoff:true,rating_meta:{},insurance_signoff_current:{},...fields,cis:'',ins_rating:null,credit_rating:null,invoice_rating:null,finance_notes:'',finance_by:'',response_rating:null,price_rating:null,tech_rating:null,sales_notes:'',sales_by:'',hs_rating:null,quality_rating:null,time_rating:null,cost_rating:null,ops_notes:'',ops_by:'',last_used:null,el_value:null,el_expiry:null,pl_value:null,pl_expiry:null,pi_value:null,pi_expiry:null,ins_received:'',pqq_design:'',pqq_ops:'',pqq_finance:'',safe_contractor:'',constructionline:'',certs:'',contact_pos:'',contact2_name:'',contact2_email:'',contact2_phone:''});}
+  localStorage.setItem('mfb_last_author',byName); localStorage.setItem('mfb_last_dept',byDept);
+  const savedIdx=isEdit?parseInt(idxStr):0;
+  saveDB(); schedSync(DB[savedIdx]._id); updateCounts(); renderMetrics(); applyFilters(); closeModal();
+  toast(isEdit?'Supplier updated':'Supplier added');
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const ni=document.getElementById('nav-'+name); if(ni)ni.classList.add('active');
+  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Pending Approval',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Analytics'};
+  document.getElementById('topbar-title').textContent=titles[name]||name;
+  if(name==='sc') renderSC();
+  if(name==='suppliers') renderSuppliersOnly();
+  if(name==='shortlist') renderShortlist();
+  if(name==='pending') renderPending();
+  if(name==='dnu') renderDNU();
+  if(name==='ins') renderIns();
+  if(name==='analytics') renderAnalytics();
+}
+
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const collapsed=sb.classList.toggle('collapsed');
+  document.getElementById('sb-toggle-icon').setAttribute('d',collapsed?'M4 2l4 4-4 4':'M8 2L4 6l4 4');
+}
+function openSidebar(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('mob-overlay').classList.add('open'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('mob-overlay').classList.remove('open'); }
+
+// ── Roles admin (Finance Director only) ──────────────────────────────────────
+function openRolesModal(){
+  if(!isSuperuser()){ toast('Only a Superuser can manage roles','err'); return; }
+  renderRolesList();
+  document.getElementById('role-email').value='';
+  document.getElementById('role-name').value='';
+  document.getElementById('role-select').value='';
+  document.getElementById('roles-modal').classList.add('open');
+}
+function closeRolesModal(){ document.getElementById('roles-modal').classList.remove('open'); }
+function renderRolesList(){
+  const el=document.getElementById('roles-list');
+  if(!ALL_ROLES_LIST.length){ el.innerHTML='<div class="empty-state">No roles assigned yet.</div>'; return; }
+  // Group role rows by person so each shows once with all their role badges.
+  const byUser={};
+  ALL_ROLES_LIST.forEach(r=>{
+    if(!byUser[r.user_id]) byUser[r.user_id]={email:r.email,display_name:r.display_name,roles:[]};
+    byUser[r.user_id].roles.push(r.role);
+  });
+  el.innerHTML=Object.entries(byUser).map(([uid,u])=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;flex-wrap:wrap">
+      <div><div style="font-size:13px;font-weight:500">${esc(u.display_name)}</div><div style="font-size:11px;color:var(--text3)">${esc(u.email)}</div></div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        ${u.roles.map(role=>`<span class="badge bg-blue" style="display:inline-flex;align-items:center;gap:5px">${esc(role)}<button class="btn-icon" style="padding:0 2px;font-size:12px;color:inherit" onclick="removeRole('${uid}','${role}')" title="Remove ${esc(role)}">✕</button></span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+async function saveRole(){
+  const email=(document.getElementById('role-email').value||'').trim().toLowerCase();
+  const role=document.getElementById('role-select').value;
+  const name=(document.getElementById('role-name').value||'').trim();
+  if(!email||!role||!name){ toast('Email, role and name are required','err'); return; }
+  // Look up the user's auth id by matching notification_recipients (kept in sync with auth.users)
+  const {data:nr,error:nrErr}=await _sb.from('notification_recipients').select('user_id,email').ilike('email',email).maybeSingle();
+  if(nrErr||!nr){ toast('That person needs to sign in at least once before you can assign a role','err'); return; }
+  const {error}=await _sb.from('user_roles').upsert({user_id:nr.user_id,email:nr.email,display_name:name,role,updated_at:new Date().toISOString()},{onConflict:'user_id,role'});
+  if(error){ toast('Error: '+error.message,'err'); return; }
+  toast('Role added'); await loadRoles(); renderRolesList();
+  document.getElementById('role-email').value=''; document.getElementById('role-name').value=''; document.getElementById('role-select').value='';
+}
+async function removeRole(userId,role){
+  if(!confirm(`Remove "${role}"?`))return;
+  const {error}=await _sb.from('user_roles').delete().eq('user_id',userId).eq('role',role);
+  if(error){ toast('Error: '+error.message,'err'); return; }
+  toast('Role removed'); await loadRoles(); renderRolesList();
+}
+
+// ── Email notification queue ──────────────────────────────────────────────────
+async function queueEmail(kind,supplierId,payload){
+  try{
+    await _sb.from('email_outbox').insert({kind,supplier_id:supplierId,payload});
+  }catch(e){ console.warn('Could not queue email',e); }
+}
+const INS_THRESHOLDS=[90,60,30,7,0]; // days-out checkpoints for "expiring soon" + 0 = expiry day
+function checkInsuranceNotify(s,field,label){
+  const d=daysUntil(s[field]); if(d===null)return;
+  if(d<0){
+    queueEmail('insurance_expired',s._id,{supplierName:s.name,insType:label,expiryDate:fmtDate(s[field]),appUrl:location.href});
+  } else if(INS_THRESHOLDS.includes(d)){
+    queueEmail('insurance_expiring',s._id,{supplierName:s.name,insType:label,expiryDate:fmtDate(s[field]),daysLeft:d,appUrl:location.href});
+  }
+}
+function runInsuranceChecks(){
+  // Runs once per session when the app has loaded data — best-effort, app-triggered (no server cron).
+  DB.filter(s=>s.subbie).forEach(s=>{
+    checkInsuranceNotify(s,'el_expiry','EL');
+    checkInsuranceNotify(s,'pl_expiry','PL');
+    checkInsuranceNotify(s,'pi_expiry','PI');
+  });
+}
+
+let _tt;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.querySelector('.toast-text').textContent=msg;
+  el.querySelector('.toast-dot').className='toast-dot'+(type==='err'?' err':'');
+  el.classList.add('show');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2400);
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeDrawer();closeModal();closeReviewModal();closeRolesModal();} });
+
+initApp();
+
+// Wire overlay to drawer open/close
+const _ov=document.getElementById("overlay");
+function _showOv(){_ov.style.display="block";}
+function _hideOv(){_ov.style.display="none";}
+const _origOpenD=openDrawer,_origCloseD=closeDrawer;
+window.openDrawer=function(idx){_origOpenD(idx);_showOv();};
+window.closeDrawer=function(){_origCloseD();_hideOv();};
+</script>
+</body>
+</html>
