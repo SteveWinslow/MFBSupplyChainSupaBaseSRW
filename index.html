@@ -122,8 +122,9 @@ tbody tr:hover td{background:var(--hover)}
 /* Forms */
 .field{display:flex;flex-direction:column;gap:4px}
 .field label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
-.field input,.field select,.field textarea{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;transition:border-color .12s;width:100%}
-.field input,.field select{height:34px}
+.field input:not([type=checkbox]):not([type=radio]),.field select,.field textarea{font-size:13px;padding:6px 10px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit;transition:border-color .12s;width:100%}
+.field input:not([type=checkbox]):not([type=radio]),.field select{height:34px}
+.field input[type=checkbox],.field input[type=radio]{width:15px;height:15px;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
 .field textarea{resize:vertical;min-height:70px;line-height:1.55}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .field input::placeholder,.field textarea::placeholder{color:var(--text3)}
@@ -131,7 +132,22 @@ tbody tr:hover td{background:var(--hover)}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .fg4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
 /* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center;padding:24px 32px;backdrop-filter:blur(4px)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300;display:none;align-items:center;justify-content:center;padding:24px 32px;backdrop-filter:blur(4px)}
+/* Command palette (Ctrl/Cmd+K search) */
+.cmdk-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:400;display:none;align-items:flex-start;justify-content:center;padding:14vh 24px 24px;backdrop-filter:blur(4px)}
+.cmdk-overlay.open{display:flex}
+.cmdk-box{background:var(--surface);border-radius:14px;width:min(96vw,560px);box-shadow:var(--shadow-md);max-height:60vh;overflow:hidden;display:flex;flex-direction:column}
+.cmdk-input-row{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.cmdk-input-row svg{flex-shrink:0;color:var(--text3)}
+.cmdk-input{border:none;outline:none;font-size:15px;font-family:inherit;flex:1;background:transparent;color:var(--text)}
+.cmdk-input::placeholder{color:var(--text3)}
+.cmdk-hint{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;background:var(--surface2);border-radius:5px;padding:2px 6px;flex-shrink:0}
+.cmdk-results{overflow-y:auto;padding:6px}
+.cmdk-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer}
+.cmdk-item:hover,.cmdk-item.active{background:var(--surface2)}
+.cmdk-item-name{font-size:13px;font-weight:500;color:var(--text)}
+.cmdk-item-sub{font-size:11px;color:var(--text3);margin-left:auto;flex-shrink:0;white-space:nowrap}
+.cmdk-empty{padding:28px 16px;text-align:center;font-size:13px;color:var(--text3)}
 .modal-overlay.open{display:flex}
 .modal{background:var(--surface);border-radius:16px;width:min(96vw,700px);box-shadow:var(--shadow-md);max-height:92vh;overflow:hidden;display:flex;flex-direction:column}
 .modal-body{padding:20px 24px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(92vh - 120px)}
@@ -189,6 +205,8 @@ tbody tr:hover td{background:var(--hover)}
   .main{margin-left:0!important}.topbar{padding:0 14px}.content{padding:14px}
   .mob-btn{display:flex!important}.fg4,.fg3{grid-template-columns:1fr 1fr}
   .metrics{grid-template-columns:1fr 1fr}
+  .cmdk-trigger{min-width:0!important;padding:6px 8px!important}
+  .cmdk-trigger-label,.cmdk-trigger-hint{display:none}
 }
 
 
@@ -364,6 +382,9 @@ let _sbUser = null;
     <button class="nav-item" id="nav-analytics" data-label="Analytics" onclick="switchTab('analytics')">
       <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="8" width="3" height="6"/><rect x="6.5" y="5" width="3" height="9"/><rect x="11" y="2" width="3" height="12"/></svg><span>Analytics</span></div>
     </button>
+    <button class="nav-item" id="nav-changes" data-label="Recent Changes" onclick="switchTab('changes')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 4v4l2.5 2.5"/><circle cx="8" cy="8" r="6"/></svg><span>Recent Changes</span></div>
+    </button>
     <div class="nav-section">Actions</div>
     <button class="nav-item" data-label="Add Supplier" onclick="openAddModal()"><div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg><span>Add Supplier</span></div></button>
     <button class="nav-item" data-label="Performance Review" onclick="openReviewModal(null)"><div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h10v8H3z"/><path d="M6 7h4M6 5h2"/></svg><span>Performance Review</span></div></button>
@@ -382,6 +403,11 @@ let _sbUser = null;
   <header class="topbar">
     <button class="mob-btn" onclick="openSidebar()"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h11M2 7.5h11M2 11h11"/></svg></button>
     <div class="topbar-title" id="topbar-title">All Suppliers</div>
+    <button class="cmdk-trigger" onclick="openCmdK()" style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);font-size:13px;font-family:inherit;cursor:pointer;min-width:160px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+      <span class="cmdk-trigger-label" style="flex:1;text-align:left">Search…</span>
+      <span class="cmdk-trigger-hint cmdk-hint">⌘K</span>
+    </button>
     <div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="openReviewModal(null)">&#128196; Review</button><button class="btn btn-sm btn-primary" onclick="openAddModal()">+ Add Supplier</button></div>
   </header>
   <div class="content">
@@ -436,19 +462,19 @@ let _sbUser = null;
       <th>Company</th><th>Category</th><th>Trade</th><th>City</th><th>Status</th>
     </tr></thead><tbody id="sup-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-shortlist"><div class="page-hd"><div><h1>Shortlist</h1><p>Star suppliers to compare and tender</p></div><div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="copyShortlist()">Copy</button><button class="btn btn-sm" onclick="window.print()">Print</button><button class="btn btn-sm" onclick="clearShortlist()">Clear all</button></div></div><div id="shortlist-content"></div></div>
-    <div class="tab" id="tab-pending"><div class="page-hd"><div><h1>Pending Approval</h1><p>New suppliers awaiting Finance sign-off</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>City</th><th>Added by</th><th>Added</th><th style="width:120px">Approval</th></tr></thead><tbody id="pending-tbody"></tbody></table></div></div></div>
-    <div class="tab" id="tab-dnu"><div class="page-hd"><div><h1>Do Not Use</h1><p>Do not engage without clearance</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>Reason</th><th>Last Used</th></tr></thead><tbody id="dnu-tbody"></tbody></table></div></div></div>
+    <div class="tab" id="tab-pending"><div class="page-hd"><div><h1>Pending Approval</h1><p>Everything awaiting a Finance decision — new suppliers and insurance sign-offs</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Type</th><th>Trade</th><th>Requested by</th><th>Date</th><th style="width:120px">Approval</th></tr></thead><tbody id="pending-tbody"></tbody></table></div></div></div>
+    <div class="tab" id="tab-dnu"><div class="page-hd"><div><h1>Do Not Use</h1><p>Do not engage without clearance</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>Reason</th><th style="width:110px">Last Used</th></tr></thead><tbody id="dnu-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-ins"><div class="page-hd"><div><h1>Insurance Monitor</h1><p>Open a row to update expiry dates inline</p></div></div><div class="metrics" id="metrics-ins"></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>EL Expiry</th><th>PL Expiry</th><th>PI Expiry</th><th>Issue</th></tr></thead><tbody id="ins-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-analytics"><div class="page-hd"><div><h1>Analytics</h1><p>Contractor performance overview</p></div></div><div id="analytics-content"></div></div>
+    <div class="tab" id="tab-changes"><div class="page-hd"><div><h1>Recent Changes</h1><p>New suppliers, approvals, reviews, and DNU changes — newest first</p></div></div><div id="changes-content"></div></div>
   </div>
 </div>
 </div>
 <div id="overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none;cursor:pointer" onclick="closeDrawer()"></div>
-<div class="drawer" id="drawer"><div class="drawer-hd"><div><div class="drawer-title" id="drawer-title"></div><div class="drawer-sub" id="drawer-sub"></div></div><div style="display:flex;gap:6px;align-items:center"><button class="btn btn-sm" id="drawer-review-btn" onclick="openReviewModal(drawerIdx)">Add Review</button><button class="btn btn-sm" onclick="editCurrent()">Edit</button><button class="btn-icon" onclick="closeDrawer()">&#10005;</button></div></div><div class="drawer-bd" id="drawer-bd"></div></div>
+<div class="drawer" id="drawer"><div class="drawer-hd"><div><div class="drawer-title" id="drawer-title"></div><div class="drawer-sub" id="drawer-sub"></div></div><div style="display:flex;gap:6px;align-items:center"><button class="btn btn-sm" id="drawer-review-btn" onclick="openReviewModal(drawerIdx)">Add Review</button><button class="btn-icon" onclick="closeDrawer()">&#10005;</button></div></div><div class="drawer-bd" id="drawer-bd"></div></div>
 <div class="modal-overlay" id="supplier-modal" onclick="if(event.target===this)closeModal()">
   <div class="modal"><div class="modal-head"><h3 id="modal-title">Add Supplier</h3><button class="btn-icon" onclick="closeModal()">&#10005;</button></div>
   <div class="modal-body">
-    <input type="hidden" id="modal-idx">
     <div class="field"><label>Business Name *</label><input id="m-name" placeholder="Full company name"></div>
     <div class="fg2"><div class="field"><label>Category *</label><select id="m-cat" onchange="cascadeModalSub()"><option value="">Select&hellip;</option><option value="Enabling Works & Demolition">Enabling Works & Demolition</option>
 <option value="Groundworks & Civil">Groundworks & Civil</option>
@@ -472,11 +498,41 @@ let _sbUser = null;
 <option value="Other">Other</option></select></div>
     <div class="field"><label>Sub-trade *</label><select id="m-sub"><option value="">Select category first&hellip;</option></select></div></div>
     <div class="fg2"><div class="field"><label>City</label><input id="m-city"></div><div class="field"><label>Regions</label><input id="m-regions" placeholder="e.g. UKK, ALL"></div></div>
-    <div class="field"><label>Type</label><div style="display:flex;gap:16px;margin-top:4px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-subbie"> Subcontractor</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-supplier"> Supplier</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-hire"> Hire</label></div></div>
+    <div class="field"><label>Type</label><div style="display:flex;gap:16px;margin-top:4px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-subbie" onchange="toggleAddSubbieSections()"> Subcontractor</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-supplier"> Supplier</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="m-hire"> Hire</label></div></div>
     <div class="field"><label>Xero Ref</label><input id="m-xero"></div>
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Contact</div>
     <div class="fg2"><div class="field"><label>Contact Name</label><input id="m-cname"></div><div class="field"><label>Email</label><input id="m-cemail" type="email"></div></div>
     <div class="fg2"><div class="field"><label>Phone</label><input id="m-cphone"></div><div class="field"><label>Office</label><input id="m-office"></div></div>
+    <div id="m-subbie-sections" style="display:none">
+      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Insurance</div>
+      <div class="fg3">
+        <div class="field"><label>EL Value (£)</label><input id="m-el-value" type="number" min="0"></div>
+        <div class="field"><label>EL Expiry</label><input id="m-el-expiry" type="date"></div>
+        <div></div>
+      </div>
+      <div class="fg3">
+        <div class="field"><label>PL Value (£)</label><input id="m-pl-value" type="number" min="0"></div>
+        <div class="field"><label>PL Expiry</label><input id="m-pl-expiry" type="date"></div>
+        <div></div>
+      </div>
+      <div class="fg3">
+        <div class="field"><label>PI Value (£)</label><input id="m-pi-value" type="number" min="0"></div>
+        <div class="field"><label>PI Expiry</label><input id="m-pi-expiry" type="date"></div>
+        <div></div>
+      </div>
+      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Ratings (optional — out of 10)</div>
+      <div class="fg3">
+        <div class="field"><label>Insurance</label><input id="m-r-ins" type="number" min="0" max="10"></div>
+        <div class="field"><label>Credit</label><input id="m-r-credit" type="number" min="0" max="10"></div>
+        <div class="field"><label>Invoicing</label><input id="m-r-invoice" type="number" min="0" max="10"></div>
+      </div>
+      <div class="fg4">
+        <div class="field"><label>H&amp;S</label><input id="m-r-hs" type="number" min="0" max="10"></div>
+        <div class="field"><label>Quality</label><input id="m-r-quality" type="number" min="0" max="10"></div>
+        <div class="field"><label>Time</label><input id="m-r-time" type="number" min="0" max="10"></div>
+        <div class="field"><label>Cost</label><input id="m-r-cost" type="number" min="0" max="10"></div>
+      </div>
+    </div>
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Status</div>
     <div class="fg2"><div class="field"><label>Status</label><select id="m-dnu"><option value="false">Active</option><option value="true">Do Not Use</option></select></div><div class="field"><label>DNU Reason</label><input id="m-dnu-notes"></div></div>
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Added by</div>
@@ -511,6 +567,28 @@ let _sbUser = null;
     </div>
     <div class="field"><label>Display Name *</label><input id="role-name" placeholder="How their name should appear"></div>
   </div><div class="modal-foot"><button class="btn" onclick="closeRolesModal()">Close</button><button class="btn btn-primary" onclick="saveRole()">Add Role</button></div></div></div>
+<div class="modal-overlay" id="ins-confirm-modal" onclick="if(event.target===this)cancelInsuranceSave()">
+  <div class="modal" style="width:min(96vw,440px)"><div class="modal-head"><h3>Confirm Insurance Update</h3><button class="btn-icon" onclick="cancelInsuranceSave()">&#10005;</button></div>
+  <div class="modal-body">
+    <div class="pending-banner" style="margin-bottom:0">
+      <span>⚠ Have you issued the updated document to Finance as evidence?</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2)">You're changing the expiry date for: <strong id="ins-confirm-types"></strong>. Finance sign-off for these will be cleared and will need re-confirming once the new certificate is on file.</div>
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text);cursor:pointer;margin-top:4px">
+      <input type="checkbox" id="ins-confirm-check" style="margin-top:3px" onchange="document.getElementById('ins-confirm-proceed').disabled=!this.checked">
+      <span>I confirm the updated insurance document has been issued to Finance.</span>
+    </label>
+  </div><div class="modal-foot"><button class="btn" onclick="cancelInsuranceSave()">Cancel</button><button class="btn btn-primary" id="ins-confirm-proceed" disabled onclick="confirmInsuranceSave()">Save dates</button></div></div></div>
+<div class="cmdk-overlay" id="cmdk-overlay" onclick="if(event.target===this)closeCmdK()">
+  <div class="cmdk-box">
+    <div class="cmdk-input-row">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+      <input class="cmdk-input" id="cmdk-input" placeholder="Search suppliers by name, trade, or city…" oninput="cmdkSearch()" autocomplete="off">
+      <span class="cmdk-hint">Esc</span>
+    </div>
+    <div class="cmdk-results" id="cmdk-results"></div>
+  </div>
+</div>
 <div class="toast" id="toast"><div class="toast-dot"></div><span class="toast-text"></span></div>
 <script>
 const TAXONOMY = {"Enabling Works & Demolition":["Asbestos Survey & Removal","Soft Strip","Selective Demolition","Full Demolition","M&E Strip-Out","Flooring Removal","Waste Management","Hoarding & Site Setup","Scaffold \u2013 Enabling","Temporary Works \u2013 Propping","Surveys & Investigations"],"Groundworks & Civil":["Groundworks / Excavation","Piling","Concrete Foundations","Ground Slab / Floor","Drainage \u2013 Below Ground","Highways & External Civils","Fencing & Hoarding"],"Structure":["Structural Steel","Structural Concrete / RC Frame","Precast Concrete","Timber Frame / CLT","Temporary Works","Mezzanine Floors"],"Envelope & Fa\u00e7ade":["Curtain Walling","Cladding \u2013 Rainscreen","Cladding \u2013 Composite / Insulated","Roofing \u2013 Flat","Roofing \u2013 Pitched / Metal","Rooflights & Glazed Canopies","Windows & Doors \u2013 Aluminium","Windows & Doors \u2013 Timber / uPVC","Automatic Doors & Entrance","Roller Shutters & Loading Doors","Structural Glazing"],"Internal Fit-Out":["Partitions \u2013 Drylining / SFS","Partitions \u2013 Demountable","Partitions \u2013 Glazed","Suspended Ceilings","Acoustic Panels","Raised Access Floors","Screeds","Flooring \u2013 Hard","Flooring \u2013 Resilient","Flooring \u2013 Carpet","Flooring \u2013 Resin","Joinery \u2013 Fitted","Joinery \u2013 General","Kitchen / Breakout Fitout","Lab Fitout","Washrooms / WC Fitout","Internal Glazing / Mirrors","Signage & Wayfinding","Furniture Supply & Install"],"Finishes":["Plastering","Painting & Decorating","Wall Tiling","Wall Coverings","Ironmongery","Feature / Specialist Finishes"],"Mechanical":["Mechanical \u2013 Main Contractor","HVAC \u2013 Air Handling","HVAC & Ventilation","HVAC \u2013 Chilled Water / Cooling","HVAC \u2013 Heating","Gas Services","Lab Gases & Compressed Air","BMS / Controls","Insulation \u2013 Mechanical"],"Electrical":["Electrical \u2013 Main Contractor","HV / Substation","LV Distribution","Lighting","UPS / Generator","Earthing & Lightning Protection","Solar PV","EV Charging"],"Plumbing":["Plumbing \u2013 Main Contractor","Hot & Cold Water Services","Above-Ground Drainage","Sanitary Ware","Rainwater Harvesting","Specialist Drainage","Insulation \u2013 Plumbing"],"Data & Low Voltage":["Structured Cabling / IT","Audio Visual","Security \u2013 CCTV","Security \u2013 Access Control","Door Entry / Intercom","Public Address / Disabled Refuge"],"Fire Protection":["Sprinklers","Fire Detection & Alarm","Passive Fire Protection","Fire Stopping","Dry / Wet Risers"],"Vertical Transport":["Lifts / Elevators","Escalators","Goods Hoists"],"Specialist / Laboratory":["Laboratory Ventilation","Cleanroom / Controlled Environment","Acoustic Treatment","Vibration Isolation","Diamond Drilling & Cutting","Asbestos Services","Lightning Protection","Lab Furniture","Medical Gas"],"Building & Structure":["Builders / General Works","Groundworks & Civil Engineering","Roofing & Cladding","Scaffolding","Demolition & Strip Out","Waterproofing & Sealant","External Works"],"External Works & Sundry":["External Metalwork","Masonry / Brickwork","Waterproofing / Tanking","Scaffold","Plant Hire","Cleaning","Landscaping / Hard Landscaping"],"Hire & Logistics":["Plant Hire","Equipment Hire / Welfare","Skip Hire & Waste","Crane Hire","Logistics / Removals","Agency / Labour"],"Materials & Supply":["Building Materials","Electrical Materials","Plumbing Materials","Insulation","Paint & Decorating","Ironmongery & Hardware","Panels & Surfaces"],"Furniture & FF&E":["Furniture Supply","Furniture Installation","Lab Furniture","Storage Systems","Kitchen Supply","Soft Furnishings & Blinds"],"Professional Services":["Engineering Consultants","Building Control","Planning","Health & Safety / CDM","Environmental & Surveys","Architecture / Design","Project Management"],"Other":["Other / Miscellaneous"]};
@@ -565,31 +643,31 @@ async function flushSync(){
   const ids=[..._dirty]; _dirty.clear();
   const rows=DB.filter(s=>ids.includes(s._id)).map(appToSb);
   if(!rows.length)return;
-  const {error}=await _sb.from('suppliers').upsert(rows,{onConflict:'id'});
-  if(error){ toast('Sync error: '+error.message,'err'); ids.forEach(id=>_dirty.add(id)); }
+  const {error}=await sbCall(_sb.from('suppliers').upsert(rows,{onConflict:'id'}),'Saving changes');
+  if(error){ ids.forEach(id=>_dirty.add(id)); }
 }
 
 async function loadDB(){
-  const {data,error}=await _sb.from('suppliers').select('*').order('name');
-  if(error){ toast('Failed to load data','err'); return; }
+  const {data,error}=await sbCall(_sb.from('suppliers').select('*').order('name'),'Loading suppliers');
+  if(error){ return; }
   if(!data||data.length===0){
     // First run — seed from built-in data
     const seed=SEED.map(s=>({...s,id:s._id,notes:[],reviews:[],is_local:false}));
     seed.forEach(s=>{ delete s._id; delete s._notes; delete s._reviews; delete s._local; });
-    const {error:e2}=await _sb.from('suppliers').insert(seed);
-    if(e2){ toast('Seed error: '+e2.message,'err'); return; }
+    const {error:e2}=await sbCall(_sb.from('suppliers').insert(seed),'Seeding initial data');
+    if(e2){ return; }
     DB=SEED.map(s=>({...s,_notes:[],_reviews:[],_local:false}));
   } else {
     DB=data.map(sbToApp);
   }
   // Load shortlist
-  const {data:prefs}=await _sb.from('user_preferences').select('shortlist').eq('user_id',_sbUser.id).maybeSingle();
+  const {data:prefs}=await sbCall(_sb.from('user_preferences').select('shortlist').eq('user_id',_sbUser.id).maybeSingle(),'Loading shortlist');
   SL=prefs?.shortlist||[];
   await loadRoles();
 }
 async function loadRoles(){
-  const {data,error}=await _sb.from('user_roles').select('user_id,email,display_name,role');
-  if(error){ console.warn('Could not load roles',error.message); ALL_ROLES_LIST=[]; myRoles=new Set(); myDisplayName=null; return; }
+  const {data,error}=await sbCall(_sb.from('user_roles').select('user_id,email,display_name,role'),'Loading roles');
+  if(error){ ALL_ROLES_LIST=[]; myRoles=new Set(); myDisplayName=null; return; }
   ALL_ROLES_LIST=data||[];
   const mine=ALL_ROLES_LIST.filter(r=>r.user_id===_sbUser.id);
   myRoles=new Set(mine.map(r=>r.role));
@@ -611,7 +689,7 @@ function renderRoleBadge(){
 function saveDB(){ updateLocalCount(); }
 async function saveSL(){
   updateCounts();
-  await _sb.from('user_preferences').upsert({user_id:_sbUser.id,shortlist:SL,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  await sbCall(_sb.from('user_preferences').upsert({user_id:_sbUser.id,shortlist:SL,updated_at:new Date().toISOString()},{onConflict:'user_id'}),'Saving shortlist');
 }
 
 async function doLogin(){
@@ -620,8 +698,16 @@ async function doLogin(){
   const errEl=document.getElementById('auth-err');
   errEl.textContent='';
   if(!email||!pass){errEl.textContent='Please enter email and password.';return;}
+  if(!navigator.onLine){errEl.textContent="You're offline — check your connection and try again.";return;}
   document.querySelector('.auth-btn').textContent='Signing in…';
-  const {data,error}=await _sb.auth.signInWithPassword({email,password:pass});
+  let data,error;
+  try{
+    ({data,error}=await _sb.auth.signInWithPassword({email,password:pass}));
+  }catch(e){
+    document.querySelector('.auth-btn').textContent='Sign in';
+    errEl.textContent='Could not reach the server — check your connection and try again.';
+    return;
+  }
   document.querySelector('.auth-btn').textContent='Sign in';
   if(error){errEl.textContent=error.message;return;}
   _sbUser=data.user;
@@ -631,25 +717,59 @@ async function doLogin(){
 }
 async function doLogout(){
   if(!confirm('Sign out?'))return;
-  await _sb.auth.signOut();
+  await sbCall(_sb.auth.signOut(),'Signing out');
   location.reload();
 }
 
 // Check existing session on load
 async function initApp(){
-  const {data:{session}}=await _sb.auth.getSession();
-  if(session){
-    _sbUser=session.user;
-    document.getElementById('auth-overlay').style.display='none';
-    document.getElementById('sb-user-email').textContent=session.user.email;
-    await loadDB(); updateCounts(); renderMetrics(); applyFilters(); runInsuranceChecks();
+  try{
+    const {data:{session}}=await _sb.auth.getSession();
+    if(session){
+      _sbUser=session.user;
+      document.getElementById('auth-overlay').style.display='none';
+      document.getElementById('sb-user-email').textContent=session.user.email;
+      await loadDB(); updateCounts(); renderMetrics(); applyFilters(); runInsuranceChecks();
+    }
+    // else: login overlay already visible
+  }catch(e){
+    console.error('initApp session check failed',e);
+    document.getElementById('auth-err').textContent='Could not reach the server. Check your connection and refresh.';
   }
-  // else: login overlay already visible
 }
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Network / Supabase reliability ───────────────────────────────────────────
+// sbCall wraps a Supabase request so every call site gets the same handling:
+// network failures (offline, DNS, timeout) and Supabase-returned errors both
+// surface as a visible toast instead of failing silently. Usage:
+//   const {data,error}=await sbCall(_sb.from('suppliers').select('*'), 'Loading suppliers');
+// The label is shown in the error toast so it's clear what failed.
+async function sbCall(promise,label){
+  if(!navigator.onLine){
+    toast(`${label||'Action'} failed — you're offline`,'err');
+    return {data:null,error:{message:'offline'}};
+  }
+  try{
+    const result=await promise;
+    if(result&&result.error){
+      console.error(label,result.error);
+      toast(`${label||'Action'} failed: ${result.error.message||'unknown error'}`,'err');
+    }
+    return result;
+  }catch(e){
+    console.error(label,e);
+    toast(`${label||'Action'} failed — check your connection`,'err');
+    return {data:null,error:e};
+  }
+}
+let _wasOffline=false;
+window.addEventListener('offline',()=>{ _wasOffline=true; toast("You're offline — changes won't save until reconnected",'err'); });
+window.addEventListener('online',()=>{ if(_wasOffline){ toast('Back online'); _wasOffline=false; } });
+
 function pd(s){ if(!s)return null; const d=new Date(s); return isNaN(d)?null:d; }
 function daysUntil(s){ const d=pd(s); if(!d)return null; return Math.round((d-today)/86400000); }
 function fmtDate(s){ const d=pd(s); if(!d)return'—'; return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}); }
@@ -657,7 +777,52 @@ function fmtTs(ts){ if(!ts)return''; const d=new Date(ts); return d.toLocaleDate
 function fmtMoney(v){ if(!v)return'—'; return v>=1000000?'£'+(v/1000000).toFixed(0)+'M':v>=1000?'£'+(v/1000).toFixed(0)+'K':'£'+v; }
 function rp(v){ if(v==null||v===''||v===0)return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; return`<span class="rating-pill ${n<=3?'r-low':n<=5?'r-mid':'r-good'}">${n}</span>`; }
 function typetag(s){ const t=[]; if(s.subbie)t.push('<span class="type-tag type-sc">S/C</span>'); if(s.supplier)t.push('<span class="type-tag type-sup">SUP</span>'); if(s.hire)t.push('<span class="type-tag type-hire">HIRE</span>'); return t.join(' ')||'<span class="type-tag" style="background:var(--surface2);color:var(--text3)">—</span>'; }
-function statusBadge(s){ return s.dnu?'<span class="badge bg-red">DNU</span>':'<span class="badge bg-green">Active</span>'; }
+// A supplier is treated as "Do Not Use" if it's explicitly flagged DNU, OR
+// it's still awaiting Finance sign-off — the underlying dnu/pending_signoff
+// fields stay independent (so a real DNU reason is never lost or conflated
+// with "just not approved yet"), but everywhere the app shows or filters by
+// DNU status, pending suppliers are included too.
+// A supplier is treated as "Do Not Use" if it's explicitly flagged DNU, OR
+// it's still awaiting Finance sign-off (new supplier), OR it's a
+// subcontractor with any insurance type (EL/PL/PI) not currently confirmed
+// by Finance. The underlying dnu/pending_signoff fields stay independent
+// (so a real DNU reason is never lost or conflated with these other
+// states), but everywhere the app shows or filters by DNU status, all
+// three are treated the same way.
+function insTypeSignedOff(s,type,expField){
+  const so=(s.insurance_signoff_current||{})[type];
+  return !!(so&&so.expiry===s[expField]&&s[expField]);
+}
+function insuranceFullySignedOff(s){
+  if(!s.subbie)return true; // sign-off concept only applies to subcontractors
+  return insTypeSignedOff(s,'EL','el_expiry')&&insTypeSignedOff(s,'PL','pl_expiry')&&insTypeSignedOff(s,'PI','pi_expiry');
+}
+// Total count of distinct items awaiting a Finance decision — new supplier
+// sign-offs plus per-type unsigned insurance (EL/PL/PI each count
+// separately, matching how they're listed as individual rows on the
+// Pending Approval tab).
+function countPendingApprovals(){
+  let n=0;
+  DB.forEach(s=>{
+    if(s.pending_signoff)n++;
+    if(s.subbie&&!s.pending_signoff){
+      [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']].forEach(([type,expField])=>{
+        if(s[expField]&&!insTypeSignedOff(s,type,expField))n++;
+      });
+    }
+  });
+  return n;
+}
+function isBlocked(s){ return !!s.dnu||!!s.pending_signoff||!insuranceFullySignedOff(s); }
+// Always returns HTML-safe text — escapes internally so callers don't need
+// to remember to wrap it themselves (dnu_notes is free-text user input).
+function blockedReason(s){
+  if(s.dnu) return esc(s.dnu_notes||'—');
+  if(s.pending_signoff) return 'Pending Finance Approval';
+  if(!insuranceFullySignedOff(s)) return 'Insurance Pending Finance Sign-off';
+  return '—';
+}
+function statusBadge(s){ return isBlocked(s)?'<span class="badge bg-red">DNU</span>':'<span class="badge bg-green">Active</span>'; }
 function tradePill(s){ return`<span class="trade-cat">${esc(s.trade_category||'')}</span>`; }
 function subPill(s){ return`<span class="trade-sub">${esc(s.trade_sub||'')}</span>`; }
 function insIssue(s){ const issues=new Set(); [s.el_expiry,s.pl_expiry,s.pi_expiry].filter(Boolean).forEach(d=>{ const x=daysUntil(d); if(x!==null&&x<0)issues.add('Expired'); else if(x!==null&&x<90)issues.add('<90d'); }); return[...issues].join(', '); }
@@ -673,6 +838,8 @@ function overallRating(s){ return avgArr([s.ins_rating,s.credit_rating,s.invoice
 
 // ── Editable, audit-logged ratings ───────────────────────────────────────────
 let _ratingEditField=null; // field currently being edited in the drawer, or null
+let _showRatingAudit=false; // global toggle — controls whether "last changed by" shows for ALL ratings at once
+function toggleRatingAudit(idx){ _showRatingAudit=!_showRatingAudit; buildDrawer(idx); }
 function ratingRow(idx,s,field){
   const label=RATING_FIELD_LABELS[field];
   const val=s[field];
@@ -684,9 +851,9 @@ function ratingRow(idx,s,field){
     <div style="display:flex;align-items:center;gap:6px">${rp(val)}
       ${canEdit&&!editing?`<button class="edit-pill" onclick="startRatingEdit(${idx},'${field}')">Edit</button>`:''}
     </div>`;
-  if(meta&&meta.by){
+  if(_showRatingAudit&&meta&&meta.by){
     row+=`<div class="r-row-note" style="flex-basis:100%;margin-top:2px">Last changed by ${esc(meta.by)}${meta.ts?' · '+fmtTs(meta.ts):''}${meta.why?'<br><span style="font-style:italic">"'+esc(meta.why)+'"</span>':''}</div>`;
-  } else {
+  } else if(!editing){
     row+=`<div class="r-row-note"></div>`;
   }
   row+=`</div>`;
@@ -722,10 +889,10 @@ async function saveRatingEdit(idx,field){
   s.rating_meta=s.rating_meta||{};
   s.rating_meta[field]={by:myName(),why:reason,ts:nowIso};
   saveDB(); schedSync(s._id);
-  await _sb.from('rating_history').insert({
+  await sbCall(_sb.from('rating_history').insert({
     supplier_id:s._id, field, old_value:oldVal, new_value:n,
     changed_by_user_id:_sbUser.id, changed_by_name:myName(), changed_by_role:actingRole, reason
-  });
+  }),'Saving rating history');
   _ratingEditField=null;
   buildDrawer(idx); renderMetrics(); applyFilters();
   toast(RATING_FIELD_LABELS[field]+' rating updated');
@@ -736,10 +903,10 @@ function updateCounts(){
   document.getElementById('nc-all').textContent=DB.length;
   document.getElementById('nc-sc').textContent=DB.filter(s=>s.subbie).length;
   document.getElementById('nc-sup').textContent=DB.filter(s=>s.supplier||s.hire).length;
-  document.getElementById('nc-dnu').textContent=DB.filter(s=>s.dnu).length;
+  document.getElementById('nc-dnu').textContent=DB.filter(isBlocked).length;
   document.getElementById('nc-ins').textContent=DB.filter(s=>s.subbie&&insIssue(s)).length;
   document.getElementById('nc-sl').textContent=SL.length;
-  document.getElementById('nc-pending').textContent=DB.filter(s=>s.pending_signoff).length;
+  document.getElementById('nc-pending').textContent=countPendingApprovals();
 }
 function updateLocalCount(){ const n=DB.filter(s=>s._local).length; document.getElementById('local-count').textContent=n?`${n} local addition${n!==1?'s':''}`:''; }
 
@@ -750,11 +917,11 @@ function renderMetrics(){
   const exp=DB.filter(s=>s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<0;}));
   const soon=DB.filter(s=>!exp.includes(s)&&s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<90;}));
   document.getElementById('metrics-all').innerHTML=
-    met('blue','Total',DB.length)+met('green','Active',DB.filter(s=>!s.dnu).length)+
-    met('purple','Subcontractors',sc.length)+met('red','DNU',DB.filter(s=>s.dnu).length)+met('amber','Ins Issues',exp.length+soon.length)+met('amber','Pending Sign-off',DB.filter(s=>s.pending_signoff).length);
+    met('blue','Total',DB.length)+met('green','Active',DB.filter(s=>!isBlocked(s)).length)+
+    met('purple','Subcontractors',sc.length)+met('red','DNU',DB.filter(isBlocked).length)+met('amber','Ins Issues',exp.length+soon.length)+met('amber','Pending Sign-off',DB.filter(s=>s.pending_signoff).length);
   document.getElementById('metrics-sc').innerHTML=
-    met('blue','Subcontractors',sc.length)+met('green','Active',sc.filter(s=>!s.dnu).length)+
-    met('red','DNU',sc.filter(s=>s.dnu).length)+met('amber','Avg Rating',avg)+met('purple','Reviewed',sc.filter(s=>(s._reviews||[]).length>0).length);
+    met('blue','Subcontractors',sc.length)+met('green','Active',sc.filter(s=>!isBlocked(s)).length)+
+    met('red','DNU',sc.filter(isBlocked).length)+met('amber','Avg Rating',avg)+met('purple','Reviewed',sc.filter(s=>(s._reviews||[]).length>0).length);
   document.getElementById('metrics-ins').innerHTML=
     met('red','Expired',exp.length)+met('amber','Expiring <90d',soon.length)+met('green','OK',sc.length-exp.length-soon.length);
 }
@@ -770,6 +937,53 @@ function cascadeModalSub(){
   const cat=document.getElementById('m-cat').value, sel=document.getElementById('m-sub');
   sel.innerHTML='<option value="">Select…</option>';
   if(cat&&TAXONOMY[cat]) TAXONOMY[cat].forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+}
+// ── Inline drawer-field editing helpers ─────────────────────────────────────
+function catOptions(selected){
+  return '<option value="">Select…</option>'+Object.keys(TAXONOMY).map(c=>`<option value="${esc(c)}"${c===selected?' selected':''}>${esc(c)}</option>`).join('');
+}
+function subOptions(cat,selected){
+  const list=TAXONOMY[cat]||[];
+  return '<option value="">Select…</option>'+list.map(s=>`<option value="${esc(s)}"${s===selected?' selected':''}>${esc(s)}</option>`).join('');
+}
+function cascadeDrawerSub(idx){
+  const cat=document.getElementById('ed-cat-'+idx).value, sel=document.getElementById('ed-sub-'+idx);
+  sel.innerHTML=subOptions(cat,null);
+}
+// Generic single-field save for the drawer's inline-editable Profile/Contact
+// fields. Mirrors the pattern used by saveLastUsed/saveInsurance elsewhere:
+// update local state, sync to Supabase, refresh dependent views.
+function saveField(idx,field,value){
+  const s=DB[idx];
+  if(s[field]===value)return; // no actual change, skip a pointless sync
+  s[field]=value;
+  if(field==='dnu') s.dnu_changed_ts=new Date().toISOString(); // for the Recent Changes feed
+  saveDB(); schedSync(s._id);
+  updateCounts(); renderMetrics(); applyFilters();
+  if(document.getElementById('tab-sc').classList.contains('active')) renderSC();
+  if(document.getElementById('tab-suppliers').classList.contains('active')) renderSuppliersOnly();
+  if(document.getElementById('tab-dnu').classList.contains('active')) renderDNU();
+  if(document.getElementById('tab-pending').classList.contains('active')) renderPending();
+  // DNU, Subcontractor-type, and Compliance accreditation fields all affect
+  // banners/badges that depend on more than just this one field — those
+  // need a full rebuild. Everything else just needs the header refreshed.
+  const needsFullRebuild=['dnu','subbie','safe_contractor','safe_contractor_expiry','constructionline','constructionline_expiry'];
+  if(needsFullRebuild.includes(field)){
+    buildDrawer(idx);
+  } else {
+    document.getElementById('drawer-title').textContent=s.name;
+    document.getElementById('drawer-sub').textContent=[s.trade_category,s.trade_sub,s.city].filter(Boolean).join(' · ');
+    document.getElementById('drawer-review-btn').style.display=s.subbie?'':'none';
+  }
+  toast('Saved');
+}
+function savePqq(idx,checked){
+  const s=DB[idx];
+  s.pqq_complete=checked;
+  if(checked&&!s.pqq_complete_date) s.pqq_complete_date=new Date().toISOString().slice(0,10);
+  saveDB(); schedSync(s._id);
+  buildDrawer(idx);
+  toast('Saved');
 }
 
 // ── Filters ───────────────────────────────────────────────────────────────────
@@ -790,8 +1004,8 @@ function applyFilters(){
     if(cat&&s.trade_category!==cat)return false;
     if(sub&&s.trade_sub!==sub)return false;
     if(region){const r=s.regions||'';if(!r.includes('ALL')&&!r.includes(region))return false;}
-    if(dnuF==='active'&&s.dnu)return false;
-    if(dnuF==='dnu'&&!s.dnu)return false;
+    if(dnuF==='active'&&isBlocked(s))return false;
+    if(dnuF==='dnu'&&!isBlocked(s))return false;
     return true;
   });
   filtered.sort((a,b)=>{
@@ -831,7 +1045,7 @@ function renderTable(){
       <td>${typetag(s)}</td>
       <td>${lastReviewBadge(s)}</td>
       <td>${statusBadge(s)}</td>
-      <td style="padding:9px 12px 9px 4px"><button class="edit-pill" onclick="event.stopPropagation();openEditModal(${idx})">Edit</button></td>
+      <td style="padding:9px 12px 9px 4px"><button class="edit-pill" onclick="event.stopPropagation();openDrawer(${idx})">Edit</button></td>
     </tr>`;
   }).join('');
   const tp=Math.ceil(filtered.length/PAGE);
@@ -858,7 +1072,7 @@ function renderSC(){
       <td>${lastReviewBadge(s)}</td>
       <td>${insStatusBadge(s)}</td>
       <td>${statusBadge(s)}</td>
-      <td style="padding:9px 12px 9px 4px"><button class="edit-pill" onclick="event.stopPropagation();openEditModal(${idx})">Edit</button></td>
+      <td style="padding:9px 12px 9px 4px"><button class="edit-pill" onclick="event.stopPropagation();openDrawer(${idx})">Edit</button></td>
     </tr>`;
   }).join('');
 }
@@ -870,26 +1084,54 @@ function renderSuppliersOnly(){
 
 // ── DNU table ─────────────────────────────────────────────────────────────────
 function renderDNU(){
-  document.getElementById('dnu-tbody').innerHTML=DB.filter(s=>s.dnu).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong style="color:var(--red)">${esc(s.name)}</strong>${s.pending_signoff?'<span class="tag-new" style="background:var(--amber-bg);color:var(--amber)">Pending sign-off</span>':''}</td><td>${subPill(s)}</td><td style="font-size:12px;color:var(--text3);max-width:240px" class="td-clip">${esc(s.dnu_notes||'—')}</td><td style="font-size:12px;color:var(--text3)">${fmtDate(s.last_used)}</td></tr>`).join('');
+  document.getElementById('dnu-tbody').innerHTML=DB.filter(isBlocked).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong style="color:var(--red)">${esc(s.name)}</strong></td><td>${subPill(s)}</td><td style="font-size:13px;color:var(--text);font-weight:500">${blockedReason(s)}</td><td style="font-size:12px;color:var(--text3);white-space:nowrap">${fmtDate(s.last_used)}</td></tr>`).join('');
 }
 
 // ── Pending Approval table ───────────────────────────────────────────────────
 function renderPending(){
-  const pending=DB.filter(s=>s.pending_signoff).sort((a,b)=>new Date(b.added_ts||0)-new Date(a.added_ts||0));
   const tbody=document.getElementById('pending-tbody');
-  if(!pending.length){
-    tbody.innerHTML='<tr><td colspan="6" class="empty-state">No suppliers awaiting approval</td></tr>';
+  // Build one flat list of approval items — each row is one specific thing
+  // awaiting a Finance decision. A supplier needing both a new-supplier
+  // sign-off AND an insurance sign-off appears as two separate rows.
+  const items=[];
+  DB.forEach(s=>{
+    const idx=DB.indexOf(s);
+    if(s.pending_signoff){
+      items.push({
+        idx, s, type:'New Supplier', typeCls:'bg-amber',
+        requestedBy:s.added_by, requestedDept:s.added_dept, ts:s.added_ts,
+        action:()=>approveSupplier(idx)
+      });
+    }
+    if(s.subbie&&!s.pending_signoff){
+      [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']].forEach(([type,expField])=>{
+        if(s[expField]&&!insTypeSignedOff(s,type,expField)){
+          items.push({
+            idx, s, type:'Insurance: '+type, typeCls:'bg-red',
+            requestedBy:null, requestedDept:null, ts:s[expField],
+            action:()=>signOffInsurance(idx,type)
+          });
+        }
+      });
+    }
+  });
+  items.sort((a,b)=>new Date(b.ts||0)-new Date(a.ts||0));
+  if(!items.length){
+    tbody.innerHTML='<tr><td colspan="6" class="empty-state">Nothing awaiting approval</td></tr>';
     return;
   }
-  tbody.innerHTML=pending.map(s=>{
-    const idx=DB.indexOf(s);
-    return`<tr onclick="openDrawer(${idx})">
-      <td><strong>${esc(s.name)}</strong>${s.dnu?' <span class="badge bg-red">DNU</span>':''}</td>
+  window._pendingItems=items; // so inline onclick handlers can call back in without re-deriving the list
+  tbody.innerHTML=items.map((item,i)=>{
+    const s=item.s;
+    const dateLabel=item.type==='New Supplier'?fmtTs(item.ts):('Expiry: '+fmtDate(item.ts));
+    const reqLabel=item.requestedBy?(esc(item.requestedBy)+(item.requestedDept?' · '+esc(item.requestedDept):'')):'<span style="color:var(--text3)">—</span>';
+    return`<tr onclick="openDrawer(${item.idx})">
+      <td><strong style="color:var(--red)">${esc(s.name)}</strong></td>
+      <td><span class="badge ${item.typeCls}">${esc(item.type)}</span></td>
       <td>${subPill(s)}</td>
-      <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
-      <td style="font-size:12px;color:var(--text3)">${esc(s.added_by||'—')}${s.added_dept?' · '+esc(s.added_dept):''}</td>
-      <td style="font-size:12px;color:var(--text3)">${s.added_ts?fmtTs(s.added_ts):'—'}</td>
-      <td style="padding:9px 12px 9px 4px">${isFinance()?`<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();approveSupplier(${idx});renderPending();">Approve</button>`:'<span style="font-size:11px;color:var(--text3)">Finance only</span>'}</td>
+      <td style="font-size:12px;color:var(--text3)">${reqLabel}</td>
+      <td style="font-size:12px;color:var(--text3)">${dateLabel}</td>
+      <td style="padding:9px 12px 9px 4px">${isFinance()?`<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();_pendingItems[${i}].action();renderPending();">Approve</button>`:'<span style="font-size:11px;color:var(--text3)">Finance only</span>'}</td>
     </tr>`;
   }).join('');
 }
@@ -963,8 +1205,6 @@ function renderShortlist(){
     tb+=row('Constructionline',s=>s.subbie?compCell(s.constructionline):'<span style="color:var(--text3)">—</span>');
     tb+=row('CIS',s=>s.subbie?compCell(s.cis):'<span style="color:var(--text3)">—</span>');
   }
-  tb+=secRow('Notes');
-  tb+=row('Ops comment',s=>`<div style="font-size:11px;color:var(--text2);text-align:left;line-height:1.5;max-width:180px">${esc(s.ops_notes||'—')}</div>`);
 
   el.innerHTML=`
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${items.map(s=>`<span class="sl-chip${s._id===slPref?' sl-chip-on':''}" onclick="slPickPref(${s._id})">${esc(s.name)}<button onclick="event.stopPropagation();slRemove(${s._id})" title="Remove">×</button></span>`).join('')}</div>
@@ -984,7 +1224,6 @@ function copyShortlist(){
     lines.push(`${s.name}${s._id===slPref?' [PREFERRED]':''}`);
     lines.push(`  Trade: ${s.trade_sub||s.trade_category||'—'} | City: ${s.city||'—'} | Contact: ${s.contact_name||'—'}`);
     if(s.subbie) lines.push(`  Rating: ${overallRating(s)||'—'} | EL: ${fmtDate(s.el_expiry)} | PL: ${fmtDate(s.pl_expiry)} | PI: ${fmtDate(s.pi_expiry)}`);
-    if(s.ops_notes) lines.push(`  Note: ${s.ops_notes}`);
     lines.push('');
   });
   navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Copied to clipboard'));
@@ -1044,9 +1283,65 @@ function renderAnalytics(){
     </div>`;
 }
 
+// ── Recent Changes feed ──────────────────────────────────────────────────────
+// Synthesized from data already recorded elsewhere — no separate audit table.
+// Covers: new suppliers added, approvals/sign-offs, reviews, DNU changes.
+// Deliberately excludes routine field edits (name/city/contact etc).
+function renderRecentChanges(){
+  const events=[];
+  DB.forEach(s=>{
+    const idx=DB.indexOf(s);
+    // New supplier added
+    if(s.added_ts){
+      events.push({ts:s.added_ts,idx,icon:'➕',color:'var(--amber)',bg:'var(--amber-bg)',
+        text:`<strong>${esc(s.name)}</strong> was added${s.added_by?' by '+esc(s.added_by):''}${s.added_dept?' ('+esc(s.added_dept)+')':''}`});
+    }
+    // Supplier approval (pending_signoff cleared)
+    if(!s.pending_signoff&&s.signoff_ts){
+      events.push({ts:s.signoff_ts,idx,icon:'✓',color:'var(--green)',bg:'var(--green-bg)',
+        text:`<strong>${esc(s.name)}</strong> was approved${s.signoff_by_name?' by '+esc(s.signoff_by_name):''}`});
+    }
+    // Insurance sign-offs (EL/PL/PI)
+    Object.entries(s.insurance_signoff_current||{}).forEach(([type,meta])=>{
+      if(meta&&meta.ts){
+        events.push({ts:meta.ts,idx,icon:'🛡',color:'var(--green)',bg:'var(--green-bg)',
+          text:`<strong>${esc(s.name)}</strong> — ${type} insurance signed off by ${esc(meta.by)}`});
+      }
+    });
+    // Reviews
+    (s._reviews||[]).forEach(r=>{
+      const cls=r.performance==='Good'?'var(--green)':r.performance==='Poor'?'var(--red)':'var(--amber)';
+      const clsBg=r.performance==='Good'?'var(--green-bg)':r.performance==='Poor'?'var(--red-bg)':'var(--amber-bg)';
+      events.push({ts:r.ts,idx,icon:'★',color:cls,bg:clsBg,
+        text:`<strong>${esc(s.name)}</strong> reviewed by ${esc(r.reviewedBy)} — <strong>${esc(r.performance)}</strong>${r.avgScore!=null?` (${r.avgScore}/10)`:''}`});
+    });
+    // DNU status changes
+    if(s.dnu_changed_ts){
+      events.push({ts:s.dnu_changed_ts,idx,icon:s.dnu?'⛔':'↩',color:s.dnu?'var(--red)':'var(--green)',bg:s.dnu?'var(--red-bg)':'var(--green-bg)',
+        text:s.dnu?`<strong>${esc(s.name)}</strong> marked Do Not Use${s.dnu_notes?': '+esc(s.dnu_notes):''}`:`<strong>${esc(s.name)}</strong> cleared from Do Not Use`});
+    }
+  });
+  events.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const recent=events.slice(0,100); // cap for performance/readability
+  const el=document.getElementById('changes-content');
+  if(!recent.length){
+    el.innerHTML='<div class="empty-state">No recent activity yet.</div>';
+    return;
+  }
+  el.innerHTML=`<div class="card"><div style="padding:6px">${recent.map((e,i)=>`
+    <div onclick="openDrawer(${e.idx})" style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;cursor:pointer;${i<recent.length-1?'border-bottom:1px solid var(--border)':''}">
+      <div style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:${e.bg};display:flex;align-items:center;justify-content:center;font-size:14px;color:${e.color}">${e.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--text);line-height:1.5">${e.text}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px">${fmtTs(e.ts)}</div>
+      </div>
+    </div>`).join('')}</div></div>`;
+}
+
 // ── Drawer ────────────────────────────────────────────────────────────────────
 function openDrawer(idx){
   drawerIdx=idx; const s=DB[idx];
+  _showRatingAudit=false;
   document.getElementById('drawer-title').textContent=s.name;
   document.getElementById('drawer-sub').textContent=[s.trade_category,s.trade_sub,s.city].filter(Boolean).join(' · ');
   document.getElementById('drawer-review-btn').style.display=s.subbie?'':'none';
@@ -1059,7 +1354,6 @@ function closeDrawer(){
   document.getElementById('overlay').classList.remove('open');
   drawerIdx=null;
 }
-function editCurrent(){ if(drawerIdx===null)return; openEditModal(drawerIdx); }
 
 function buildDrawer(idx){
   const s=DB[idx]; const on=isStarred(s); let h='';
@@ -1068,43 +1362,61 @@ function buildDrawer(idx){
     <span>⏳ Pending Finance Sign-off — not yet approved</span>
     ${isFinance()?`<button class="btn btn-sm btn-primary" onclick="approveSupplier(${idx})">Approve</button>`:''}
   </div>`;
-  // Overview
+  if(!s.pending_signoff&&!insuranceFullySignedOff(s)) h+=`<div class="pending-banner">
+    <span>⚠ Do Not Use — Insurance Pending Finance Sign-off</span>
+  </div>`;
+  // Overview — all fields live-editable, save on blur/change
   h+=`<div class="detail-section">
-    <div class="section-hd">Overview
+    <div class="section-hd" style="border-bottom:none;justify-content:flex-end;padding-bottom:0;margin-bottom:6px">
       <button class="star-btn${on?' on':''}" style="font-size:14px" onclick="toggleStar(${idx})">${on?'★ Shortlisted':'☆ Add to Shortlist'}</button>
     </div>
-    <div class="detail-grid">
-      <div class="detail-field"><div class="detail-lbl">Category</div><div class="detail-val">${tradePill(s)}</div></div>
-      <div class="detail-field"><div class="detail-lbl">Trade</div><div class="detail-val">${subPill(s)}</div></div>
-      <div class="detail-field"><div class="detail-lbl">Type</div><div class="detail-val">${typetag(s)}</div></div>
-      <div class="detail-field"><div class="detail-lbl">Xero Ref</div><div class="detail-val mono">${esc(s.xero_ref||'—')}</div></div>
-      <div class="detail-field"><div class="detail-lbl">City</div><div class="detail-val">${esc(s.city||'—')}</div></div>
-      <div class="detail-field" style="grid-column:1/-1">
-        <div class="detail-lbl" style="display:flex;align-items:center;justify-content:space-between">Last Used <button class="btn btn-sm" onclick="toggleBox('lu-${idx}')">Update</button></div>
-        <div class="detail-val">${fmtDate(s.last_used)}</div>
-        <div id="lu-${idx}" class="quick-box" style="display:none">
-          <span class="quick-box-label">Set Last Used Date</span>
-          <div class="quick-row"><input type="date" id="lu-d-${idx}" value="${s.last_used||''}">
-          <button class="btn btn-sm btn-primary" onclick="saveLastUsed(${idx})">Save</button>
-          <button class="btn btn-sm" onclick="toggleBox('lu-${idx}')">Cancel</button></div>
-        </div>
+    <div class="field" style="margin-bottom:10px"><label>Business Name</label><input id="ed-name-${idx}" value="${esc(s.name||'')}" onblur="saveField(${idx},'name',this.value)"></div>
+    <div class="fg2" style="margin-bottom:10px">
+      <div class="field"><label>Category</label><select id="ed-cat-${idx}" onchange="cascadeDrawerSub(${idx});saveField(${idx},'trade_category',this.value)">${catOptions(s.trade_category)}</select></div>
+      <div class="field"><label>Sub-trade</label><select id="ed-sub-${idx}" onchange="saveField(${idx},'trade_sub',this.value)">${subOptions(s.trade_category,s.trade_sub)}</select></div>
+    </div>
+    <div class="fg2" style="margin-bottom:10px">
+      <div class="field"><label>City</label><input id="ed-city-${idx}" value="${esc(s.city||'')}" onblur="saveField(${idx},'city',this.value)"></div>
+      <div class="field"><label>Regions</label><input id="ed-regions-${idx}" value="${esc(s.regions||'')}" placeholder="e.g. UKK, ALL" onblur="saveField(${idx},'regions',this.value)"></div>
+    </div>
+    <div class="field" style="margin-bottom:10px"><label>Type</label><div style="display:flex;gap:16px;margin-top:4px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="ed-subbie-${idx}" ${s.subbie?'checked':''} onchange="saveField(${idx},'subbie',this.checked)"> Subcontractor</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="ed-supplier-${idx}" ${s.supplier?'checked':''} onchange="saveField(${idx},'supplier',this.checked)"> Supplier</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="ed-hire-${idx}" ${s.hire?'checked':''} onchange="saveField(${idx},'hire',this.checked)"> Hire</label>
+    </div></div>
+    <div class="field" style="margin-bottom:10px"><label>Xero Ref</label><input id="ed-xero-${idx}" value="${esc(s.xero_ref||'')}" onblur="saveField(${idx},'xero_ref',this.value)"></div>
+    <div class="detail-field" style="margin-bottom:4px">
+      <div class="detail-lbl" style="display:flex;align-items:center;justify-content:space-between">Last Used <button class="btn btn-sm" onclick="toggleBox('lu-${idx}')">Update</button></div>
+      <div class="detail-val">${fmtDate(s.last_used)}</div>
+      <div id="lu-${idx}" class="quick-box" style="display:none">
+        <span class="quick-box-label">Set Last Used Date</span>
+        <div class="quick-row"><input type="date" id="lu-d-${idx}" value="${s.last_used||''}">
+        <button class="btn btn-sm btn-primary" onclick="saveLastUsed(${idx})">Save</button>
+        <button class="btn btn-sm" onclick="toggleBox('lu-${idx}')">Cancel</button></div>
       </div>
     </div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;margin-top:6px;border-top:1px solid var(--border)">Status</div>
+    <div class="fg2" style="margin-top:8px">
+      <div class="field"><label>Status</label><select id="ed-dnu-${idx}" onchange="saveField(${idx},'dnu',this.value==='true')"><option value="false"${!s.dnu?' selected':''}>Active</option><option value="true"${s.dnu?' selected':''}>Do Not Use</option></select></div>
+      <div class="field"><label>DNU Reason</label><input id="ed-dnureason-${idx}" value="${esc(s.dnu_notes||'')}" onblur="saveField(${idx},'dnu_notes',this.value)"></div>
+    </div>
     </div>`;
-  // Contact
-  if(s.contact_name||s.contact_email||s.contact_phone||s.office_number){
-    h+=`<div class="detail-section"><div class="section-hd">Contact</div><div class="detail-grid">
-    ${s.contact_name?`<div class="detail-field"><div class="detail-lbl">Name</div><div class="detail-val">${esc(s.contact_name)}</div></div>`:''}
-    ${s.contact_phone?`<div class="detail-field"><div class="detail-lbl">Phone</div><div class="detail-val mono"><a href="tel:${esc(s.contact_phone)}" style="color:var(--accent)">${esc(s.contact_phone)}</a></div></div>`:''}
-    ${s.contact_email?`<div class="detail-field" style="grid-column:1/-1"><div class="detail-lbl">Email</div><div class="detail-val"><a href="mailto:${esc(s.contact_email)}" style="color:var(--accent)">${esc(s.contact_email)}</a></div></div>`:''}
-    ${s.office_number?`<div class="detail-field"><div class="detail-lbl">Office</div><div class="detail-val mono">${esc(s.office_number)}</div></div>`:''}
-    </div></div>`;
-  }
+  // Contact — all fields live-editable
+  h+=`<div class="detail-section"><div class="section-hd">Contact</div>
+    <div class="fg2" style="margin-bottom:10px">
+      <div class="field"><label>Name</label><input id="ed-cname-${idx}" value="${esc(s.contact_name||'')}" onblur="saveField(${idx},'contact_name',this.value)"></div>
+      <div class="field"><label>Email</label><input id="ed-cemail-${idx}" type="email" value="${esc(s.contact_email||'')}" onblur="saveField(${idx},'contact_email',this.value)"></div>
+    </div>
+    <div class="fg2">
+      <div class="field"><label>Phone</label><input id="ed-cphone-${idx}" value="${esc(s.contact_phone||'')}" onblur="saveField(${idx},'contact_phone',this.value)"></div>
+      <div class="field"><label>Office</label><input id="ed-office-${idx}" value="${esc(s.office_number||'')}" onblur="saveField(${idx},'office_number',this.value)"></div>
+    </div>
+  </div>`;
   // Insurance (subcontractors)
   if(s.subbie){
     const signoffRow=(type,valField,expField)=>{
       const so=(s.insurance_signoff_current||{})[type];
-      const signed=so&&so.expiry===s[expField]&&s[expField]; // only valid if matches current expiry
+      const signed=insTypeSignedOff(s,type,expField);
       let badge=signed
         ? `<span class="badge bg-green">✓ Checked by ${esc(so.by)} · ${fmtTs(so.ts)}</span>`
         : `<span class="badge bg-amber">Not yet confirmed</span>`;
@@ -1142,6 +1454,44 @@ function buildDrawer(idx){
       </div>
     </div>`;
   }
+  // Compliance — SafeContractor / Constructionline accreditation + PQQ, subcontractors only
+  if(s.subbie){
+    const accBadge=(status,expField)=>{
+      const exp=s[expField];
+      if(status!=='YES')return'<span class="badge bg-neutral">Not accredited</span>';
+      if(!exp)return'<span class="badge bg-amber">Accredited — no expiry set</span>';
+      const x=daysUntil(exp);
+      if(x<0)return`<span class="badge bg-red">Expired ${fmtDate(exp)}</span>`;
+      if(x<90)return`<span class="badge bg-amber">Expires ${fmtDate(exp)}</span>`;
+      return`<span class="badge bg-green">Valid to ${fmtDate(exp)}</span>`;
+    };
+    h+=`<div class="detail-section">
+      <div class="section-hd">Compliance</div>
+      <div class="fg2" style="margin-bottom:10px">
+        <div class="field"><label>SafeContractor</label><select id="ed-safecon-${idx}" onchange="saveField(${idx},'safe_contractor',this.value)">
+          <option value=""${!s.safe_contractor?' selected':''}>Not set</option>
+          <option value="YES"${s.safe_contractor==='YES'?' selected':''}>Accredited</option>
+          <option value="NO"${s.safe_contractor==='NO'?' selected':''}>Not accredited</option>
+        </select></div>
+        <div class="field"><label>SafeContractor Expiry</label><input type="date" id="ed-safecon-exp-${idx}" value="${s.safe_contractor_expiry||''}" onblur="saveField(${idx},'safe_contractor_expiry',this.value||null)"></div>
+      </div>
+      <div style="margin-bottom:10px">${accBadge(s.safe_contractor,'safe_contractor_expiry')}</div>
+      <div class="fg2" style="margin-bottom:10px">
+        <div class="field"><label>Constructionline</label><select id="ed-cline-${idx}" onchange="saveField(${idx},'constructionline',this.value)">
+          <option value=""${!s.constructionline?' selected':''}>Not set</option>
+          <option value="YES"${s.constructionline==='YES'?' selected':''}>Accredited</option>
+          <option value="NO"${s.constructionline==='NO'?' selected':''}>Not accredited</option>
+        </select></div>
+        <div class="field"><label>Constructionline Expiry</label><input type="date" id="ed-cline-exp-${idx}" value="${s.constructionline_expiry||''}" onblur="saveField(${idx},'constructionline_expiry',this.value||null)"></div>
+      </div>
+      <div style="margin-bottom:10px">${accBadge(s.constructionline,'constructionline_expiry')}</div>
+      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;margin-top:4px;border-top:1px solid var(--border)">PQQ — Pre-Qualification Questionnaire</div>
+      <div style="margin-top:8px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="ed-pqq-${idx}" ${s.pqq_complete?'checked':''} onchange="savePqq(${idx},this.checked)"> PQQ complete — internal process and documentation finished
+      </label></div>
+      ${s.pqq_complete?`<div class="fg2" style="margin-top:8px"><div class="field"><label>Date Completed</label><input type="date" id="ed-pqq-date-${idx}" value="${s.pqq_complete_date||''}" onblur="saveField(${idx},'pqq_complete_date',this.value||null)"></div></div>`:''}
+    </div>`;
+  }
   // Ratings — editable, role-gated, with required reason. Always shown for subcontractors.
   if(s.subbie){
     const opsA=avgArr([s.hs_rating,s.quality_rating,s.time_rating,s.cost_rating]);
@@ -1156,7 +1506,7 @@ function buildDrawer(idx){
     h+=ratingRow(idx,s,'quality_rating');
     h+=ratingRow(idx,s,'time_rating');
     h+=ratingRow(idx,s,'cost_rating');
-    if(s.ops_notes)h+=`<div style="font-size:12px;color:var(--text2);padding:8px;background:var(--surface2);border-radius:6px;margin-top:8px;border-left:3px solid var(--border2)">${esc(s.ops_notes)}<br><span style="font-size:11px;color:var(--text3)">${esc(s.ops_by||'')}</span></div>`;
+    h+=`<div style="margin-top:10px"><button onclick="toggleRatingAudit(${idx})" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;color:var(--accent);padding:0;text-decoration:underline">${_showRatingAudit?'Hide audit info':'Show audit info'}</button></div>`;
     h+=`</div>`;
   }
   // Performance reviews
@@ -1229,19 +1579,43 @@ function buildDrawer(idx){
 }
 
 function toggleBox(id){ const el=document.getElementById(id); if(el)el.style.display=el.style.display==='none'?'block':'none'; }
+let _pendingInsuranceSave=null; // {idx, newEl, newPl, newPi} while confirmation modal is open
 function saveInsurance(idx){
   const s=DB[idx];
   const newEl=document.getElementById('ins-el-'+idx).value||null;
   const newPl=document.getElementById('ins-pl-'+idx).value||null;
   const newPi=document.getElementById('ins-pi-'+idx).value||null;
+  const changedTypes=[];
+  if(newEl!==s.el_expiry) changedTypes.push('EL');
+  if(newPl!==s.pl_expiry) changedTypes.push('PL');
+  if(newPi!==s.pi_expiry) changedTypes.push('PI');
+  if(!changedTypes.length){ toggleBox('ins-'+idx); return; } // nothing actually changed, just close the box
+  _pendingInsuranceSave={idx,newEl,newPl,newPi};
+  document.getElementById('ins-confirm-types').textContent=changedTypes.join(', ');
+  document.getElementById('ins-confirm-check').checked=false;
+  document.getElementById('ins-confirm-proceed').disabled=true;
+  document.getElementById('ins-confirm-modal').classList.add('open');
+}
+function cancelInsuranceSave(){
+  _pendingInsuranceSave=null;
+  document.getElementById('ins-confirm-modal').classList.remove('open');
+}
+function confirmInsuranceSave(){
+  if(!_pendingInsuranceSave)return;
+  if(!document.getElementById('ins-confirm-check').checked)return;
+  const {idx,newEl,newPl,newPi}=_pendingInsuranceSave;
+  const s=DB[idx];
   s.insurance_signoff_current=s.insurance_signoff_current||{};
   // Clear sign-off for any type whose date actually changed — needs re-confirming.
   if(newEl!==s.el_expiry) delete s.insurance_signoff_current.EL;
   if(newPl!==s.pl_expiry) delete s.insurance_signoff_current.PL;
   if(newPi!==s.pi_expiry) delete s.insurance_signoff_current.PI;
   s.el_expiry=newEl; s.pl_expiry=newPl; s.pi_expiry=newPi;
-  saveDB(); schedSync(s._id); updateCounts(); renderMetrics(); buildDrawer(idx);
+  saveDB(); schedSync(s._id); updateCounts(); renderMetrics(); applyFilters(); buildDrawer(idx);
   if(document.getElementById('tab-ins').classList.contains('active')) renderIns();
+  if(document.getElementById('tab-dnu').classList.contains('active')) renderDNU();
+  _pendingInsuranceSave=null;
+  document.getElementById('ins-confirm-modal').classList.remove('open');
   toast('Insurance dates updated');
 }
 async function signOffInsurance(idx,type){
@@ -1254,12 +1628,13 @@ async function signOffInsurance(idx,type){
   s.insurance_signoff_current=s.insurance_signoff_current||{};
   s.insurance_signoff_current[type]={by:myName(),ts:nowIso,expiry};
   saveDB(); schedSync(s._id);
-  await _sb.from('insurance_signoff').insert({
+  await sbCall(_sb.from('insurance_signoff').insert({
     supplier_id:s._id, ins_type:type, expiry_date_signed_off:expiry,
     signed_off_by_user_id:_sbUser.id, signed_off_by_name:myName()
-  });
-  buildDrawer(idx);
+  }),'Saving insurance sign-off');
+  buildDrawer(idx); updateCounts(); renderMetrics(); applyFilters();
   if(document.getElementById('tab-ins').classList.contains('active')) renderIns();
+  if(document.getElementById('tab-dnu').classList.contains('active')) renderDNU();
   toast(type+' insurance confirmed checked');
 }
 async function approveSupplier(idx){
@@ -1377,62 +1752,57 @@ async function saveReview(){
   queueEmail('review_complete',s._id,{supplierName:s.name,reviewedBy,dept,performance:perfVal,avgScore,project,improvements,appUrl:location.href});
 }
 
-// ── Add / Edit supplier modal ─────────────────────────────────────────────────
+// ── Add supplier modal ────────────────────────────────────────────────────────
 function openAddModal(){
-  document.getElementById('modal-idx').value='';
   document.getElementById('modal-title').textContent='Add Supplier';
   clearForm(); document.getElementById('supplier-modal').classList.add('open');
 }
-function openEditModal(idx){
-  const s=DB[idx];
-  document.getElementById('modal-idx').value=String(idx);
-  document.getElementById('modal-title').textContent='Edit: '+s.name;
-  document.getElementById('m-name').value=s.name||'';
-  document.getElementById('m-cat').value=s.trade_category||''; cascadeModalSub();
-  setTimeout(()=>{ document.getElementById('m-sub').value=s.trade_sub||''; },0);
-  document.getElementById('m-city').value=s.city||'';
-  document.getElementById('m-regions').value=s.regions||'';
-  document.getElementById('m-subbie').checked=!!s.subbie;
-  document.getElementById('m-supplier').checked=!!s.supplier;
-  document.getElementById('m-hire').checked=!!s.hire;
-  document.getElementById('m-xero').value=s.xero_ref||'';
-  document.getElementById('m-cname').value=s.contact_name||'';
-  document.getElementById('m-cemail').value=s.contact_email||'';
-  document.getElementById('m-cphone').value=s.contact_phone||'';
-  document.getElementById('m-office').value=s.office_number||'';
-  document.getElementById('m-dnu').value=s.dnu?'true':'false';
-  document.getElementById('m-dnu-notes').value=s.dnu_notes||'';
-  document.getElementById('m-by-name').value=localStorage.getItem('mfb_last_author')||'';
-  document.getElementById('m-by-dept').value=localStorage.getItem('mfb_last_dept')||'';
-  document.getElementById('m-init-note').value='';
-  document.getElementById('supplier-modal').classList.add('open');
+function toggleAddSubbieSections(){
+  document.getElementById('m-subbie-sections').style.display=document.getElementById('m-subbie').checked?'block':'none';
 }
 function closeModal(){ document.getElementById('supplier-modal').classList.remove('open'); }
 function clearForm(){
-  ['m-name','m-city','m-regions','m-xero','m-cname','m-cemail','m-cphone','m-office','m-dnu-notes','m-init-note'].forEach(id=>{ document.getElementById(id).value=''; });
+  ['m-name','m-city','m-regions','m-xero','m-cname','m-cemail','m-cphone','m-office','m-dnu-notes','m-init-note',
+   'm-el-value','m-el-expiry','m-pl-value','m-pl-expiry','m-pi-value','m-pi-expiry',
+   'm-r-ins','m-r-credit','m-r-invoice','m-r-hs','m-r-quality','m-r-time','m-r-cost'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('m-cat').value='';
   document.getElementById('m-sub').innerHTML='<option value="">Select category first…</option>';
   ['m-subbie','m-supplier','m-hire'].forEach(id=>{ document.getElementById(id).checked=false; });
+  document.getElementById('m-subbie-sections').style.display='none';
   document.getElementById('m-dnu').value='false';
   document.getElementById('m-by-name').value=localStorage.getItem('mfb_last_author')||'';
   document.getElementById('m-by-dept').value=localStorage.getItem('mfb_last_dept')||'';
 }
 function saveSupplier(){
-  const idxStr=document.getElementById('modal-idx').value, isEdit=idxStr!=='';
   const name=(document.getElementById('m-name').value||'').trim(); if(!name){toast('Name required','err');return;}
+  const dup=DB.find(s=>s.name.trim().toLowerCase()===name.toLowerCase());
+  if(dup){
+    const proceed=confirm(`"${dup.name}" already exists in the database${dup.dnu?' (currently DNU)':''}${dup.pending_signoff?' (pending approval)':''}.\n\nAdd this as a new, separate entry anyway?`);
+    if(!proceed)return;
+  }
   const cat=document.getElementById('m-cat').value, sub=document.getElementById('m-sub').value;
   if(!cat){toast('Category required','err');return;} if(!sub){toast('Sub-trade required','err');return;}
   const byName=(document.getElementById('m-by-name').value||'').trim(), byDept=document.getElementById('m-by-dept').value;
   if(!byName){toast('Your name required','err');return;} if(!byDept){toast('Department required','err');return;}
   const noteText=(document.getElementById('m-init-note').value||'').trim();
   const noteEntry=noteText?[{text:noteText,author:byName,dept:byDept,ts:new Date().toISOString()}]:[];
-  const fields={name,trade_category:cat,trade_sub:sub,city:document.getElementById('m-city').value.trim(),regions:document.getElementById('m-regions').value.trim(),subbie:document.getElementById('m-subbie').checked,supplier:document.getElementById('m-supplier').checked,hire:document.getElementById('m-hire').checked,xero_ref:document.getElementById('m-xero').value.trim(),contact_name:document.getElementById('m-cname').value.trim(),contact_email:document.getElementById('m-cemail').value.trim(),contact_phone:document.getElementById('m-cphone').value.trim(),office_number:document.getElementById('m-office').value.trim(),dnu:document.getElementById('m-dnu').value==='true',dnu_notes:document.getElementById('m-dnu-notes').value.trim()};
-  if(isEdit){const s=DB[parseInt(idxStr)];Object.assign(s,fields);if(noteEntry.length)s._notes=[...(s._notes||[]),...noteEntry];}
-  else{DB.unshift({_id:Date.now(),_local:true,added_by:byName,added_dept:byDept,added_ts:new Date().toISOString(),_notes:noteEntry,_reviews:[],pending_signoff:true,rating_meta:{},insurance_signoff_current:{},...fields,cis:'',ins_rating:null,credit_rating:null,invoice_rating:null,finance_notes:'',finance_by:'',response_rating:null,price_rating:null,tech_rating:null,sales_notes:'',sales_by:'',hs_rating:null,quality_rating:null,time_rating:null,cost_rating:null,ops_notes:'',ops_by:'',last_used:null,el_value:null,el_expiry:null,pl_value:null,pl_expiry:null,pi_value:null,pi_expiry:null,ins_received:'',pqq_design:'',pqq_ops:'',pqq_finance:'',safe_contractor:'',constructionline:'',certs:'',contact_pos:'',contact2_name:'',contact2_email:'',contact2_phone:''});}
+  const isSubbie=document.getElementById('m-subbie').checked;
+  const numOrNull=id=>{ const v=document.getElementById(id).value; return v===''?null:parseFloat(v); };
+  const dateOrNull=id=>{ const v=document.getElementById(id).value; return v===''?null:v; };
+  const fields={name,trade_category:cat,trade_sub:sub,city:document.getElementById('m-city').value.trim(),regions:document.getElementById('m-regions').value.trim(),subbie:isSubbie,supplier:document.getElementById('m-supplier').checked,hire:document.getElementById('m-hire').checked,xero_ref:document.getElementById('m-xero').value.trim(),contact_name:document.getElementById('m-cname').value.trim(),contact_email:document.getElementById('m-cemail').value.trim(),contact_phone:document.getElementById('m-cphone').value.trim(),office_number:document.getElementById('m-office').value.trim(),dnu:document.getElementById('m-dnu').value==='true',dnu_notes:document.getElementById('m-dnu-notes').value.trim()};
+  // Insurance + ratings only captured if marked as Subcontractor — they don't apply otherwise.
+  const insuranceFields=isSubbie?{el_value:numOrNull('m-el-value'),el_expiry:dateOrNull('m-el-expiry'),pl_value:numOrNull('m-pl-value'),pl_expiry:dateOrNull('m-pl-expiry'),pi_value:numOrNull('m-pi-value'),pi_expiry:dateOrNull('m-pi-expiry')}:{el_value:null,el_expiry:null,pl_value:null,pl_expiry:null,pi_value:null,pi_expiry:null};
+  const ratingFields=isSubbie?{ins_rating:numOrNull('m-r-ins'),credit_rating:numOrNull('m-r-credit'),invoice_rating:numOrNull('m-r-invoice'),hs_rating:numOrNull('m-r-hs'),quality_rating:numOrNull('m-r-quality'),time_rating:numOrNull('m-r-time'),cost_rating:numOrNull('m-r-cost')}:{ins_rating:null,credit_rating:null,invoice_rating:null,hs_rating:null,quality_rating:null,time_rating:null,cost_rating:null};
+  // Build rating_meta entries for whichever ratings were actually given a value on creation.
+  const ratingMeta={};
+  const nowIso=new Date().toISOString();
+  Object.entries(ratingFields).forEach(([field,val])=>{ if(val!=null) ratingMeta[field]={by:byName,why:'Initial rating on supplier setup',ts:nowIso}; });
+  const newSupplier={_id:Date.now(),_local:true,added_by:byName,added_dept:byDept,added_ts:nowIso,_notes:noteEntry,_reviews:[],pending_signoff:true,rating_meta:ratingMeta,insurance_signoff_current:{},...fields,...insuranceFields,...ratingFields,cis:'',last_used:null,safe_contractor:'',safe_contractor_expiry:null,constructionline:'',constructionline_expiry:null,pqq_complete:false,pqq_complete_date:null};
+  DB.unshift(newSupplier);
   localStorage.setItem('mfb_last_author',byName); localStorage.setItem('mfb_last_dept',byDept);
-  const savedIdx=isEdit?parseInt(idxStr):0;
-  saveDB(); schedSync(DB[savedIdx]._id); updateCounts(); renderMetrics(); applyFilters(); closeModal();
-  toast(isEdit?'Supplier updated':'Supplier added');
+  saveDB(); schedSync(newSupplier._id); updateCounts(); renderMetrics(); applyFilters(); closeModal();
+  toast('Supplier added');
+  queueEmail('new_supplier',newSupplier._id,{supplierName:newSupplier.name,addedBy:byName,addedDept:byDept,tradeCategory:cat,tradeSub:sub,appUrl:location.href});
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -1441,7 +1811,7 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   const ni=document.getElementById('nav-'+name); if(ni)ni.classList.add('active');
-  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Pending Approval',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Analytics'};
+  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Pending Approval',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Analytics',changes:'Recent Changes'};
   document.getElementById('topbar-title').textContent=titles[name]||name;
   if(name==='sc') renderSC();
   if(name==='suppliers') renderSuppliersOnly();
@@ -1450,6 +1820,7 @@ function switchTab(name){
   if(name==='dnu') renderDNU();
   if(name==='ins') renderIns();
   if(name==='analytics') renderAnalytics();
+  if(name==='changes') renderRecentChanges();
 }
 
 function toggleSidebar(){
@@ -1539,7 +1910,69 @@ function toast(msg,type=''){
   el.classList.add('show');
   clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2400);
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeDrawer();closeModal();closeReviewModal();closeRolesModal();} });
+
+// ── Command palette (Ctrl/Cmd+K) ─────────────────────────────────────────────
+let _cmdkActive=-1, _cmdkResults=[];
+function openCmdK(){
+  if(!DB||!DB.length)return; // not logged in / nothing loaded yet
+  document.getElementById('cmdk-overlay').classList.add('open');
+  const input=document.getElementById('cmdk-input');
+  input.value=''; cmdkSearch();
+  setTimeout(()=>input.focus(),0);
+}
+function closeCmdK(){
+  document.getElementById('cmdk-overlay').classList.remove('open');
+  _cmdkActive=-1; _cmdkResults=[];
+}
+function cmdkSearch(){
+  const q=(document.getElementById('cmdk-input').value||'').trim().toLowerCase();
+  const resEl=document.getElementById('cmdk-results');
+  if(!q){
+    _cmdkResults=[]; _cmdkActive=-1;
+    resEl.innerHTML='<div class="cmdk-empty">Type to search suppliers…</div>';
+    return;
+  }
+  _cmdkResults=DB.filter(s=>{
+    const hay=[s.name,s.trade_category,s.trade_sub,s.city,s.contact_name].join(' ').toLowerCase();
+    return hay.includes(q);
+  }).slice(0,30);
+  _cmdkActive=_cmdkResults.length?0:-1;
+  renderCmdkResults();
+}
+function renderCmdkResults(){
+  const resEl=document.getElementById('cmdk-results');
+  if(!_cmdkResults.length){
+    resEl.innerHTML='<div class="cmdk-empty">No suppliers match</div>';
+    return;
+  }
+  resEl.innerHTML=_cmdkResults.map((s,i)=>{
+    const idx=DB.indexOf(s);
+    return`<div class="cmdk-item${i===_cmdkActive?' active':''}" onmouseenter="_cmdkActive=${i};renderCmdkResults()" onclick="cmdkGo(${idx})">
+      <span class="cmdk-item-name">${esc(s.name)}</span>
+      <span class="cmdk-item-sub">${esc(s.trade_sub||s.trade_category||'')}${s.city?' · '+esc(s.city):''}</span>
+    </div>`;
+  }).join('');
+}
+function cmdkGo(idx){
+  closeCmdK();
+  openDrawer(idx);
+}
+document.addEventListener('keydown',e=>{
+  // Ctrl/Cmd+K opens the command palette from anywhere
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){
+    e.preventDefault();
+    const overlay=document.getElementById('cmdk-overlay');
+    if(overlay.classList.contains('open')) closeCmdK(); else openCmdK();
+    return;
+  }
+  const cmdkOpen=document.getElementById('cmdk-overlay').classList.contains('open');
+  if(cmdkOpen){
+    if(e.key==='ArrowDown'){ e.preventDefault(); if(_cmdkResults.length){ _cmdkActive=(_cmdkActive+1)%_cmdkResults.length; renderCmdkResults(); } return; }
+    if(e.key==='ArrowUp'){ e.preventDefault(); if(_cmdkResults.length){ _cmdkActive=(_cmdkActive-1+_cmdkResults.length)%_cmdkResults.length; renderCmdkResults(); } return; }
+    if(e.key==='Enter'){ e.preventDefault(); if(_cmdkActive>=0&&_cmdkResults[_cmdkActive]) cmdkGo(DB.indexOf(_cmdkResults[_cmdkActive])); return; }
+  }
+  if(e.key==='Escape'){closeCmdK();closeDrawer();closeModal();closeReviewModal();closeRolesModal();cancelInsuranceSave();}
+});
 
 initApp();
 
