@@ -332,6 +332,8 @@ tbody tr:hover td{background:var(--hover)}
 <script>
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
+// Bump this when you deploy a new build so users can tell you what they're on.
+const APP_VERSION = 'v7.1';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -397,6 +399,7 @@ let _sbUser = null;
       <span id="sb-user-email" style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"></span>
       <button onclick="doLogout()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:4px;white-space:nowrap" title="Sign out">Sign out</button>
     </div>
+    <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:6px" id="app-version"></div>
   </div>
 </aside>
 <div class="main">
@@ -723,6 +726,8 @@ async function doLogout(){
 
 // Check existing session on load
 async function initApp(){
+  const vEl=document.getElementById('app-version');
+  if(vEl) vEl.textContent=APP_VERSION;
   try{
     const {data:{session}}=await _sb.auth.getSession();
     if(session){
@@ -778,17 +783,11 @@ function fmtMoney(v){ if(!v)return'—'; return v>=1000000?'£'+(v/1000000).toFi
 function rp(v){ if(v==null||v===''||v===0)return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; return`<span class="rating-pill ${n<=3?'r-low':n<=5?'r-mid':'r-good'}">${n}</span>`; }
 function typetag(s){ const t=[]; if(s.subbie)t.push('<span class="type-tag type-sc">S/C</span>'); if(s.supplier)t.push('<span class="type-tag type-sup">SUP</span>'); if(s.hire)t.push('<span class="type-tag type-hire">HIRE</span>'); return t.join(' ')||'<span class="type-tag" style="background:var(--surface2);color:var(--text3)">—</span>'; }
 // A supplier is treated as "Do Not Use" if it's explicitly flagged DNU, OR
-// it's still awaiting Finance sign-off — the underlying dnu/pending_signoff
-// fields stay independent (so a real DNU reason is never lost or conflated
-// with "just not approved yet"), but everywhere the app shows or filters by
-// DNU status, pending suppliers are included too.
-// A supplier is treated as "Do Not Use" if it's explicitly flagged DNU, OR
-// it's still awaiting Finance sign-off (new supplier), OR it's a
-// subcontractor with any insurance type (EL/PL/PI) not currently confirmed
-// by Finance. The underlying dnu/pending_signoff fields stay independent
-// (so a real DNU reason is never lost or conflated with these other
-// states), but everywhere the app shows or filters by DNU status, all
-// three are treated the same way.
+// it's a subcontractor with any insurance type (EL/PL/PI) not currently
+// confirmed by Finance. New suppliers are NOT gated — Finance already
+// gatekeeps entry via the PQQ process, so a second approval step is
+// redundant. The underlying dnu field stays independent of insurance state,
+// so a real DNU reason is never lost or conflated with an unsigned cert.
 function insTypeSignedOff(s,type,expField){
   const so=(s.insurance_signoff_current||{})[type];
   return !!(so&&so.expiry===s[expField]&&s[expField]);
@@ -797,15 +796,13 @@ function insuranceFullySignedOff(s){
   if(!s.subbie)return true; // sign-off concept only applies to subcontractors
   return insTypeSignedOff(s,'EL','el_expiry')&&insTypeSignedOff(s,'PL','pl_expiry')&&insTypeSignedOff(s,'PI','pi_expiry');
 }
-// Total count of distinct items awaiting a Finance decision — new supplier
-// sign-offs plus per-type unsigned insurance (EL/PL/PI each count
-// separately, matching how they're listed as individual rows on the
-// Pending Approval tab).
+// Total count of distinct items awaiting a Finance decision — per-type
+// unsigned insurance (EL/PL/PI each count separately, matching how they're
+// listed as individual rows on the Pending Approval tab).
 function countPendingApprovals(){
   let n=0;
   DB.forEach(s=>{
-    if(s.pending_signoff)n++;
-    if(s.subbie&&!s.pending_signoff){
+    if(s.subbie){
       [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']].forEach(([type,expField])=>{
         if(s[expField]&&!insTypeSignedOff(s,type,expField))n++;
       });
@@ -813,12 +810,11 @@ function countPendingApprovals(){
   });
   return n;
 }
-function isBlocked(s){ return !!s.dnu||!!s.pending_signoff||!insuranceFullySignedOff(s); }
+function isBlocked(s){ return !!s.dnu||!insuranceFullySignedOff(s); }
 // Always returns HTML-safe text — escapes internally so callers don't need
 // to remember to wrap it themselves (dnu_notes is free-text user input).
 function blockedReason(s){
   if(s.dnu) return esc(s.dnu_notes||'—');
-  if(s.pending_signoff) return 'Pending Finance Approval';
   if(!insuranceFullySignedOff(s)) return 'Insurance Pending Finance Sign-off';
   return '—';
 }
@@ -918,7 +914,7 @@ function renderMetrics(){
   const soon=DB.filter(s=>!exp.includes(s)&&s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<90;}));
   document.getElementById('metrics-all').innerHTML=
     met('blue','Total',DB.length)+met('green','Active',DB.filter(s=>!isBlocked(s)).length)+
-    met('purple','Subcontractors',sc.length)+met('red','DNU',DB.filter(isBlocked).length)+met('amber','Ins Issues',exp.length+soon.length)+met('amber','Pending Sign-off',DB.filter(s=>s.pending_signoff).length);
+    met('purple','Subcontractors',sc.length)+met('red','DNU',DB.filter(isBlocked).length)+met('amber','Ins Issues',exp.length+soon.length)+met('amber','Awaiting Sign-off',countPendingApprovals());
   document.getElementById('metrics-sc').innerHTML=
     met('blue','Subcontractors',sc.length)+met('green','Active',sc.filter(s=>!isBlocked(s)).length)+
     met('red','DNU',sc.filter(isBlocked).length)+met('amber','Avg Rating',avg)+met('purple','Reviewed',sc.filter(s=>(s._reviews||[]).length>0).length);
@@ -1038,7 +1034,7 @@ function renderTable(){
     const idx=DB.indexOf(s); const on=isStarred(s);
     return`<tr onclick="openDrawer(${idx})">
       <td style="padding:9px 6px 9px 12px;width:32px"><button class="star-btn${on?' on':''}" onclick="event.stopPropagation();toggleStar(${idx})">${on?'★':'☆'}</button></td>
-      <td><strong>${esc(s.name)}</strong>${s._local?'<span class="tag-new">New</span>':''}${s.pending_signoff?'<span class="tag-new" style="background:var(--amber-bg);color:var(--amber)">Pending sign-off</span>':''}</td>
+      <td><strong>${esc(s.name)}</strong>${s._local?'<span class="tag-new">New</span>':''}</td>
       <td>${tradePill(s)}</td>
       <td>${subPill(s)}</td>
       <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
@@ -1090,20 +1086,13 @@ function renderDNU(){
 // ── Pending Approval table ───────────────────────────────────────────────────
 function renderPending(){
   const tbody=document.getElementById('pending-tbody');
-  // Build one flat list of approval items — each row is one specific thing
-  // awaiting a Finance decision. A supplier needing both a new-supplier
-  // sign-off AND an insurance sign-off appears as two separate rows.
+  // Build one flat list of approval items — each row is one specific
+  // insurance type awaiting Finance sign-off, so a subcontractor with
+  // several unsigned certs appears as several separate rows.
   const items=[];
   DB.forEach(s=>{
     const idx=DB.indexOf(s);
-    if(s.pending_signoff){
-      items.push({
-        idx, s, type:'New Supplier', typeCls:'bg-amber',
-        requestedBy:s.added_by, requestedDept:s.added_dept, ts:s.added_ts,
-        action:()=>approveSupplier(idx)
-      });
-    }
-    if(s.subbie&&!s.pending_signoff){
+    if(s.subbie){
       [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']].forEach(([type,expField])=>{
         if(s[expField]&&!insTypeSignedOff(s,type,expField)){
           items.push({
@@ -1123,7 +1112,7 @@ function renderPending(){
   window._pendingItems=items; // so inline onclick handlers can call back in without re-deriving the list
   tbody.innerHTML=items.map((item,i)=>{
     const s=item.s;
-    const dateLabel=item.type==='New Supplier'?fmtTs(item.ts):('Expiry: '+fmtDate(item.ts));
+    const dateLabel='Expiry: '+fmtDate(item.ts);
     const reqLabel=item.requestedBy?(esc(item.requestedBy)+(item.requestedDept?' · '+esc(item.requestedDept):'')):'<span style="color:var(--text3)">—</span>';
     return`<tr onclick="openDrawer(${item.idx})">
       <td><strong style="color:var(--red)">${esc(s.name)}</strong></td>
@@ -1296,8 +1285,8 @@ function renderRecentChanges(){
       events.push({ts:s.added_ts,idx,icon:'➕',color:'var(--amber)',bg:'var(--amber-bg)',
         text:`<strong>${esc(s.name)}</strong> was added${s.added_by?' by '+esc(s.added_by):''}${s.added_dept?' ('+esc(s.added_dept)+')':''}`});
     }
-    // Supplier approval (pending_signoff cleared)
-    if(!s.pending_signoff&&s.signoff_ts){
+    // Historic supplier approval (from before new-supplier approval was retired)
+    if(s.signoff_ts){
       events.push({ts:s.signoff_ts,idx,icon:'✓',color:'var(--green)',bg:'var(--green-bg)',
         text:`<strong>${esc(s.name)}</strong> was approved${s.signoff_by_name?' by '+esc(s.signoff_by_name):''}`});
     }
@@ -1358,11 +1347,7 @@ function closeDrawer(){
 function buildDrawer(idx){
   const s=DB[idx]; const on=isStarred(s); let h='';
   if(s.dnu) h+=`<div class="dnu-banner">⚠ Do Not Use${s.dnu_notes?': '+esc(s.dnu_notes):''}</div>`;
-  if(s.pending_signoff) h+=`<div class="pending-banner">
-    <span>⏳ Pending Finance Sign-off — not yet approved</span>
-    ${isFinance()?`<button class="btn btn-sm btn-primary" onclick="approveSupplier(${idx})">Approve</button>`:''}
-  </div>`;
-  if(!s.pending_signoff&&!insuranceFullySignedOff(s)) h+=`<div class="pending-banner">
+  if(!insuranceFullySignedOff(s)) h+=`<div class="pending-banner">
     <span>⚠ Do Not Use — Insurance Pending Finance Sign-off</span>
   </div>`;
   // Overview — all fields live-editable, save on blur/change
@@ -1637,16 +1622,6 @@ async function signOffInsurance(idx,type){
   if(document.getElementById('tab-dnu').classList.contains('active')) renderDNU();
   toast(type+' insurance confirmed checked');
 }
-async function approveSupplier(idx){
-  if(!isFinance()){toast('Only Finance Director can approve new suppliers','err');return;}
-  const s=DB[idx];
-  s.pending_signoff=false;
-  s.signoff_by_name=myName();
-  s.signoff_ts=new Date().toISOString();
-  saveDB(); schedSync(s._id);
-  buildDrawer(idx); applyFilters(); updateCounts(); renderMetrics();
-  toast('Supplier approved');
-}
 function saveLastUsed(idx){
   DB[idx].last_used=document.getElementById('lu-d-'+idx).value||null;
   saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Last used date updated');
@@ -1777,7 +1752,7 @@ function saveSupplier(){
   const name=(document.getElementById('m-name').value||'').trim(); if(!name){toast('Name required','err');return;}
   const dup=DB.find(s=>s.name.trim().toLowerCase()===name.toLowerCase());
   if(dup){
-    const proceed=confirm(`"${dup.name}" already exists in the database${dup.dnu?' (currently DNU)':''}${dup.pending_signoff?' (pending approval)':''}.\n\nAdd this as a new, separate entry anyway?`);
+    const proceed=confirm(`"${dup.name}" already exists in the database${dup.dnu?' (currently DNU)':''}.\n\nAdd this as a new, separate entry anyway?`);
     if(!proceed)return;
   }
   const cat=document.getElementById('m-cat').value, sub=document.getElementById('m-sub').value;
@@ -1797,7 +1772,7 @@ function saveSupplier(){
   const ratingMeta={};
   const nowIso=new Date().toISOString();
   Object.entries(ratingFields).forEach(([field,val])=>{ if(val!=null) ratingMeta[field]={by:byName,why:'Initial rating on supplier setup',ts:nowIso}; });
-  const newSupplier={_id:Date.now(),_local:true,added_by:byName,added_dept:byDept,added_ts:nowIso,_notes:noteEntry,_reviews:[],pending_signoff:true,rating_meta:ratingMeta,insurance_signoff_current:{},...fields,...insuranceFields,...ratingFields,cis:'',last_used:null,safe_contractor:'',safe_contractor_expiry:null,constructionline:'',constructionline_expiry:null,pqq_complete:false,pqq_complete_date:null};
+  const newSupplier={_id:Date.now(),_local:true,added_by:byName,added_dept:byDept,added_ts:nowIso,_notes:noteEntry,_reviews:[],pending_signoff:false,rating_meta:ratingMeta,insurance_signoff_current:{},...fields,...insuranceFields,...ratingFields,cis:'',last_used:null,safe_contractor:'',safe_contractor_expiry:null,constructionline:'',constructionline_expiry:null,pqq_complete:false,pqq_complete_date:null};
   DB.unshift(newSupplier);
   localStorage.setItem('mfb_last_author',byName); localStorage.setItem('mfb_last_dept',byDept);
   saveDB(); schedSync(newSupplier._id); updateCounts(); renderMetrics(); applyFilters(); closeModal();
