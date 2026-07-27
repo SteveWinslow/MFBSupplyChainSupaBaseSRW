@@ -331,7 +331,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v8.0';
+const APP_VERSION = 'v8.2';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -385,6 +385,9 @@ let _sbUser = null;
     <button class="nav-item" id="nav-changes" data-label="Recent Changes" onclick="switchTab('changes')">
       <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 4v4l2.5 2.5"/><circle cx="8" cy="8" r="6"/></svg><span>Recent Changes</span></div>
     </button>
+    <button class="nav-item" id="nav-matrix" data-label="Rating Matrix" onclick="switchTab('matrix')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12"/></svg><span>Rating Matrix</span></div>
+    </button>
     <div class="nav-section">Actions</div>
     <button class="nav-item" data-label="Add Supplier" onclick="openAddModal()"><div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg><span>Add Supplier</span></div></button>
     <button class="nav-item" data-label="Performance Review" onclick="openReviewModal(null)"><div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h10v8H3z"/><path d="M6 7h4M6 5h2"/></svg><span>Performance Review</span></div></button>
@@ -437,7 +440,7 @@ let _sbUser = null;
     </div>
     <div class="tab" id="tab-sc"><div class="metrics" id="metrics-sc"></div>
       <div class="card"><div class="card-header"><h2>Subcontractors</h2></div><div class="card-scroll"><table><thead><tr>
-        <th style="width:36px"></th><th>Company</th><th>Category</th><th>Trade</th><th>City</th><th>Region</th><th>Finance</th><th>Ops</th><th>Last Review</th><th>Insurance</th><th>Status</th><th style="width:48px"></th>
+        <th style="width:36px"></th><th>Company</th><th>Category</th><th>Trade</th><th>City</th><th>Region</th><th>Overall</th><th>Last Review</th><th>Insurance</th><th>Status</th><th style="width:48px"></th>
       </tr></thead><tbody id="sc-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-suppliers"><div class="card"><div class="card-header"><h2>Suppliers / Manufacturers / Hire</h2></div><div class="card-scroll"><table><thead><tr>
       <th>Company</th><th>Category</th><th>Trade</th><th>City</th><th>Region</th><th>Status</th>
@@ -448,6 +451,7 @@ let _sbUser = null;
     <div class="tab" id="tab-ins"><div class="page-hd"><div><h1>Insurance Monitor</h1><p>Open a row to update expiry dates inline</p></div></div><div class="metrics" id="metrics-ins"></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>EL Expiry</th><th>PL Expiry</th><th>PI Expiry</th><th>Issue</th></tr></thead><tbody id="ins-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-analytics"><div class="page-hd"><div><h1>Analytics</h1><p>Contractor performance overview</p></div></div><div id="analytics-content"></div></div>
     <div class="tab" id="tab-changes"><div class="page-hd"><div><h1>Recent Changes</h1><p>New suppliers, approvals, reviews, and DNU changes — newest first</p></div></div><div id="changes-content"></div></div>
+    <div class="tab" id="tab-matrix"><div class="page-hd"><div><h1>Rating Matrix</h1><p>McFeggan Supplier Chain Rating Matrix — reference for scoring</p></div></div><div id="matrix-content"></div></div>
   </div>
 </div>
 </div>
@@ -482,17 +486,17 @@ let _sbUser = null;
         <div class="field"><label>PI Expiry</label><input id="m-pi-expiry" type="date"></div>
         <div></div>
       </div>
-      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Ratings (optional — out of 10)</div>
+      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Ratings (optional — out of 4; Sales &amp; Design scored in the supplier record)</div>
       <div class="fg3">
-        <div class="field"><label>Insurance</label><input id="m-r-ins" type="number" min="0" max="6"></div>
-        <div class="field"><label>Credit</label><input id="m-r-credit" type="number" min="0" max="6"></div>
-        <div class="field"><label>Invoicing</label><input id="m-r-invoice" type="number" min="0" max="6"></div>
+        <div class="field"><label>Insurance</label><input id="m-r-ins" type="number" min="0" max="4"></div>
+        <div class="field"><label>Credit</label><input id="m-r-credit" type="number" min="0" max="4"></div>
+        <div class="field"><label>Invoicing</label><input id="m-r-invoice" type="number" min="0" max="4"></div>
       </div>
       <div class="fg4">
-        <div class="field"><label>H&amp;S</label><input id="m-r-hs" type="number" min="0" max="6"></div>
-        <div class="field"><label>Quality</label><input id="m-r-quality" type="number" min="0" max="6"></div>
-        <div class="field"><label>Time</label><input id="m-r-time" type="number" min="0" max="6"></div>
-        <div class="field"><label>Cost</label><input id="m-r-cost" type="number" min="0" max="6"></div>
+        <div class="field"><label>H&amp;S</label><input id="m-r-hs" type="number" min="0" max="4"></div>
+        <div class="field"><label>Quality</label><input id="m-r-quality" type="number" min="0" max="4"></div>
+        <div class="field"><label>Time</label><input id="m-r-time" type="number" min="0" max="4"></div>
+        <div class="field"><label>Cost</label><input id="m-r-cost" type="number" min="0" max="4"></div>
       </div>
     </div>
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Status</div>
@@ -524,7 +528,7 @@ let _sbUser = null;
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;border-top:1px solid var(--border)">Add a Role by Email</div>
     <div class="fg2">
       <div class="field"><label>Email *</label><input id="role-email" placeholder="name@mcfegganbrown.co.uk"></div>
-      <div class="field"><label>Role *</label><select id="role-select"><option value="">Select&hellip;</option><option>Superuser</option><option>Finance Director</option><option>Project Manager</option><option>Design Lead</option><option>Operations Director</option></select></div>
+      <div class="field"><label>Role *</label><select id="role-select"><option value="">Select&hellip;</option><option>Superuser</option><option>Finance Director</option><option>Sales Lead</option><option>Design Lead</option><option>Project Manager</option><option>Operations Director</option></select></div>
     </div>
     <div class="field"><label>Display Name *</label><input id="role-name" placeholder="How their name should appear"></div>
   </div><div class="modal-foot"><button class="btn" onclick="closeRolesModal()">Close</button><button class="btn btn-primary" onclick="saveRole()">Add Role</button></div></div></div>
@@ -587,13 +591,19 @@ const RQ = [
 const LS='mfb_sup_v4', SLK='mfb_shortlist';
 
 // ── Roles & permissions ──────────────────────────────────────────────────────
-const ROLES = ['Finance Director','Project Manager','Design Lead','Operations Director'];
-const ALL_ROLE_NAMES = ['Superuser','Finance Director','Project Manager','Design Lead','Operations Director'];
+const ROLES = ['Finance Director','Sales Lead','Design Lead','Project Manager','Operations Director'];
+const ALL_ROLE_NAMES = ['Superuser','Finance Director','Sales Lead','Design Lead','Project Manager','Operations Director'];
 // Which role(s) may edit which rating fields.
 const RATING_FIELD_ROLES = {
   ins_rating:     ['Finance Director'],
   credit_rating:  ['Finance Director'],
   invoice_rating: ['Finance Director'],
+  sales_response_rating:  ['Sales Lead'],
+  sales_price_rating:     ['Sales Lead'],
+  sales_technical_rating: ['Sales Lead'],
+  design_response_rating:  ['Design Lead'],
+  design_price_rating:     ['Design Lead'],
+  design_technical_rating: ['Design Lead'],
   hs_rating:      ['Operations Director'],
   quality_rating: ['Operations Director'],
   time_rating:    ['Operations Director'],
@@ -601,8 +611,18 @@ const RATING_FIELD_ROLES = {
 };
 const RATING_FIELD_LABELS = {
   ins_rating:'Insurance', credit_rating:'Credit', invoice_rating:'Invoicing',
+  sales_response_rating:'Response', sales_price_rating:'Price Competitiveness', sales_technical_rating:'Technical Capability',
+  design_response_rating:'Response', design_price_rating:'Price Competitiveness', design_technical_rating:'Technical Capability',
   hs_rating:'H&S', quality_rating:'Quality', time_rating:'Time', cost_rating:'Cost'
 };
+// The rating groups, in display order, with their columns.
+const RATING_GROUPS = [
+  {key:'finance', label:'Finance', fields:['ins_rating','credit_rating','invoice_rating']},
+  {key:'sales',   label:'Sales',   fields:['sales_response_rating','sales_price_rating','sales_technical_rating']},
+  {key:'design',  label:'Design',  fields:['design_response_rating','design_price_rating','design_technical_rating']},
+  {key:'ops',     label:'Ops',     fields:['hs_rating','quality_rating','time_rating','cost_rating']}
+];
+const RATING_MATRIX = {"matrix":[{"group":"Finance","criterion":"Insurances","scores":{"4":"Insurance \nEL & PL > £5m\nPI > £1m","3":"Insurance \nEL & PL < £5m","2":"Expired Insurance","1":"No Valid Insurances","0":"No Feedback/Not interacted yet"}},{"group":"Finance","criterion":"Credit Score Band","scores":{"4":"Excellent","3":"Good","2":"Fair","1":"Poor","0":""}},{"group":"Finance","criterion":"Invoicing","scores":{"4":"Accurate, compliant, and consistently efficient invoicing.","3":"Accurate and compliant invoicing.","2":"Occasional errors requiring correction.","1":"Frequent errors or non-compliant invoices.\nNo CIS verified","0":""}},{"group":"Sales/Design","criterion":"Response","scores":{"4":"Exceptional, detailed response that exceeds requirements, demonstrates strong understanding, and provides high-quality supporting information.","3":"Comprehensive and well-presented response addressing all key requirements with appropriate supporting information.","2":"Response addresses most requirements but lacks detail or supporting evidence. Some concerns regarding quality or completeness.","1":"Response is incomplete, late, or fails to address key requirements. Limited engagement or supporting information provided.","0":""}},{"group":"Sales/Design","criterion":"Price Competitiveness / Accuracy","scores":{"4":"Highly competitive, accurate, transparent, and commercially robust pricing with no material concerns.","3":"Competitive, accurate, and well-structured pricing with only minor clarifications required.","2":"Pricing is generally competitive but includes minor inaccuracies, assumptions, or insufficient cost breakdown.","1":"Pricing is uncompetitive, contains significant errors or omissions, or lacks sufficient detail and transparency.","0":""}},{"group":"Sales/Design","criterion":"Technical Capability","scores":{"4":"Extensive relevant experience, proven technical expertise, excellent project references, and high confidence in successful delivery.","3":"Strong evidence of relevant experience, competent technical team, and ability to successfully deliver the required works.","2":"Demonstrates some relevant experience and capability but has gaps in technical expertise or supporting evidence.","1":"Insufficient capability or relevant experience.","0":""}},{"group":"Ops","criterion":"H&S","scores":{"4":"Always use PPE and enforce safety rules. Good housekeeping and site safety","3":"Always use PPE and enforce safety rules but poor housekeeping and site safety","2":"Never use PPE or enforce safety rules. Poor housekeeping and no up-to-date H&S licenses and permits for operations","1":"Continued failure to address issues. Yellow & red cards issued","0":""}},{"group":"Ops","criterion":"Quality","scores":{"4":"No known issues","3":"Some quality Issues but usually resolved efficiently with no questions asked","2":"Issues with quality that do not get readily get resolved","1":"No intent to resolve issues. Resolution is at cost to McFB","0":""}},{"group":"Ops","criterion":"Time","scores":{"4":"Works always progressing on schedule, with timely site arrivals and excellent responsiveness to program changes","3":"Works offten behind the schedule, late site arrivals but excellent responsiveness to program changes","2":"Works or deliveries frequently delayed without chance of recovery. Lots of extra costs outside their price given that should be included","1":"Works always delayed without chance of recovery. Pooor timekeeping & attitude of personnel","0":""}},{"group":"Ops","criterion":"Cost","scores":{"4":"Very well priced with no hidden additional costs. Willingness to negotiate and work with us","3":"Reasonably priced but sometimes hit us with additional hidden costs. Willingness to negotiate and settle within limited ompact to MCFB","2":"Repeat behaviour of frequently claiming additional costs. Limited intent to negotiate and settle","1":"Additional costs claims submitted as soon as they step on the site. Poor attitude to resolution","0":""}}],"labels":{"4":"Good","3":"Excellent","2":"Issues","1":"Do Not Use","0":"Not interacted yet"}};
 let myRoles=new Set(); // a person can hold multiple roles — set after login from user_roles table
 let myDisplayName=null;
 function canEditRating(field){ const allowed=RATING_FIELD_ROLES[field]; return allowed && allowed.some(r=>myRoles.has(r)); }
@@ -751,7 +771,7 @@ function daysUntil(s){ const d=pd(s); if(!d)return null; return Math.round((d-to
 function fmtDate(s){ const d=pd(s); if(!d)return'—'; return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}); }
 function fmtTs(ts){ if(!ts)return''; const d=new Date(ts); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
 function fmtMoney(v){ if(!v)return'—'; return v>=1000000?'£'+(v/1000000).toFixed(0)+'M':v>=1000?'£'+(v/1000).toFixed(0)+'K':'£'+v; }
-function rp(v){ if(v==null||v===''||v===0)return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; return`<span class="rating-pill ${n<=2?'r-low':n<=4?'r-mid':'r-good'}">${n}</span>`; }
+function rp(v){ if(v==null||v===''||v===0)return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; return`<span class="rating-pill ${n<=2?'r-low':n<=3?'r-mid':'r-good'}">${n}</span>`; }
 function typetag(s){ const t=[]; if(s.subbie)t.push('<span class="type-tag type-sc">S/C</span>'); if(s.supplier)t.push('<span class="type-tag type-sup">SUP</span>'); if(s.hire)t.push('<span class="type-tag type-hire">HIRE</span>'); return t.join(' ')||'<span class="type-tag" style="background:var(--surface2);color:var(--text3)">—</span>'; }
 // Insurance is date-driven: anything on the database has already been
 // supplied to and checked by Finance, so there's no separate sign-off step.
@@ -821,12 +841,23 @@ function avgArr(arr){ const v=arr.filter(x=>x!=null&&x!==0); return v.length?Mat
 // Live "Overall" score — average of every rating that's actually been set
 // across Finance (Insurance/Credit/Invoicing) and Operations (H&S/Quality/
 // Time/Cost). Replaces the old static manually-typed rating field.
-function overallRating(s){ return avgArr([s.ins_rating,s.credit_rating,s.invoice_rating,s.hs_rating,s.quality_rating,s.time_rating,s.cost_rating]); }
-// Finance and Operations are scored by different people against different
-// criteria, so the contractor lists show them as separate averages rather
-// than collapsing both into a single number.
-function financeRating(s){ return avgArr([s.ins_rating,s.credit_rating,s.invoice_rating]); }
-function opsRating(s){ return avgArr([s.hs_rating,s.quality_rating,s.time_rating,s.cost_rating]); }
+// Each rating group is scored by different people against different criteria,
+// so they're shown as separate averages rather than one blended number.
+function groupRating(s,key){
+  const g=RATING_GROUPS.find(x=>x.key===key);
+  return g?avgArr(g.fields.map(f=>s[f])):null;
+}
+function financeRating(s){ return groupRating(s,'finance'); }
+function salesRating(s){ return groupRating(s,'sales'); }
+function designRating(s){ return groupRating(s,'design'); }
+function opsRating(s){ return groupRating(s,'ops'); }
+// Overall is the average of the four group averages, so each department
+// counts equally regardless of how many criteria it scores against.
+function overallRating(s){
+  const gs=RATING_GROUPS.map(g=>groupRating(s,g.key)).filter(v=>v!=null&&v!=='');
+  if(!gs.length)return null;
+  return (gs.reduce((a,b)=>a+Number(b),0)/gs.length).toFixed(1).replace(/\.0$/,'');
+}
 
 // ── Editable, audit-logged ratings ───────────────────────────────────────────
 let _ratingEditField=null; // field currently being edited in the drawer, or null
@@ -852,7 +883,7 @@ function ratingRow(idx,s,field){
   if(editing){
     row+=`<div class="quick-box" style="margin-top:4px;margin-bottom:8px">
       <span class="quick-box-label">Update ${esc(label)} Rating</span>
-      <div class="quick-row"><span style="width:auto">Score</span><input type="number" min="0" max="6" id="rt-val-${field}" value="${val!=null?val:''}" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace"></div>
+      <div class="quick-row"><span style="width:auto">Score</span><input type="number" min="0" max="4" id="rt-val-${field}" value="${val!=null?val:''}" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace"></div>
       <div class="field" style="margin-top:6px"><label>Reason for change *</label><textarea id="rt-reason-${field}" rows="2" placeholder="Required — why is this rating changing?"></textarea></div>
       <div class="quick-row" style="margin-top:8px">
         <button class="btn btn-sm btn-primary" onclick="saveRatingEdit(${idx},'${field}')">Save</button>
@@ -869,7 +900,7 @@ async function saveRatingEdit(idx,field){
   const raw=valEl.value;
   if(raw===''){toast('Enter a score 0–10','err');return;}
   const n=Number(raw);
-  if(isNaN(n)||n<0||n>6){toast('Score must be between 0 and 6','err');return;}
+  if(isNaN(n)||n<0||n>4){toast('Score must be between 0 and 4','err');return;}
   const reason=(reasonEl.value||'').trim();
   if(!reason){toast('Reason is required','err');return;}
   if(!canEditRating(field)){toast('You do not have permission to edit this rating','err');return;}
@@ -1152,8 +1183,7 @@ function renderSC(){
       <td>${subPill(s)}</td>
       <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
       <td style="font-size:12px;color:var(--text3)">${regionCell(s)}</td>
-      <td>${rp(financeRating(s))}</td>
-      <td>${rp(opsRating(s))}</td>
+      <td>${rp(overallRating(s))}</td>
       <td>${lastReviewBadge(s)}</td>
       <td>${insStatusBadge(s)}</td>
       <td>${statusBadge(s)}</td>
@@ -1270,8 +1300,10 @@ function renderShortlist(){
   tb+=row('Last review',s=>lastReviewBadge(s));
   if(hasSub){
     tb+=secRow('Ratings');
-    tb+=row('Finance',s=>s.subbie?rp(financeRating(s)):'<span style="color:var(--text3)">—</span>');
-    tb+=row('Ops',s=>s.subbie?rp(opsRating(s)):'<span style="color:var(--text3)">—</span>');
+    tb+=row('Overall',s=>s.subbie?rp(overallRating(s)):'<span style="color:var(--text3)">—</span>');
+    RATING_GROUPS.forEach(g=>{
+      tb+=row(g.label,s=>s.subbie?rp(groupRating(s,g.key)):'<span style="color:var(--text3)">—</span>');
+    });
     tb+=row('Quality',s=>s.subbie?rp(s.quality_rating):'<span style="color:var(--text3)">—</span>');
     tb+=row('Programme',s=>s.subbie?rp(s.time_rating):'<span style="color:var(--text3)">—</span>');
     tb+=row('H&amp;S',s=>s.subbie?rp(s.hs_rating):'<span style="color:var(--text3)">—</span>');
@@ -1302,7 +1334,7 @@ function copyShortlist(){
   items.forEach(s=>{
     lines.push(`${s.name}${s._id===slPref?' [PREFERRED]':''}`);
     lines.push(`  Trade: ${s.trade_sub||s.trade_category||'—'} | City: ${s.city||'—'} | Contact: ${s.contact_name||'—'}`);
-    if(s.subbie) lines.push(`  Finance: ${financeRating(s)||'—'} | Ops: ${opsRating(s)||'—'} | EL: ${fmtDate(s.el_expiry)} | PL: ${fmtDate(s.pl_expiry)} | PI: ${fmtDate(s.pi_expiry)}`);
+    if(s.subbie) lines.push(`  Overall: ${overallRating(s)||'—'} | Finance: ${financeRating(s)||'—'} | Sales: ${salesRating(s)||'—'} | Design: ${designRating(s)||'—'} | Ops: ${opsRating(s)||'—'} | EL: ${fmtDate(s.el_expiry)} | PL: ${fmtDate(s.pl_expiry)} | PI: ${fmtDate(s.pi_expiry)}`);
     lines.push('');
   });
   navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Copied to clipboard'));
@@ -1331,8 +1363,8 @@ function renderAnalytics(){
       <div style="padding:16px">${recent.length?recent.map(r=>{
         const cls={Good:'rs-good',OK:'rs-ok',Poor:'rs-poor'}[r.performance]||'rs-ok';
         return`<div class="review-card" style="cursor:pointer;display:flex;gap:14px;align-items:flex-start" onclick="openDrawer(${r.sIdx})">
-          ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=4?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:6px 12px;min-width:56px">
-            <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=4?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
+          ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=3?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:6px 12px;min-width:56px">
+            <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=3?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
             <div style="font-size:8px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">avg /6</div>
           </div>`:''}
           <div style="flex:1;min-width:0">
@@ -1356,8 +1388,8 @@ function renderAnalytics(){
         </div>
       </div>
       <div class="card" style="margin:0"><div class="card-header"><h2>Subcontractor Summary</h2></div>
-        <div style="overflow-x:auto"><table><thead><tr><th>Company</th><th>Finance</th><th>Ops</th><th>Reviews</th><th>Last</th></tr></thead>
-        <tbody>${sc.map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})" style="cursor:pointer"><td style="font-size:13px">${esc(s.name)}</td><td>${rp(financeRating(s))}</td><td>${rp(opsRating(s))}</td><td style="font-size:12px;color:var(--text3);text-align:center">${(s._reviews||[]).length}</td><td>${lastReviewBadge(s)}</td></tr>`).join('')}</tbody></table></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Company</th><th>Overall</th><th>Finance</th><th>Sales</th><th>Design</th><th>Ops</th><th>Reviews</th><th>Last</th></tr></thead>
+        <tbody>${sc.map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})" style="cursor:pointer"><td style="font-size:13px">${esc(s.name)}</td><td>${rp(overallRating(s))}</td><td>${rp(financeRating(s))}</td><td>${rp(salesRating(s))}</td><td>${rp(designRating(s))}</td><td>${rp(opsRating(s))}</td><td style="font-size:12px;color:var(--text3);text-align:center">${(s._reviews||[]).length}</td><td>${lastReviewBadge(s)}</td></tr>`).join('')}</tbody></table></div>
       </div>
     </div>`;
 }
@@ -1366,6 +1398,40 @@ function renderAnalytics(){
 // Synthesized from data already recorded elsewhere — no separate audit table.
 // Covers: new suppliers added, approvals/sign-offs, reviews, DNU changes.
 // Deliberately excludes routine field edits (name/city/contact etc).
+
+function renderMatrix(){
+  const el=document.getElementById('matrix-content');
+  const scores=[4,3,2,1,0];
+  const bandColor={4:'var(--green-bg)',3:'var(--green-bg)',2:'var(--amber-bg)',1:'var(--red-bg)',0:'var(--surface2)'};
+  const bandText={4:'var(--green)',3:'var(--green)',2:'var(--amber)',1:'var(--red)',0:'var(--text3)'};
+  // group criteria under their heading
+  const groups={};
+  RATING_MATRIX.matrix.forEach(c=>{ (groups[c.group]=groups[c.group]||[]).push(c); });
+  let h='<div class="card" style="padding:0;overflow-x:auto"><table style="border-collapse:collapse;width:100%;min-width:900px;font-size:12px">';
+  // header row: score bands
+  h+='<thead><tr><th style="text-align:left;padding:10px 12px;position:sticky;left:0;background:var(--surface);border-bottom:2px solid var(--border);min-width:200px">Criterion</th>';
+  scores.forEach(s=>{
+    h+=`<th style="padding:10px 12px;border-bottom:2px solid var(--border);background:${bandColor[s]};color:${bandText[s]};min-width:180px;text-align:left;vertical-align:top">
+      <div style="font-size:15px;font-weight:700">${s}</div>
+      <div style="font-size:11px;font-weight:600">${esc(RATING_MATRIX.labels[s])}</div>
+    </th>`;
+  });
+  h+='</tr></thead><tbody>';
+  Object.keys(groups).forEach(grp=>{
+    h+=`<tr><td colspan="6" style="padding:9px 12px;background:var(--surface2);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);position:sticky;left:0">${esc(grp)}</td></tr>`;
+    groups[grp].forEach(c=>{
+      h+=`<tr><td style="padding:10px 12px;font-weight:600;vertical-align:top;position:sticky;left:0;background:var(--surface);border-bottom:1px solid var(--border)">${esc(c.criterion)}</td>`;
+      scores.forEach(s=>{
+        const txt=c.scores[String(s)]||c.scores[s]||'';
+        h+=`<td style="padding:10px 12px;vertical-align:top;border-bottom:1px solid var(--border);border-left:1px solid var(--border);white-space:pre-wrap;line-height:1.45;color:${txt?'var(--text)':'var(--text3)'}">${esc(txt)||'—'}</td>`;
+      });
+      h+='</tr>';
+    });
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+}
+
 let FIELD_HISTORY=[];
 async function renderRecentChanges(){
   // Pull the most recent field edits on demand — this table grows, and most
@@ -1408,7 +1474,7 @@ async function renderRecentChanges(){
       const cls=r.performance==='Good'?'var(--green)':r.performance==='Poor'?'var(--red)':'var(--amber)';
       const clsBg=r.performance==='Good'?'var(--green-bg)':r.performance==='Poor'?'var(--red-bg)':'var(--amber-bg)';
       events.push({ts:r.ts,idx,icon:'★',color:cls,bg:clsBg,
-        text:`<strong>${esc(s.name)}</strong> reviewed by ${esc(r.reviewedBy)} — <strong>${esc(r.performance)}</strong>${r.avgScore!=null?` (${r.avgScore}/6)`:''}`});
+        text:`<strong>${esc(s.name)}</strong> reviewed by ${esc(r.reviewedBy)} — <strong>${esc(r.performance)}</strong>${r.avgScore!=null?` (${r.avgScore}/4)`:''}`});
     });
     // DNU status changes
     if(s.dnu_changed_ts){
@@ -1604,18 +1670,13 @@ function buildDrawer(idx){
   }
   // Ratings — editable, role-gated, with required reason. Always shown for subcontractors.
   if(s.subbie){
-    const opsA=avgArr([s.hs_rating,s.quality_rating,s.time_rating,s.cost_rating]);
-    const finA=avgArr([s.ins_rating,s.credit_rating,s.invoice_rating]);
-    h+=`<div class="detail-section"><div class="section-hd">Ratings</div>`;
-    h+=`<div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:6px">Finance ${finA!=null?rp(finA):''}</div>`;
-    h+=ratingRow(idx,s,'ins_rating');
-    h+=ratingRow(idx,s,'credit_rating');
-    h+=ratingRow(idx,s,'invoice_rating');
-    h+=`<div style="font-size:11px;font-weight:600;color:var(--text3);margin:12px 0 6px">Operations ${opsA!=null?rp(opsA):''}</div>`;
-    h+=ratingRow(idx,s,'hs_rating');
-    h+=ratingRow(idx,s,'quality_rating');
-    h+=ratingRow(idx,s,'time_rating');
-    h+=ratingRow(idx,s,'cost_rating');
+    const overall=overallRating(s);
+    h+=`<div class="detail-section"><div class="section-hd">Ratings ${overall!=null?`<span style="font-weight:400;text-transform:none;letter-spacing:0">overall ${rp(overall)}</span>`:''}</div>`;
+    RATING_GROUPS.forEach((g,gi)=>{
+      const ga=groupRating(s,g.key);
+      h+=`<div style="font-size:11px;font-weight:600;color:var(--text3);margin:${gi?'12px':'0'} 0 6px">${esc(g.label)} ${ga!=null?rp(ga):''}</div>`;
+      g.fields.forEach(f=>{ h+=ratingRow(idx,s,f); });
+    });
     h+=`<div style="margin-top:10px"><button onclick="toggleRatingAudit(${idx})" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;color:var(--accent);padding:0;text-decoration:underline">${_showRatingAudit?'Hide audit info':'Show audit info'}</button></div>`;
     h+=`</div>`;
   }
@@ -1632,11 +1693,11 @@ function buildDrawer(idx){
         const v=r.questions?.[q.id];
         if(v===undefined)return'';
         if(typeof v==='boolean')return`<span style="font-size:11px;color:var(--text3);margin-right:8px">${esc(q.label)}: <strong style="color:${v?'var(--green)':'var(--red)'}">${v?'Y':'N'}</strong></span>`;
-        return`<span style="font-size:11px;color:var(--text3);margin-right:8px">${esc(q.label)}: <strong style="color:var(--text)">${v}/6</strong></span>`;
+        return`<span style="font-size:11px;color:var(--text3);margin-right:8px">${esc(q.label)}: <strong style="color:var(--text)">${v}/4</strong></span>`;
       }).join('');
       return`<div class="review-card" style="display:flex;gap:14px;align-items:flex-start">
-        ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=4?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:8px 14px;min-width:64px">
-          <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=4?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
+        ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=3?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:8px 14px;min-width:64px">
+          <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=3?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
           <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">avg /6</div>
         </div>`:''}
         <div style="flex:1;min-width:0">
@@ -1793,8 +1854,8 @@ function openReviewModal(idx){
     <div class="rq-row">
       <div><div class="rq-label">${esc(q.label)}</div><div class="rq-sub">${esc(q.sub)}</div></div>
       <div class="rq-btns">
-        <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="6" placeholder="–" oninput="setRQ('${q.id}',this.value)">
-        <span class="rq-score-sub">/6</span>
+        <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="4" placeholder="–" oninput="setRQ('${q.id}',this.value)">
+        <span class="rq-score-sub">/4</span>
       </div>
     </div>`).join('');
   updateRvAvgDisplay();
@@ -1821,10 +1882,10 @@ function updateRvAvgDisplay(){
   if(!el||!num)return;
   if(avg==null){ el.style.display='none'; return; }
   el.style.display='flex';
-  num.textContent=avg+'/6';
-  const color=avg<=2?'var(--red)':avg<=4?'var(--amber)':'var(--green)';
+  num.textContent=avg+'/4';
+  const color=avg<=2?'var(--red)':avg<=3?'var(--amber)':'var(--green)';
   el.style.borderLeftColor=color;
-  el.style.background=avg<=2?'var(--red-bg)':avg<=4?'var(--amber-bg)':'var(--green-bg)';
+  el.style.background=avg<=2?'var(--red-bg)':avg<=3?'var(--amber-bg)':'var(--green-bg)';
   num.style.color=color;
   el.querySelector('span').style.color=color;
 }
@@ -1832,7 +1893,7 @@ function updateRvAvgDisplay(){
 // from the average of the question scores (out of 5).
 function perfFromAvg(avg){
   if(avg==null)return null;
-  return avg<=2?'Poor':avg<=4?'OK':'Good';
+  return avg<=1?'Do Not Use':avg<=2?'Issues':avg<=3?'Excellent':'Good';
 }
 async function saveReview(){
   const suppIdx=parseInt(document.getElementById('rv-supplier').value);
@@ -1918,7 +1979,7 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   const ni=document.getElementById('nav-'+name); if(ni)ni.classList.add('active');
-  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Expiring Soon',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Analytics',changes:'Recent Changes'};
+  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Expiring Soon',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Analytics',changes:'Recent Changes',matrix:'Rating Matrix'};
   document.getElementById('topbar-title').textContent=titles[name]||name;
   if(name==='sc') renderSC();
   if(name==='suppliers') renderSuppliersOnly();
@@ -1928,6 +1989,7 @@ function switchTab(name){
   if(name==='ins') renderIns();
   if(name==='analytics') renderAnalytics();
   if(name==='changes') renderRecentChanges();
+  if(name==='matrix') renderMatrix();
 }
 
 function toggleSidebar(){
