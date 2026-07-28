@@ -331,7 +331,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v9.2';
+const APP_VERSION = 'v9.4';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -939,6 +939,8 @@ async function saveRatingEdit(idx,field){
     supplier_id:s._id, field, old_value:oldVal, new_value:n,
     changed_by_user_id:_sbUser.id, changed_by_name:myName(), changed_by_role:actingRole, reason
   }),'Saving rating history');
+  // Also record in the unified change history so it appears in Recent Changes.
+  logFieldChange(s, field, oldVal==null?'(blank)':oldVal+'/4', n+'/4');
   _ratingEditField=null;
   buildDrawer(idx); renderMetrics(); applyFilters();
   toast(RATING_FIELD_LABELS[field]+' rating updated');
@@ -1066,7 +1068,17 @@ const FIELD_LABELS={name:'Business Name',trade_category:'Category',trade_sub:'Su
   el_value:'EL Value',pl_value:'PL Value',pi_value:'PI Value',
   safe_contractor:'SafeContractor',safe_contractor_expiry:'SafeContractor Expiry',
   constructionline:'Constructionline',constructionline_expiry:'Constructionline Expiry'};
-function fieldLabel(f){ return FIELD_LABELS[f]||f; }
+function fieldLabel(f){
+  if(f==='comment') return 'Comment';
+  if(f==='review') return 'Performance Review';
+  if(FIELD_LABELS[f]) return FIELD_LABELS[f];
+  if(RATING_FIELD_LABELS[f]){
+    // prefix rating criteria with their group for clarity in the feed
+    const g=RATING_GROUPS.find(x=>x.fields.includes(f));
+    return (g?g.label+' — ':'')+RATING_FIELD_LABELS[f]+' rating';
+  }
+  return f;
+}
 // Every field edit is logged so the activity feed can show what changed,
 // who changed it and when. Fire-and-forget — a failed log must never block
 // the edit itself.
@@ -1653,39 +1665,39 @@ async function renderRecentChanges(){
     const s=DB[idx];
     const from=h.old_value===null||h.old_value===''?'(blank)':h.old_value;
     const to=h.new_value===null||h.new_value===''?'(blank)':h.new_value;
-    events.push({ts:h.created_at,idx,icon:'✎',color:'var(--accent)',bg:'var(--surface2)',
-      text:`<strong>${esc(s.name)}</strong> — ${esc(h.field_label||h.field)} changed from <em>${esc(from)}</em> to <em>${esc(to)}</em> by ${esc(h.changed_by_name)}`});
+    events.push({ts:h.created_at,idx,icon:'✎',color:'var(--accent)',bg:'var(--surface2)',who:h.changed_by_name,
+      text:`<strong>${esc(s.name)}</strong> — ${esc(h.field_label||h.field)} changed from <em>${esc(from)}</em> to <em>${esc(to)}</em>`});
   });
   DB.forEach(s=>{
     const idx=DB.indexOf(s);
     // New supplier added
     if(s.added_ts){
-      events.push({ts:s.added_ts,idx,icon:'➕',color:'var(--amber)',bg:'var(--amber-bg)',
-        text:`<strong>${esc(s.name)}</strong> was added${s.added_by?' by '+esc(s.added_by):''}${s.added_dept?' ('+esc(s.added_dept)+')':''}`});
+      events.push({ts:s.added_ts,idx,icon:'➕',color:'var(--amber)',bg:'var(--amber-bg)',who:s.added_by?s.added_by+(s.added_dept?' ('+s.added_dept+')':''):'',
+        text:`<strong>${esc(s.name)}</strong> was added`});
     }
     // Historic supplier approval (from before new-supplier approval was retired)
     if(s.signoff_ts){
-      events.push({ts:s.signoff_ts,idx,icon:'✓',color:'var(--green)',bg:'var(--green-bg)',
-        text:`<strong>${esc(s.name)}</strong> was approved${s.signoff_by_name?' by '+esc(s.signoff_by_name):''}`});
+      events.push({ts:s.signoff_ts,idx,icon:'✓',color:'var(--green)',bg:'var(--green-bg)',who:s.signoff_by_name||'',
+        text:`<strong>${esc(s.name)}</strong> was approved`});
     }
     // Historic insurance sign-offs (from before sign-off was retired)
     Object.entries(s.insurance_signoff_current||{}).forEach(([type,meta])=>{
       if(meta&&meta.ts){
-        events.push({ts:meta.ts,idx,icon:'🛡',color:'var(--green)',bg:'var(--green-bg)',
-          text:`<strong>${esc(s.name)}</strong> — ${type} insurance signed off by ${esc(meta.by)}`});
+        events.push({ts:meta.ts,idx,icon:'🛡',color:'var(--green)',bg:'var(--green-bg)',who:meta.by||'',
+          text:`<strong>${esc(s.name)}</strong> — ${type} insurance signed off`});
       }
     });
     // Reviews
     (s._reviews||[]).forEach(r=>{
       const cls=r.performance==='Good'?'var(--green)':r.performance==='Poor'?'var(--red)':'var(--amber)';
       const clsBg=r.performance==='Good'?'var(--green-bg)':r.performance==='Poor'?'var(--red-bg)':'var(--amber-bg)';
-      events.push({ts:r.ts,idx,icon:'★',color:cls,bg:clsBg,
-        text:`<strong>${esc(s.name)}</strong> reviewed by ${esc(r.reviewedBy)} — <strong>${esc(r.performance)}</strong>${r.avgScore!=null?` (${r.avgScore}/4)`:''}`});
+      events.push({ts:r.ts,idx,icon:'★',color:cls,bg:clsBg,who:r.reviewedBy||'',
+        text:`<strong>${esc(s.name)}</strong> reviewed — <strong>${esc(r.performance)}</strong>${r.avgScore!=null?` (${r.avgScore}/4)`:''}`});
     });
     // DNU status changes
     if(s.dnu_changed_ts){
-      events.push({ts:s.dnu_changed_ts,idx,icon:s.dnu?'⛔':'↩',color:s.dnu?'var(--red)':'var(--green)',bg:s.dnu?'var(--red-bg)':'var(--green-bg)',
-        text:(s.dnu?`<strong>${esc(s.name)}</strong> marked Do Not Use${s.dnu_notes?': '+esc(s.dnu_notes):''}`:`<strong>${esc(s.name)}</strong> cleared from Do Not Use`)+(s.dnu_changed_by?` — by ${esc(s.dnu_changed_by)}`:'')});
+      events.push({ts:s.dnu_changed_ts,idx,icon:s.dnu?'⛔':'↩',color:s.dnu?'var(--red)':'var(--green)',bg:s.dnu?'var(--red-bg)':'var(--green-bg)',who:s.dnu_changed_by||'',
+        text:(s.dnu?`<strong>${esc(s.name)}</strong> marked Do Not Use${s.dnu_notes?': '+esc(s.dnu_notes):''}`:`<strong>${esc(s.name)}</strong> cleared from Do Not Use`)});
     }
   });
   events.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
@@ -1701,6 +1713,7 @@ async function renderRecentChanges(){
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;color:var(--text);line-height:1.5">${e.text}</div>
         <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px">${fmtTs(e.ts)}</div>
+        ${e.who?`<div style="font-size:11px;color:var(--text3);margin-top:1px">${esc(e.who)}</div>`:''}
       </div>
     </div>`).join('')}</div></div>`;
 }
@@ -1999,9 +2012,11 @@ function addNote(idx){
   DB[idx]._notes=DB[idx]._notes||[];
   DB[idx]._notes.push({text,author,dept,ts:new Date().toISOString()});
   localStorage.setItem('mfb_last_author',author); localStorage.setItem('mfb_last_dept',dept);
+  // Log to the change feed (truncate long comments for the summary line).
+  logFieldChange(DB[idx],'comment',null,'Comment added: "'+(text.length>80?text.slice(0,80)+'…':text)+'"');
   saveDB(); schedSync(DB[idx]._id); applyFilters(); toast('Comment posted'); buildDrawer(idx);
 }
-function delNote(idx,ni,e){ e.stopPropagation(); if(!isSuperuser()){ toast('Only a Superuser can delete comments','err'); return; } if(!confirm('Delete this comment?'))return; DB[idx]._notes.splice(ni,1); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Comment deleted'); }
+function delNote(idx,ni,e){ e.stopPropagation(); if(!isSuperuser()){ toast('Only a Superuser can delete comments','err'); return; } if(!confirm('Delete this comment?'))return; const removed=DB[idx]._notes[ni]; DB[idx]._notes.splice(ni,1); logFieldChange(DB[idx],'comment',(removed&&removed.text?'"'+(removed.text.length>60?removed.text.slice(0,60)+'…':removed.text)+'"':'a comment'),'(deleted)'); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Comment deleted'); }
 function delReview(idx,ri,e){
   e.stopPropagation(); if(!confirm('Delete this review?'))return;
   DB[idx]._reviews.splice(ri,1); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Review deleted');
