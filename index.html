@@ -331,7 +331,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v8.3';
+const APP_VERSION = 'v9.2';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -361,12 +361,6 @@ let _sbUser = null;
     <button class="nav-item active" id="nav-all" data-label="All Suppliers" onclick="switchTab('all')">
       <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M5 5h6M5 11h3"/></svg><span>All Suppliers</span></div><span class="nav-count" id="nc-all">—</span>
     </button>
-    <button class="nav-item" id="nav-sc" data-label="Subcontractors" onclick="switchTab('sc')">
-      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a3 3 0 110 6A3 3 0 018 2zM3 14a5 5 0 0110 0"/></svg><span>Subcontractors</span></div><span class="nav-count" id="nc-sc">—</span>
-    </button>
-    <button class="nav-item" id="nav-suppliers" data-label="Suppliers" onclick="switchTab('suppliers')">
-      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg><span>Suppliers</span></div><span class="nav-count" id="nc-sup">—</span>
-    </button>
     <button class="nav-item" id="nav-shortlist" data-label="Shortlist" onclick="switchTab('shortlist')">
       <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.8 3.6 4 .6-2.9 2.8.7 4L8 11 4.4 13l.7-4L2.2 6.2l4-.6z"/></svg><span>Shortlist</span></div><span class="nav-count" id="nc-sl">—</span>
     </button>
@@ -387,6 +381,12 @@ let _sbUser = null;
     </button>
     <button class="nav-item" id="nav-matrix" data-label="Rating Matrix" onclick="switchTab('matrix')">
       <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12"/></svg><span>Rating Matrix</span></div>
+    </button>
+    <button class="nav-item" id="nav-certreview" data-label="Targeted Supplier Review" onclick="switchTab('certreview')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l3 3 7-7"/></svg><span>Targeted Review</span></div><span class="nav-count" id="nc-certreview">—</span>
+    </button>
+    <button class="nav-item" id="nav-pqq" data-label="PQQ Review" onclick="switchTab('pqq')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v6l4 2"/><circle cx="8" cy="8" r="6"/></svg><span>PQQ Review</span></div><span class="nav-count" id="nc-pqq">—</span>
     </button>
     <div class="nav-section">Actions</div>
     <button class="nav-item" data-label="Add Supplier" onclick="openAddModal()"><div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg><span>Add Supplier</span></div></button>
@@ -416,7 +416,6 @@ let _sbUser = null;
   </header>
   <div class="content">
     <div class="tab active" id="tab-all">
-      <div class="metrics" id="metrics-all"></div>
       <div class="card"><div class="card-header"><h2>Supplier Register</h2><span id="result-count" style="font-size:12px;color:var(--text3)"></span></div>
         <div class="card-body"><div class="toolbar">
           <div class="s-wrap"><span class="s-icon">&#128269;</span><input class="search-inp" type="text" id="f-search" placeholder="Search name, trade, city&hellip;" oninput="applyFilters();toggleSearchClear()"><button class="s-clear" id="f-search-clear" onclick="clearSearch()" title="Clear search" aria-label="Clear search">&#10005;</button></div>
@@ -431,20 +430,14 @@ let _sbUser = null;
           <th onclick="sortBy('name')" data-col="name">Company</th>
           <th onclick="sortBy('trade_category')" data-col="trade_category">Category</th>
           <th onclick="sortBy('trade_sub')" data-col="trade_sub">Trade</th>
-          <th onclick="sortBy('city')" data-col="city">City</th>
-          <th onclick="sortBy('regions')" data-col="regions">Region</th>
+          <th onclick="sortBy('city')" data-col="city">Office</th>
+          <th onclick="sortBy('regions')" data-col="regions">Operating Region</th>
+          <th onclick="sortBy('_ins')" data-col="_ins">1st Ins' Exp'</th>
           <th>Type</th><th>Last Review</th><th>Status</th><th style="width:48px"></th>
         </tr></thead><tbody id="supplier-tbody"></tbody></table></div>
         <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)"><span id="page-info" style="flex:1"></span><div style="display:flex;gap:4px" id="page-btns"></div></div>
       </div>
     </div>
-    <div class="tab" id="tab-sc"><div class="metrics" id="metrics-sc"></div>
-      <div class="card"><div class="card-header"><h2>Subcontractors</h2></div><div class="card-scroll"><table><thead><tr>
-        <th style="width:36px"></th><th>Company</th><th>Category</th><th>Trade</th><th>City</th><th>Region</th><th>Overall</th><th>Last Review</th><th>Insurance</th><th>Status</th><th style="width:48px"></th>
-      </tr></thead><tbody id="sc-tbody"></tbody></table></div></div></div>
-    <div class="tab" id="tab-suppliers"><div class="card"><div class="card-header"><h2>Suppliers / Manufacturers / Hire</h2></div><div class="card-scroll"><table><thead><tr>
-      <th>Company</th><th>Category</th><th>Trade</th><th>City</th><th>Region</th><th>Status</th>
-    </tr></thead><tbody id="sup-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-shortlist"><div class="page-hd"><div><h1>Shortlist</h1><p>Star suppliers to compare and tender</p></div><div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="copyShortlist()">Copy</button><button class="btn btn-sm" onclick="window.print()">Print</button><button class="btn btn-sm" onclick="clearShortlist()">Clear all</button></div></div><div id="shortlist-content"></div></div>
     <div class="tab" id="tab-pending"><div class="page-hd"><div><h1>Expiring Soon</h1><p>Insurance certificates due to expire within 90 days — most urgent first</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Type</th><th>Trade</th><th>Expires</th><th style="width:110px">Time Left</th></tr></thead><tbody id="pending-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-dnu"><div class="page-hd"><div><h1>Do Not Use</h1><p>Do not engage without clearance</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>Reason</th><th style="width:150px">Set by</th><th style="width:110px">Last Used</th></tr></thead><tbody id="dnu-tbody"></tbody></table></div></div></div>
@@ -452,6 +445,8 @@ let _sbUser = null;
     <div class="tab" id="tab-analytics"><div class="page-hd"><div><h1>Analytics</h1><p>Contractor performance overview</p></div></div><div id="analytics-content"></div></div>
     <div class="tab" id="tab-changes"><div class="page-hd"><div><h1>Recent Changes</h1><p>New suppliers, approvals, reviews, and DNU changes — newest first</p></div></div><div id="changes-content"></div></div>
     <div class="tab" id="tab-matrix"><div class="page-hd"><div><h1>Rating Matrix</h1><p>McFeggan Supplier Chain Rating Matrix — reference for scoring</p></div></div><div id="matrix-content"></div></div>
+    <div class="tab" id="tab-certreview"><div class="page-hd"><div><h1>Targeted Supplier Review</h1><p>Temporary list — tick each supplier as it is reviewed. Completed rows disappear; the tab clears when all are done.</p></div></div><div id="certreview-content"></div></div>
+    <div class="tab" id="tab-pqq"><div class="page-hd"><div><h1>PQQ Annual Review</h1><p>Suppliers whose PQQ is due for its yearly review (loaded over a year ago). Ops can mark a review complete to reset the clock for another year.</p></div></div><div id="pqq-content"></div></div>
   </div>
 </div>
 </div>
@@ -528,7 +523,7 @@ let _sbUser = null;
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;border-top:1px solid var(--border)">Add a Role by Email</div>
     <div class="fg2">
       <div class="field"><label>Email *</label><input id="role-email" placeholder="name@mcfegganbrown.co.uk"></div>
-      <div class="field"><label>Role *</label><select id="role-select"><option value="">Select&hellip;</option><option>Superuser</option><option>Finance Director</option><option>Sales Lead</option><option>Design Lead</option><option>Project Manager</option><option>Operations Director</option></select></div>
+      <div class="field"><label>Role *</label><select id="role-select"><option value="">Select&hellip;</option><option>Superuser</option><option>Finance Director</option><option>Finance</option><option>Sales Lead</option><option>Design Lead</option><option>Project Manager</option><option>Operations Director</option></select></div>
     </div>
     <div class="field"><label>Display Name *</label><input id="role-name" placeholder="How their name should appear"></div>
   </div><div class="modal-foot"><button class="btn" onclick="closeRolesModal()">Close</button><button class="btn btn-primary" onclick="saveRole()">Add Role</button></div></div></div>
@@ -539,18 +534,7 @@ let _sbUser = null;
     <div class="field"><label>Changed by *</label><select id="dnu-changed-by"></select></div>
     <div class="field"><label>Reason *</label><textarea id="dnu-change-reason" rows="3" placeholder="Why is this status changing?"></textarea></div>
   </div><div class="modal-foot"><button class="btn" onclick="cancelDnuChange()">Cancel</button><button class="btn btn-primary" onclick="confirmDnuChange()">Save</button></div></div></div>
-<div class="modal-overlay" id="ins-confirm-modal" onclick="if(event.target===this)cancelInsuranceSave()">
-  <div class="modal" style="width:min(96vw,440px)"><div class="modal-head"><h3>Confirm Insurance Update</h3><button class="btn-icon" onclick="cancelInsuranceSave()">&#10005;</button></div>
-  <div class="modal-body">
-    <div class="pending-banner" style="margin-bottom:0">
-      <span>⚠ Have you issued the updated document to Finance as evidence?</span>
-    </div>
-    <div style="font-size:12px;color:var(--text2)">You're changing the expiry date for: <strong id="ins-confirm-types"></strong>. Make sure Finance has the new certificate on file.</div>
-    <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text);cursor:pointer;margin-top:4px">
-      <input type="checkbox" id="ins-confirm-check" style="margin-top:3px" onchange="document.getElementById('ins-confirm-proceed').disabled=!this.checked">
-      <span>I confirm the updated insurance document has been issued to Finance.</span>
-    </label>
-  </div><div class="modal-foot"><button class="btn" onclick="cancelInsuranceSave()">Cancel</button><button class="btn btn-primary" id="ins-confirm-proceed" disabled onclick="confirmInsuranceSave()">Save dates</button></div></div></div>
+
 <div class="cmdk-overlay" id="cmdk-overlay" onclick="if(event.target===this)closeCmdK()">
   <div class="cmdk-box">
     <div class="cmdk-input-row">
@@ -591,13 +575,13 @@ const RQ = [
 const LS='mfb_sup_v4', SLK='mfb_shortlist';
 
 // ── Roles & permissions ──────────────────────────────────────────────────────
-const ROLES = ['Finance Director','Sales Lead','Design Lead','Project Manager','Operations Director'];
-const ALL_ROLE_NAMES = ['Superuser','Finance Director','Sales Lead','Design Lead','Project Manager','Operations Director'];
+const ROLES = ['Finance Director','Finance','Sales Lead','Design Lead','Project Manager','Operations Director'];
+const ALL_ROLE_NAMES = ['Superuser','Finance Director','Finance','Sales Lead','Design Lead','Project Manager','Operations Director'];
 // Which role(s) may edit which rating fields.
 const RATING_FIELD_ROLES = {
-  ins_rating:     ['Finance Director'],
-  credit_rating:  ['Finance Director'],
-  invoice_rating: ['Finance Director'],
+  ins_rating:     ['Finance Director','Finance'],
+  credit_rating:  ['Finance Director','Finance'],
+  invoice_rating: ['Finance Director','Finance'],
   sales_response_rating:  ['Sales Lead'],
   sales_price_rating:     ['Sales Lead'],
   sales_technical_rating: ['Sales Lead'],
@@ -626,7 +610,16 @@ const RATING_MATRIX = {"matrix":[{"group":"Finance","criterion":"Insurances","sc
 let myRoles=new Set(); // a person can hold multiple roles — set after login from user_roles table
 let myDisplayName=null;
 function canEditRating(field){ const allowed=RATING_FIELD_ROLES[field]; return allowed && allowed.some(r=>myRoles.has(r)); }
-function isSuperuser(){ return myRoles.has('Superuser'); }
+// Insurance information is controlled by Finance-type roles (or Superuser) only.
+const FINANCE_ROLES=['Finance Director','Finance'];
+function canEditInsurance(){ return isSuperuser()||FINANCE_ROLES.some(r=>myRoles.has(r)); }
+function isSuperuser(){
+  // Tolerant of casing/spacing variants in the user_roles table
+  // ('superuser', 'Super User', etc.) so a minor data entry difference
+  // doesn't silently strip Superuser powers.
+  for(const r of myRoles){ if(String(r).toLowerCase().replace(/[^a-z]/g,'')==='superuser') return true; }
+  return false;
+}
 
 let ALL_ROLES_LIST=[]; // [{user_id,email,display_name,role}] — one row PER (person, role), so one person can appear multiple times
 
@@ -706,7 +699,7 @@ async function doLogin(){
   _sbUser=data.user;
   document.getElementById('auth-overlay').style.display='none';
   document.getElementById('sb-user-email').textContent=email;
-  await loadDB(); updateCounts(); renderMetrics(); applyFilters(); runInsuranceChecks();
+  await loadDB(); await loadReviewDone(); updateCounts(); renderMetrics(); applyFilters(); runInsuranceChecks();
 }
 async function doLogout(){
   if(!confirm('Sign out?'))return;
@@ -725,7 +718,7 @@ async function initApp(){
       _sbUser=session.user;
       document.getElementById('auth-overlay').style.display='none';
       document.getElementById('sb-user-email').textContent=session.user.email;
-      await loadDB(); updateCounts(); renderMetrics(); applyFilters(); runInsuranceChecks();
+      await loadDB(); await loadReviewDone(); updateCounts(); renderMetrics(); applyFilters(); runInsuranceChecks();
     }
     // else: login overlay already visible
   }catch(e){
@@ -769,6 +762,32 @@ window.addEventListener('online',()=>{ if(_wasOffline){ toast('Back online'); _w
 function pd(s){ if(!s)return null; const d=new Date(s); return isNaN(d)?null:d; }
 function daysUntil(s){ const d=pd(s); if(!d)return null; return Math.round((d-today)/86400000); }
 function fmtDate(s){ const d=pd(s); if(!d)return'—'; return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}); }
+// Soonest of a supplier's three insurance expiries (EL/PL/PI). Returns the
+// raw date string, or null if none set. Used for the All Suppliers column.
+// ── PQQ annual review ────────────────────────────────────────────────────────
+// A supplier's PQQ should be re-checked a year after it was loaded. Once Ops
+// reviews it, they stamp pqq_reviewed_ts, which resets the clock.
+function pqqDueTs(s){
+  const base = s.pqq_reviewed_ts || s.added_ts;
+  if(!base) return null;
+  const d=new Date(base); d.setFullYear(d.getFullYear()+1);
+  return d;
+}
+function pqqDueDate(s){ const d=pqqDueTs(s); return d?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}):'—'; }
+function pqqReviewDue(s){ const d=pqqDueTs(s); return d ? d<=new Date() : false; }
+function soonestInsuranceExpiry(s){
+  const ds=[s.el_expiry,s.pl_expiry,s.pi_expiry].map(pd).filter(Boolean);
+  if(!ds.length)return null;
+  return ds.reduce((a,b)=>a<b?a:b).toISOString().slice(0,10);
+}
+function insExpiryCell(s){
+  if(!s.subbie)return'<span style="color:var(--text3)">—</span>'; // only subbies carry insurance
+  const soon=soonestInsuranceExpiry(s);
+  if(!soon)return'<span style="color:var(--text3)">—</span>';
+  const dleft=daysUntil(soon);
+  const col=dleft<0?'var(--red)':dleft<90?'var(--amber)':'var(--text3)';
+  return `<span style="font-size:12px;color:${col};font-weight:${dleft<90?'600':'400'}">${fmtDate(soon)}</span>`;
+}
 function fmtTs(ts){ if(!ts)return''; const d=new Date(ts); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
 function fmtMoney(v){ if(!v)return'—'; return v>=1000000?'£'+(v/1000000).toFixed(0)+'M':v>=1000?'£'+(v/1000).toFixed(0)+'K':'£'+v; }
 function rp(v){ if(v==null||v===''||v===0)return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; return`<span class="rating-pill ${n<=2?'r-low':n<=3?'r-mid':'r-good'}">${n}</span>`; }
@@ -806,7 +825,11 @@ function blockedReason(s){
   if(exp.length) return 'Insurance expired: '+exp.join(', ');
   return '—';
 }
-function statusBadge(s){ return isBlocked(s)?'<span class="badge bg-red">DNU</span>':'<span class="badge bg-green">Active</span>'; }
+function statusBadge(s){
+  if(isBlocked(s)) return '<span class="badge bg-red">DNU</span>';
+  if(s.soft_dnu) return '<span class="badge bg-amber" title="PQQ review overdue — under review">Review</span>';
+  return '<span class="badge bg-green">Active</span>';
+}
 // Trades are multi-value: a contractor can span several categories and many
 // sub-trades. Stored as semicolon-separated strings in trade_category /
 // trade_sub so the existing columns still work.
@@ -924,12 +947,12 @@ async function saveRatingEdit(idx,field){
 // ── Counts ────────────────────────────────────────────────────────────────────
 function updateCounts(){
   document.getElementById('nc-all').textContent=DB.length;
-  document.getElementById('nc-sc').textContent=DB.filter(s=>s.subbie).length;
-  document.getElementById('nc-sup').textContent=DB.filter(s=>s.supplier||s.hire).length;
   document.getElementById('nc-dnu').textContent=DB.filter(isBlocked).length;
   document.getElementById('nc-ins').textContent=DB.filter(s=>s.subbie&&insIssue(s)).length;
   document.getElementById('nc-sl').textContent=SL.length;
   document.getElementById('nc-pending').textContent=countExpiringSoon();
+  const nco=certReviewOutstanding().length; const el1=document.getElementById('nc-certreview'); if(el1) el1.textContent=nco;
+  const ncp=pqqDueList().length; const el2=document.getElementById('nc-pqq'); if(el2) el2.textContent=ncp;
 }
 function updateLocalCount(){ const n=DB.filter(s=>s._local).length; document.getElementById('local-count').textContent=n?`${n} local addition${n!==1?'s':''}`:''; }
 
@@ -939,12 +962,9 @@ function renderMetrics(){
   const avg=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length).toFixed(1):'—';
   const exp=DB.filter(s=>s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<0;}));
   const soon=DB.filter(s=>!exp.includes(s)&&s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<90;}));
-  document.getElementById('metrics-all').innerHTML=
-    met('blue','Total',DB.length)+met('green','Active',DB.filter(s=>!isBlocked(s)).length)+
-    met('purple','Subcontractors',sc.length)+met('red','DNU',DB.filter(isBlocked).length)+met('amber','Ins Issues',exp.length+soon.length)+met('amber','Expiring Soon',countExpiringSoon());
-  document.getElementById('metrics-sc').innerHTML=
-    met('blue','Subcontractors',sc.length)+met('green','Active',sc.filter(s=>!isBlocked(s)).length)+
-    met('red','DNU',sc.filter(isBlocked).length)+met('amber','Avg Rating',avg)+met('purple','Reviewed',sc.filter(s=>(s._reviews||[]).length>0).length);
+  // Stat cards were removed from All Suppliers; the insurance tab keeps its own.
+  const mAll=document.getElementById('metrics-all'); if(mAll) mAll.innerHTML='';
+  const mSc=document.getElementById('metrics-sc'); if(mSc) mSc.innerHTML='';
   document.getElementById('metrics-ins').innerHTML=
     met('red','Expired',exp.length)+met('amber','Expiring <90d',soon.length)+met('green','OK',sc.length-exp.length-soon.length);
 }
@@ -987,7 +1007,7 @@ function cascadeDrawerSub(idx){
   sel.innerHTML=subOptions(cats,multiVal(sel));
 }
 // Generic single-field save for the drawer's inline-editable Profile/Contact
-// fields. Mirrors the pattern used by saveLastUsed/saveInsurance elsewhere:
+// fields. Mirrors the pattern used by saveLastUsed elsewhere:
 // update local state, sync to Supabase, refresh dependent views.
 // ── Do Not Use status changes ────────────────────────────────────────────────
 // Changing DNU always records who made the call and why — it's a decision
@@ -1058,8 +1078,12 @@ function logFieldChange(s,field,oldVal,newVal){
     changed_by_user_id:_sbUser?_sbUser.id:null, changed_by_name:myName()
   }),'Saving change history');
 }
+const INSURANCE_FIELDS=['el_value','el_expiry','pl_value','pl_expiry','pi_value','pi_expiry'];
 function saveField(idx,field,value){
   const s=DB[idx];
+  // Insurance fields are Finance-controlled — backstop the UI gating here so a
+  // stray call can't slip an edit through.
+  if(INSURANCE_FIELDS.includes(field) && !canEditInsurance()){ toast('Only Finance can edit insurance','err'); buildDrawer(idx); return; }
   if(s[field]===value)return; // no actual change, skip a pointless sync
   const oldVal=s[field];
   s[field]=value;
@@ -1067,8 +1091,6 @@ function saveField(idx,field,value){
   logFieldChange(s,field,oldVal,value);
   saveDB(); schedSync(s._id);
   updateCounts(); renderMetrics(); applyFilters();
-  if(document.getElementById('tab-sc').classList.contains('active')) renderSC();
-  if(document.getElementById('tab-suppliers').classList.contains('active')) renderSuppliersOnly();
   if(document.getElementById('tab-dnu').classList.contains('active')) renderDNU();
   if(document.getElementById('tab-pending').classList.contains('active')) renderPending();
   // DNU, Subcontractor-type, and Compliance accreditation fields all affect
@@ -1108,7 +1130,9 @@ function applyFilters(){
     return true;
   });
   filtered.sort((a,b)=>{
-    let av=a[sortCol],bv=b[sortCol];
+    // _ins is a computed column (soonest insurance expiry), not a stored field.
+    let av = sortCol==='_ins' ? soonestInsuranceExpiry(a) : a[sortCol];
+    let bv = sortCol==='_ins' ? soonestInsuranceExpiry(b) : b[sortCol];
     if(av==null)av=sortDir>0?'zzz':''; if(bv==null)bv=sortDir>0?'zzz':'';
     if(typeof av==='number'&&typeof bv==='number')return(av-bv)*sortDir;
     return String(av).localeCompare(String(bv))*sortDir;
@@ -1142,7 +1166,7 @@ function renderTable(){
   const start=(page-1)*PAGE, slice=filtered.slice(start,start+PAGE);
   const tbody=document.getElementById('supplier-tbody');
   if(!slice.length){
-    tbody.innerHTML='<tr><td colspan="10" class="empty-state">No suppliers match your filters</td></tr>';
+    tbody.innerHTML='<tr><td colspan="11" class="empty-state">No suppliers match your filters</td></tr>';
     document.getElementById('page-info').textContent='';
     document.getElementById('page-btns').innerHTML='';
     return;
@@ -1156,6 +1180,7 @@ function renderTable(){
       <td>${subPill(s)}</td>
       <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
       <td style="font-size:12px;color:var(--text3)">${regionCell(s)}</td>
+      <td>${insExpiryCell(s)}</td>
       <td>${typetag(s)}</td>
       <td>${lastReviewBadge(s)}</td>
       <td>${statusBadge(s)}</td>
@@ -1247,7 +1272,6 @@ function toggleStar(idx){
   const id=DB[idx]._id;
   if(SL.includes(id)) SL=SL.filter(x=>x!==id); else SL.push(id);
   saveSL(); applyFilters();
-  if(document.getElementById('tab-sc').classList.contains('active')) renderSC();
   if(document.getElementById('tab-shortlist').classList.contains('active')) renderShortlist();
   if(drawerIdx!==null) buildDrawer(drawerIdx);
   toast(SL.includes(id)?'Added to shortlist':'Removed from shortlist');
@@ -1266,6 +1290,20 @@ function renderShortlist(){
     if(x<0)return`<span class="badge bg-red" style="font-size:11px">Expired ${fmtDate(d)}</span>`;
     if(x<90)return`<span class="badge bg-amber" style="font-size:11px">${fmtDate(d)}</span>`;
     return`<span class="badge bg-green" style="font-size:11px">${fmtDate(d)}</span>`;
+  }
+  // Shortlist insurance cell: cover value alongside the expiry date, since
+  // when comparing subbies for tender the sum insured matters as much as when
+  // it lapses.
+  function insCellVal(val,d){
+    const money=val?`<div style="font-size:12px;font-weight:600;color:var(--text)">${fmtMoney(val)}</div>`:'';
+    let date;
+    if(!d){ date='<span style="font-size:11px;color:var(--text3)">no date</span>'; }
+    else { const x=daysUntil(d);
+      const cls=x!=null&&x<0?'bg-red':x!=null&&x<90?'bg-amber':'bg-green';
+      date=`<span class="badge ${cls}" style="font-size:10px">${fmtDate(d)}</span>`;
+    }
+    if(!val&&!d)return'<span style="font-size:12px;color:var(--text3)">—</span>';
+    return money+date;
   }
   function compCell(v){
     if(!v||v==='NO'||v==='No')return'<span style="color:var(--text3);font-size:16px">—</span>';
@@ -1308,9 +1346,9 @@ function renderShortlist(){
     tb+=row('Programme',s=>s.subbie?rp(s.time_rating):'<span style="color:var(--text3)">—</span>');
     tb+=row('H&amp;S',s=>s.subbie?rp(s.hs_rating):'<span style="color:var(--text3)">—</span>');
     tb+=secRow('Insurance');
-    tb+=row('EL expiry',s=>s.subbie?insCell(s.el_expiry):'<span style="color:var(--text3)">—</span>');
-    tb+=row('PL expiry',s=>s.subbie?insCell(s.pl_expiry):'<span style="color:var(--text3)">—</span>');
-    tb+=row('PI expiry',s=>s.subbie?insCell(s.pi_expiry):'<span style="color:var(--text3)">—</span>');
+    tb+=row('EL (value / expiry)',s=>s.subbie?insCellVal(s.el_value,s.el_expiry):'<span style="color:var(--text3)">—</span>');
+    tb+=row('PL (value / expiry)',s=>s.subbie?insCellVal(s.pl_value,s.pl_expiry):'<span style="color:var(--text3)">—</span>');
+    tb+=row('PI (value / expiry)',s=>s.subbie?insCellVal(s.pi_value,s.pi_expiry):'<span style="color:var(--text3)">—</span>');
     tb+=secRow('Compliance');
     tb+=row('Safe Contractor',s=>s.subbie?compCell(s.safe_contractor):'<span style="color:var(--text3)">—</span>');
     tb+=row('Constructionline',s=>s.subbie?compCell(s.constructionline):'<span style="color:var(--text3)">—</span>');
@@ -1398,6 +1436,174 @@ function renderAnalytics(){
 // Synthesized from data already recorded elsewhere — no separate audit table.
 // Covers: new suppliers added, approvals/sign-offs, reviews, DNU changes.
 // Deliberately excludes routine field edits (name/city/contact etc).
+
+
+const CERT_REVIEW_LIST = ["2 TECK LIMITED","361 DEGREES LTD","A C Ceramics","A DOOR ADDITIONS LTD","A.D Colbert Ltd","A1 Fire and Security Ltd","A2 ELECTRICAL LTD","Abbey Electrical (Swindon) Limited","ABILITY LIFTS LIMITED","ACCESS CONTRACTING LIMITED","ACCESS FLOORING SOLUTIONS 21 LTD","ACE SYSTEMS LIMITED","ACS CONTROLLED DEMOLITION LTD","Adex Drilling Service","AGA SCAFFOLDING LTD","AJS SUSPENDED CEILINGS LIMITED","ALDWORTH ROOFING CONTRACTS LTD","All Mastic Ltd","ALL SEASONS ROOFING GROUP LTD","AMELIO UTILITIES (GLOUCESTER) LIMITED","APR Group Ltd","Aqua Libra S/A","ARTISTIC BLINDS","AURA","B & H PLUMBING & HEATING SERVICES LIMITED","B.R DAY GROUNDWORKS LIMITED","Baldwin & Bleakley","BAMBURY METAL FABRICATIONS LIMITED","BASE LIFT SERVICES LTD","BATH CITY SCAFFOLDING LIMITED","Bath Drain & Jetting Services Ltd T/A Mega-Rod","BC Floors & Walls S/C","BEN MASON T/A ADHERE","Bespoke Detection Services Ltd","Blenheim Plumbing & Heating S/C","Borders Flooring Services","Britannia Retail Limited","Britson Ltd S/C","BRONEV LIFTS LIMITED","C A Services (NI) Ltd","CANNON SECURITY LIMITED","Carma UK Construction Ltd","Ceaton Security Services","Cedrics Labouring Service Ltd S/C","Chamberlain Bros Construction Ltd S/C","CHAPEL BATH ENGINEERING LTD","Chapel Drilling Ltd","Churches Fire Security Ltd","CINTRIX SYSTEMS LIMITED","CLARKE-RENDALL BUSINESS FURNITURE LIMITED","CML Commercial Cleaning Specialists","COMPRESSED AIR SYSTEMS LIMITED","COMPRESSED AIR SYSTEMS LTD","CONTRACT FLOORING SERVICES (CAMBRIDGE) LIMITED","Convery Ceilings Ltd","Coolstream UK Ltd S/C","Coolstream Vent (SW) Ltd S/C","COOL-THERM (UK) LIMITED","Core Drill Ltd S/C","Core-Ect Diamond Drilling Ltd","CorHol Property Services","CRBS (SW) Limited","Creatif Architectural Products Limited","Cubed Interior Projects Ltd","D P Controls Limited (pinnock services)","D.J. MAYHEAD ELECTRICAL SERVICES LIMITED","D.J.Mayhead Electrical Services Ltd S/C","Dart & Co. Limited","DOOR SERVICES (BRISTOL) LIMITED","Drillcut (UK) Ltd","Eamonn Kilby Decorators S/C","Economic Drain Repairs","ECS Systems Ltd","ELECSEC UK LTD","Elite Partitions & Ceilings","ELLIOTT ENVIRONMENTAL SERVICES LIMITED","ENVIRA-MECH SERVICES LIMITED","ENVIROTECH ALARMS LTD","Eton Environmental Group Ltd","Extreme Clean","FIRECARE FIRE ALARM SERVICES LIMITED","Five Star Door Systems","Fuller Plumbing & Heating S/C","FUSELAND ELECTRICAL SERVICES LIMITED","Future Mastics","Gartec Limited","Gas2o Ltd","Gatehouse Architectural Aluminium S/C","GLENFIELD ELECTRICAL LTD","GRP X LTD","H W Groundworks","HARRINGTON DEVELOPMENTS LTD","Hawkins Insulation Limited S/C","HS ELECTRICAL SERVICES (WAKEFIELD) LTD","HYAK LTD T/A Castle Scaffolding","IB FIRE PROTECTION LTD","ICONIC FLOORING (LEEDS) LTD","Ideal Interiors Southern Ltd","IDH Direct Ltd","Inspired Worx Ltd S/C","IntegraIQ","Integrated Laboratory Services Ltd S/C","INTERIOR RESOLUTIONS LIMITED","Intersign Partitions Ltd","INVALIFTS LIMITED","INVICTA STORAGE SYSTEMS LIMITED","IO CONTROLS LIMITED","JAMIESONS SERVICES LTD","JN Services Electrical Ltd S/C","Jones & Woolman UK Ltd","Jones Weatherproofing Ltd","Jordon Hicks S/C","K R F Metals Limited","Kev Kenny","KINETIC SYSTEMS (BRISTOL) LIMITED","KINGSCOURT CLADDING SERVICES LTD","Kingston Landscape Group Ltd","Komfort Partitioning Ltd","KW INTERIORS (SOUTH WEST & WALES) LTD","Lansdowne Surveys Limited","Lawmans Demolition S/C","Lazer Flooring Ltd","Lightning Protection Testing UK","LINARDS LAUZUMS","LS Surface Repairs","LSF Commercial S/C","LT SMART LTD","Lucas Communications (SW) Ltd","M2 FLOORING SOLUTIONS LIMITED","Magic Man ltd","Magicman Holdings Limited","MagicMan Holdings ltd","Maintain a Drain","Martin Boyle Painting Contractors","MATT DURBIN ASSOCIATES LIMITED","Mays Way Ltd","MECSOL LTD","Medical Piped Gases Limited","Merit Cleaning Services Ltd","METELEC SERVICES LTD","Mezztechnic S/C","MG Carpentry & Construction Ltd","MIDLAND COMMERCIAL ENVIRONMENTAL SERVICES LTD","MIDLANDS FLOORING LIMITED","Minton Communications","MIRAGE INTERIORS LIMITED","MITCHELL PLUMBING AND HEATING CONTRACTORS LTD","Modular Safety Systems Ltd","Monument Site Management","Morban Ltd","Morclad Roofing Ltd S/C","Moveable Wall Solutions","MR C J & MRS M T MORGAN","Mr C J Morgan & Mrs M T Morgan","Multigas Installations Ltd S/C","N.C. CERAMICS LIMITED","Nailsea Fencing & Gardens Ltd S/C","Nash Glass Ltd S/C","NO GREY AREA LTD","North Bristol Plastering Ltd","NORTHVILLE SCAFFOLDING LTD","OAKDALE TECHNICAL SERVICES LTD","OASIS PLANTS LIMITED","OneFifty","ONSITE CENTRAL LIMITED","Optima Property Services Limited","Optimum Laboratory Installations Ltd","Orbital Electrical (South West) Ltd S/C","P Harvey & Sons Ltd","Paul Kimble Flooring","Paul West Carpentry","PBG Projects Ltd","PC Flooring Ltd","PCD SERVICES LIMITED","PDH Fire and Security","PFP RESOURCING LTD","POW WORKSHOPS LIMITED","Powerite Contracting Ltd","PRNS BUILDING SERVICES LTD","PROCTER BROTHERS LTD","Q Fabs Ltd","RAREKIND LTD","RB Flooring Ltd","REACTIVE MAINTENANCE SERVICES LIMITED","REGALE REFRIGERATION AND AIR CONDITIONING LIMITED","REGALE REFRIGERATION AND AIR CONDITIONING LIMITED (Royal Air Conditioning)","RICHARDSON DECORATING CONTRACTORS","RIDGEWELL FLAT ROOFING LIMITED","Rightway Enviromental Ltd S/C","RJW INTERIORS LTD","Rob Maidment Flooring","Robert Scott","Rock and Stone Consulting Ltd T/A Silex UK","S and W Property Solutions Edinburgh","S.J.C.Flooring","S.J.M DECORATORS LTD","SCEPTRE NETWORKING LIMITED","Scott Wall","Sealant Applications (Cymru) Ltd","Sealant Applications Ltd","Selo Construction Ltd","SENEVO DESIGNS LTD","Sids Labour Worx Ltd","Sight and Sound Services Ltd","SIV Fire Protection Limited","South West Stainless Ltd","SOUTHAM ELECTRICAL BROS LIMITED","SPAN ROOFING CONTRACTORS LIMITED","SPURWAY SCAFFOLDING LIMITED","Stancold PLC","STEELGRAM FABRICATIONS LIMITED","Stertil UK Ltd","Steven O'Brien","Steven O'Brien Decorators","SUREBOND SURFACES (UK) LTD","Sweet Joinery Limited","T & H CONTRACT SERVICES LIMITED","TABLEFORM LTD","TANDY ELECTRICAL CONTRACTORS LTD","Tapper Interiors Ltd S/C","Taurus Electrical Installations Ltd","TCGB Plumbing & HEating","TEKTA UK LIMITED","Thames Cryogenics Limited","The Fume Cupboard Company","The Fume Cupboard Company S/C","TPT FIRE PROJECTS LTD","Triangle Lift Services Ltd","UK Roller Shutters Ltd","UMBERSLADE BUSINESS SERVICES LIMITED","Universal Ceilings & Partitions Ltd S/C","Urban Cleaning Ltd","Valeriu Alexandru Cojocaru","VALLEYS ROOFING & CLADDING LTD","VALVE FORCE LIMITED","West Drywall - Mike West","XL Commercial Interiors S/C"];
+// Targeted Supplier Review — a shared staff exercise. Each supplier needs a
+// Finance review AND an Ops review; a row shows both ticks and only drops off
+// once both are done. Completions live in the targeted_review table so they
+// are shared across users and devices.
+let REVIEW_DONE={}; // { supplierKey: { Finance:{by}, Ops:{by} } }
+let _showReviewComplete=false; // reveal completed rows so they can be un-ticked
+function toggleShowReviewComplete(){ _showReviewComplete=!_showReviewComplete; renderCertReview(); }
+async function loadReviewDone(){
+  const {data,error}=await sbCall(_sb.from('targeted_review').select('*'),'Loading review progress');
+  REVIEW_DONE={};
+  if(!error && data) data.forEach(r=>{ (REVIEW_DONE[r.supplier_key]=REVIEW_DONE[r.supplier_key]||{})[r.department]={by:r.done_by_name}; });
+}
+function norm(x){ return String(x||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+// Looser key for fuzzy supplier-name matching: undo HTML encoding, drop
+// trailing status notes ("- DO NOT USE"), parenthetical asides, S/C & S/A
+// suffixes and the Ltd/Limited company suffix, so a clean list name still
+// finds a database record that carries extra annotations.
+function normLoose(x){
+  let s=String(x||'').toLowerCase().replace(/&amp;/g,'&');
+  s=s.split(/\s[-\u2013]\s/)[0];        // text before " - " / " – "
+  s=s.replace(/\bs\/[ac]\b/g,'');       // S/C, S/A
+  s=s.replace(/\bt\/a\b.*$/,'');        // trading-as tail
+  s=s.replace(/\(.*?\)/g,'');            // (parenthetical notes)
+  s=s.replace(/\b(ltd|limited)\b/g,'');  // company suffix
+  return s.replace(/[^a-z0-9]/g,'');
+}
+// Resolve a review-list name to a DB index: exact first, then loose, then a
+// prefix match (DB name starts with the list name, catching trailing notes).
+function matchSupplierIdx(nm){
+  if(matchSupplierIdx._cache) return matchSupplierIdx._cache(nm);
+  const exact={}, loose={}, arr=[];
+  DB.forEach((s,i)=>{ exact[norm(s.name)]=i; const l=normLoose(s.name); if(l&&!(l in loose))loose[l]=i; arr.push([norm(s.name),i]); });
+  matchSupplierIdx._cache=(name)=>{
+    const n=norm(name); if(n in exact) return exact[n];
+    const l=normLoose(name); if(l && l in loose) return loose[l];
+    if(n.length>=6){ const hit=arr.find(([k])=>k.startsWith(n)); if(hit) return hit[1]; }
+    return undefined;
+  };
+  return matchSupplierIdx._cache(nm);
+}
+function clearMatchCache(){ matchSupplierIdx._cache=null; }
+// Which department the signed-in user may tick. Superuser may tick both.
+function myReviewDepts(){
+  const d=[];
+  if(isSuperuser()||myRoles.has('Finance Director')||myRoles.has('Finance')) d.push('Finance');
+  if(isSuperuser()||myRoles.has('Operations Director')) d.push('Ops');
+  return d;
+}
+function reviewKey(nm){ return normLoose(nm)||norm(nm); }
+function isRowComplete(nm){ const r=REVIEW_DONE[reviewKey(nm)]||{}; return r.Finance&&r.Ops; }
+function toggleReviewByIdx(li,dept){ const nm=CERT_REVIEW_LIST[li]; if(nm!=null) toggleReview(nm,dept); }
+async function toggleReview(nm,dept){
+  if(!myReviewDepts().includes(dept)){ toast(`Only ${dept==='Finance'?'Finance':'Ops'} can tick that`,'err'); return; }
+  const key=reviewKey(nm);
+  const cur=REVIEW_DONE[key]||{};
+  if(cur[dept]){
+    // untick
+    await sbCall(_sb.from('targeted_review').delete().eq('supplier_key',key).eq('department',dept),'Removing review tick');
+    delete cur[dept];
+  } else {
+    await sbCall(_sb.from('targeted_review').insert({supplier_key:key,supplier_label:nm,department:dept,done_by_user_id:_sbUser.id,done_by_name:myName()}),'Saving review tick');
+    cur[dept]={by:myName()};
+  }
+  REVIEW_DONE[key]=cur;
+  renderCertReview(); updateCounts();
+}
+function certReviewOutstanding(){
+  return CERT_REVIEW_LIST.filter(nm=>!isRowComplete(nm));
+}
+async function renderCertReview(){
+  const el=document.getElementById('certreview-content');
+  await loadReviewDone();
+  const outstanding=CERT_REVIEW_LIST.filter(nm=>!isRowComplete(nm));
+  const completed=CERT_REVIEW_LIST.filter(nm=>isRowComplete(nm));
+  const doneCount=completed.length;
+  const rows = _showReviewComplete ? completed : outstanding;
+  clearMatchCache();
+  const mine=myReviewDepts();
+  const hint=mine.length?`You can tick: ${mine.join(' & ')}`:'View only — no review role';
+  const toggleBtn=`<button class="btn btn-sm" onclick="toggleShowReviewComplete()">${_showReviewComplete?'‹ Back to outstanding':`Show completed (${doneCount})`}</button>`;
+  // Everything outstanding is done, and we're not viewing completed: celebrate.
+  if(!_showReviewComplete && !outstanding.length){
+    el.innerHTML=`<div class="card" style="padding:32px;text-align:center"><div style="font-size:15px;font-weight:600;color:var(--green)">✓ All suppliers reviewed</div><div style="font-size:13px;color:var(--text3);margin-top:6px">Both Finance and Ops have signed off every supplier. You can remove this tab.</div><div style="margin-top:14px">${toggleBtn}</div></div>`;
+    return;
+  }
+  const matchedCount=rows.filter(nm=>matchSupplierIdx(nm)!==undefined).length;
+  const tickCell=(nm,li,dept)=>{
+    const done=(REVIEW_DONE[reviewKey(nm)]||{})[dept];
+    const canTick=mine.includes(dept);
+    const box=`<span style="display:inline-block;width:16px;height:16px;border-radius:4px;border:1.5px solid ${done?'var(--green)':'var(--border2)'};background:${done?'var(--green)':'transparent'};color:#fff;font-size:11px;line-height:14px;text-align:center">${done?'✓':''}</span>`;
+    const title=done?`${dept} reviewed by ${esc(done.by)}`:(canTick?`Mark ${dept} reviewed`:`${dept} only`);
+    if(!canTick) return `<span title="${title}" style="opacity:${done?'1':'.4'}">${box}</span>`;
+    // Pass the list index, not the name — supplier names contain quotes and
+    // ampersands that would break an inline onclick string.
+    return `<button onclick="toggleReviewByIdx(${li},'${dept}')" title="${title}" style="background:none;border:none;cursor:pointer;padding:0">${box}</button>`;
+  };
+  const heading=_showReviewComplete?`${completed.length} completed`:`${outstanding.length} to review`;
+  const sub=_showReviewComplete
+    ? `Both departments signed off. Click a green box to un-tick and return a supplier to the list. · ${esc(hint)}`
+    : `${doneCount} complete · ${rows.length-matchedCount} not in database · ${esc(hint)}`;
+  let h=`<div class="card"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div><h2>${heading}</h2><span style="font-size:12px;color:var(--text3)">${sub}</span></div>${toggleBtn}</div><div class="card-scroll"><table><thead><tr><th style="width:64px;text-align:center">Finance</th><th style="width:64px;text-align:center">Ops</th><th>Supplier</th><th>In database?</th></tr></thead><tbody>`;
+  rows.forEach(nm=>{
+    const idx=matchSupplierIdx(nm);
+    const link = idx!==undefined
+      ? `<button class="btn btn-sm" onclick="openDrawer(${idx})">Open</button>`
+      : '<span style="font-size:12px;color:var(--amber)">not in database</span>';
+    h+=`<tr>
+      <td style="text-align:center">${tickCell(nm,CERT_REVIEW_LIST.indexOf(nm),'Finance')}</td>
+      <td style="text-align:center">${tickCell(nm,CERT_REVIEW_LIST.indexOf(nm),'Ops')}</td>
+      <td><strong>${esc(nm)}</strong></td>
+      <td>${link}</td>
+    </tr>`;
+  });
+  h+='</tbody></table></div></div>';
+  el.innerHTML=h;
+}
+
+// PQQ Annual Review — suppliers loaded over a year ago (or a year since their
+// last PQQ review). Ops marks a review done, which stamps pqq_reviewed_ts and
+// clears any soft-DNU flag.
+function pqqDueList(){ return DB.filter(s=>pqqReviewDue(s)&&!s.dnu); }
+function renderPQQ(){
+  const el=document.getElementById('pqq-content');
+  const due=pqqDueList();
+  const canAct=isSuperuser()||myRoles.has('Operations Director');
+  if(!due.length){
+    el.innerHTML='<div class="card" style="padding:32px;text-align:center"><div style="font-size:15px;font-weight:600;color:var(--green)">✓ No PQQ reviews outstanding</div><div style="font-size:13px;color:var(--text3);margin-top:6px">Nothing is currently due its annual review.</div></div>';
+    return;
+  }
+  let h=`<div class="card"><div class="card-header"><h2>${due.length} due review</h2></div><div class="card-scroll"><table><thead><tr><th>Supplier</th><th>Loaded</th><th>Review due</th><th>Flag</th><th style="width:220px">Action</th></tr></thead><tbody>`;
+  due.forEach(s=>{
+    const idx=DB.indexOf(s);
+    const act = canAct
+      ? `<button class="btn btn-sm btn-primary" onclick="pqqMarkReviewed(${idx})">Mark reviewed</button>`
+        + (s.soft_dnu
+            ? ` <button class="btn btn-sm" onclick="setSoftDnu(${idx},false)">Clear flag</button>`
+            : ` <button class="btn btn-sm" onclick="setSoftDnu(${idx},true)">Flag (soft-DNU)</button>`)
+      : '<span style="font-size:12px;color:var(--text3)">Ops only</span>';
+    h+=`<tr>
+      <td><strong>${esc(s.name)}</strong></td>
+      <td style="font-size:12px;color:var(--text3)">${s.added_ts?fmtDate(s.added_ts):'—'}</td>
+      <td style="font-size:12px;color:var(--amber);font-weight:600">${pqqDueDate(s)}</td>
+      <td>${s.soft_dnu?'<span class="badge bg-amber">Review</span>':'<span class="badge bg-green">—</span>'}</td>
+      <td>${act}</td>
+    </tr>`;
+  });
+  h+='</tbody></table></div></div>';
+  el.innerHTML=h;
+}
+function pqqMarkReviewed(idx){
+  const s=DB[idx];
+  s.pqq_reviewed_ts=new Date().toISOString();
+  s.pqq_reviewed_by=myName();
+  s.soft_dnu=false; s.soft_dnu_notes=null;
+  logFieldChange(s,'pqq_reviewed_ts',null,s.pqq_reviewed_ts);
+  saveDB(); schedSync(s._id); renderPQQ(); updateCounts(); applyFilters();
+  toast('PQQ review recorded');
+}
+function setSoftDnu(idx,on){
+  const s=DB[idx];
+  s.soft_dnu=!!on;
+  logFieldChange(s,'soft_dnu',(!on).toString(),on.toString());
+  saveDB(); schedSync(s._id); renderPQQ(); applyFilters();
+  toast(on?'Flagged for review':'Flag cleared');
+}
 
 function renderMatrix(){
   const el=document.getElementById('matrix-content');
@@ -1593,11 +1799,13 @@ function buildDrawer(idx){
       <div class="field"><label>Status</label><select id="ed-dnu-${idx}" onchange="startDnuChange(${idx},this.value==='true')"${ro()}><option value="false"${!s.dnu?' selected':''}>Active</option><option value="true"${s.dnu?' selected':''}>Do Not Use</option></select></div>
       <div class="field"><label>DNU Reason</label><input id="ed-dnureason-${idx}" value="${esc(s.dnu_notes||'')}" onblur="saveField(${idx},'dnu_notes',this.value)"${ro()}></div>
     </div>
-    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;margin-top:12px;border-top:1px solid var(--border)">Loaded By</div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;margin-top:12px;border-top:1px solid var(--border)">Loaded</div>
     <div class="detail-grid" style="margin-top:8px">
       <div class="detail-field"><div class="detail-lbl">Added by</div><div class="detail-val">${esc(s.added_by||'—')}</div></div>
       <div class="detail-field"><div class="detail-lbl">Department</div><div class="detail-val">${esc(s.added_dept||'—')}</div></div>
       <div class="detail-field" style="grid-column:1/-1"><div class="detail-lbl">Date added</div><div class="detail-val">${s.added_ts?fmtTs(s.added_ts):'—'}</div></div>
+      <div class="detail-field"><div class="detail-lbl">PQQ review due</div><div class="detail-val ${pqqReviewDue(s)?'':''}" style="${pqqReviewDue(s)?'color:var(--amber);font-weight:600':''}">${pqqDueDate(s)}</div></div>
+      <div class="detail-field"><div class="detail-lbl">PQQ last reviewed</div><div class="detail-val">${s.pqq_reviewed_ts?fmtDate(s.pqq_reviewed_ts):'—'}</div></div>
     </div>
     </div>`;
   // Contact — all fields live-editable
@@ -1613,25 +1821,25 @@ function buildDrawer(idx){
   </div>`;
   // Insurance (subcontractors)
   if(s.subbie){
+    // Insurance is Finance-controlled: editable inline only when the drawer is
+    // in edit mode AND the user holds a Finance role (or Superuser). Everyone
+    // else sees read-only values, and editors from other departments see a
+    // "Finance only" note.
+    const insEdit = _drawerEdit && canEditInsurance();
+    const insVal=(label,vField,dField)=>{
+      if(insEdit){
+        return `<div class="detail-field"><div class="detail-lbl">${label} Value</div><input type="number" id="ed-${vField}-${idx}" value="${s[vField]!=null?s[vField]:''}" placeholder="0" onblur="saveField(${idx},'${vField}',this.value===''?null:Number(this.value))" style="width:100%"></div>
+        <div class="detail-field"><div class="detail-lbl">${label} Expiry</div><input type="date" id="ed-${dField}-${idx}" value="${s[dField]||''}" onchange="saveField(${idx},'${dField}',this.value||null)" style="width:100%"></div>`;
+      }
+      return `<div class="detail-field"><div class="detail-lbl">${label} Value</div><div class="detail-val">${fmtMoney(s[vField])}</div></div>
+      <div class="detail-field"><div class="detail-lbl">${label} Expiry</div><div class="detail-val ${insCls(s[dField])}">${fmtDate(s[dField])}</div></div>`;
+    };
     h+=`<div class="detail-section">
-      <div class="section-hd">Insurance ${_drawerEdit?`<button class="btn btn-sm" onclick="toggleBox('ins-${idx}')">Update dates</button>`:''}</div>
+      <div class="section-hd">Insurance ${_drawerEdit&&!canEditInsurance()?'<span style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;color:var(--text3)">Finance only</span>':''}</div>
       <div class="detail-grid">
-        <div class="detail-field"><div class="detail-lbl">EL Value</div><div class="detail-val">${fmtMoney(s.el_value)}</div></div>
-        <div class="detail-field"><div class="detail-lbl">EL Expiry</div><div class="detail-val ${insCls(s.el_expiry)}">${fmtDate(s.el_expiry)}</div></div>
-        <div class="detail-field"><div class="detail-lbl">PL Value</div><div class="detail-val">${fmtMoney(s.pl_value)}</div></div>
-        <div class="detail-field"><div class="detail-lbl">PL Expiry</div><div class="detail-val ${insCls(s.pl_expiry)}">${fmtDate(s.pl_expiry)}</div></div>
-        <div class="detail-field"><div class="detail-lbl">PI Value</div><div class="detail-val">${fmtMoney(s.pi_value)}</div></div>
-        <div class="detail-field"><div class="detail-lbl">PI Expiry</div><div class="detail-val ${insCls(s.pi_expiry)}">${fmtDate(s.pi_expiry)}</div></div>
-      </div>
-      <div id="ins-${idx}" class="quick-box" style="display:none">
-        <span class="quick-box-label">Update Insurance Expiry Dates</span>
-        <div class="quick-row"><span>EL</span><input type="date" id="ins-el-${idx}" value="${s.el_expiry||''}"></div>
-        <div class="quick-row"><span>PL</span><input type="date" id="ins-pl-${idx}" value="${s.pl_expiry||''}"></div>
-        <div class="quick-row"><span>PI</span><input type="date" id="ins-pi-${idx}" value="${s.pi_expiry||''}"></div>
-        <div class="quick-row" style="margin-top:6px">
-          <button class="btn btn-sm btn-primary" onclick="saveInsurance(${idx})">Save dates</button>
-          <button class="btn btn-sm" onclick="toggleBox('ins-${idx}')">Cancel</button>
-        </div>
+        ${insVal('EL','el_value','el_expiry')}
+        ${insVal('PL','pl_value','pl_expiry')}
+        ${insVal('PI','pi_value','pi_expiry')}
       </div>
     </div>`;
   }
@@ -1732,7 +1940,7 @@ function buildDrawer(idx){
           <span class="comment-author">${esc(n.author)}</span>
           <span class="comment-tag">${esc(n.dept)}</span>
           <span class="comment-time">${fmtTs(n.ts)}</span>
-          <button class="btn-danger" onclick="delNote(${idx},${i},event)">✕</button>
+          ${isSuperuser()?`<button class="btn-danger" onclick="delNote(${idx},${i},event)">✕</button>`:''}
         </div>
         <div class="comment-text">${esc(n.text)}</div>
       </div>`).join('')+'</div>';
@@ -1755,44 +1963,6 @@ function buildDrawer(idx){
 }
 
 function toggleBox(id){ const el=document.getElementById(id); if(el)el.style.display=el.style.display==='none'?'block':'none'; }
-let _pendingInsuranceSave=null; // {idx, newEl, newPl, newPi} while confirmation modal is open
-function saveInsurance(idx){
-  const s=DB[idx];
-  const newEl=document.getElementById('ins-el-'+idx).value||null;
-  const newPl=document.getElementById('ins-pl-'+idx).value||null;
-  const newPi=document.getElementById('ins-pi-'+idx).value||null;
-  const changedTypes=[];
-  if(newEl!==s.el_expiry) changedTypes.push('EL');
-  if(newPl!==s.pl_expiry) changedTypes.push('PL');
-  if(newPi!==s.pi_expiry) changedTypes.push('PI');
-  if(!changedTypes.length){ toggleBox('ins-'+idx); return; } // nothing actually changed, just close the box
-  _pendingInsuranceSave={idx,newEl,newPl,newPi};
-  document.getElementById('ins-confirm-types').textContent=changedTypes.join(', ');
-  document.getElementById('ins-confirm-check').checked=false;
-  document.getElementById('ins-confirm-proceed').disabled=true;
-  document.getElementById('ins-confirm-modal').classList.add('open');
-}
-function cancelInsuranceSave(){
-  _pendingInsuranceSave=null;
-  document.getElementById('ins-confirm-modal').classList.remove('open');
-}
-function confirmInsuranceSave(){
-  if(!_pendingInsuranceSave)return;
-  if(!document.getElementById('ins-confirm-check').checked)return;
-  const {idx,newEl,newPl,newPi}=_pendingInsuranceSave;
-  const s=DB[idx];
-  if(newEl!==s.el_expiry) logFieldChange(s,'el_expiry',s.el_expiry,newEl);
-  if(newPl!==s.pl_expiry) logFieldChange(s,'pl_expiry',s.pl_expiry,newPl);
-  if(newPi!==s.pi_expiry) logFieldChange(s,'pi_expiry',s.pi_expiry,newPi);
-  s.el_expiry=newEl; s.pl_expiry=newPl; s.pi_expiry=newPi;
-  saveDB(); schedSync(s._id); updateCounts(); renderMetrics(); applyFilters(); buildDrawer(idx);
-  if(document.getElementById('tab-ins').classList.contains('active')) renderIns();
-  if(document.getElementById('tab-dnu').classList.contains('active')) renderDNU();
-  if(document.getElementById('tab-pending').classList.contains('active')) renderPending();
-  _pendingInsuranceSave=null;
-  document.getElementById('ins-confirm-modal').classList.remove('open');
-  toast('Insurance dates updated');
-}
 // Per-supplier change history, fetched on demand from field_history.
 async function loadSupplierHistory(idx){
   const s=DB[idx];
@@ -1831,7 +2001,7 @@ function addNote(idx){
   localStorage.setItem('mfb_last_author',author); localStorage.setItem('mfb_last_dept',dept);
   saveDB(); schedSync(DB[idx]._id); applyFilters(); toast('Comment posted'); buildDrawer(idx);
 }
-function delNote(idx,ni,e){ e.stopPropagation(); if(!confirm('Delete this comment?'))return; DB[idx]._notes.splice(ni,1); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Comment deleted'); }
+function delNote(idx,ni,e){ e.stopPropagation(); if(!isSuperuser()){ toast('Only a Superuser can delete comments','err'); return; } if(!confirm('Delete this comment?'))return; DB[idx]._notes.splice(ni,1); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Comment deleted'); }
 function delReview(idx,ri,e){
   e.stopPropagation(); if(!confirm('Delete this review?'))return;
   DB[idx]._reviews.splice(ri,1); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Review deleted');
@@ -1841,7 +2011,6 @@ function delReview(idx,ri,e){
 // ── Review modal ──────────────────────────────────────────────────────────────
 function openReviewModal(idx){
   rqState={};
-  ['perf-poor','perf-ok','perf-good'].forEach(id=>document.getElementById(id).classList.remove('on'));
   const sel=document.getElementById('rv-supplier');
   sel.innerHTML='<option value="">Select contractor…</option>'+DB.filter(s=>s.subbie).map(s=>`<option value="${DB.indexOf(s)}">${esc(s.name)}</option>`).join('');
   if(idx!==null) sel.value=String(idx);
@@ -1866,7 +2035,7 @@ function setRQ(id,raw){
   if(raw===''){ delete rqState[id]; updateRvAvgDisplay(); return; }
   let n=Number(raw);
   if(isNaN(n))return;
-  if(n<0)n=0; if(n>10)n=10;
+  if(n<0)n=0; if(n>4)n=4;
   rqState[id]=n;
   updateRvAvgDisplay();
 }
@@ -1915,7 +2084,6 @@ async function saveReview(){
   if(drawerIdx===suppIdx) buildDrawer(suppIdx);
   applyFilters(); updateCounts(); renderMetrics();
   if(document.getElementById('tab-analytics').classList.contains('active')) renderAnalytics();
-  if(document.getElementById('tab-sc').classList.contains('active')) renderSC();
   queueEmail('review_complete',s._id,{supplierName:s.name,reviewedBy,dept,performance:perf,avgScore,project,improvements,appUrl:location.href});
 }
 
@@ -1979,10 +2147,8 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   const ni=document.getElementById('nav-'+name); if(ni)ni.classList.add('active');
-  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Expiring Soon',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Analytics',changes:'Recent Changes',matrix:'Rating Matrix'};
+  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Expiring Soon',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Analytics',changes:'Recent Changes',matrix:'Rating Matrix',certreview:'Targeted Supplier Review',pqq:'PQQ Review'};
   document.getElementById('topbar-title').textContent=titles[name]||name;
-  if(name==='sc') renderSC();
-  if(name==='suppliers') renderSuppliersOnly();
   if(name==='shortlist') renderShortlist();
   if(name==='pending') renderPending();
   if(name==='dnu') renderDNU();
@@ -1990,6 +2156,8 @@ function switchTab(name){
   if(name==='analytics') renderAnalytics();
   if(name==='changes') renderRecentChanges();
   if(name==='matrix') renderMatrix();
+  if(name==='certreview') renderCertReview();
+  if(name==='pqq') renderPQQ();
 }
 
 function toggleSidebar(){
@@ -2151,7 +2319,7 @@ document.addEventListener('keydown',e=>{
     // Escape clears the query first; a second press closes the palette.
     if(e.key==='Escape'&&document.getElementById('cmdk-input').value){ e.preventDefault(); clearCmdK(); return; }
   }
-  if(e.key==='Escape'){closeCmdK();closeDrawer();closeModal();closeReviewModal();closeRolesModal();cancelInsuranceSave();}
+  if(e.key==='Escape'){closeCmdK();closeDrawer();closeModal();closeReviewModal();closeRolesModal();}
 });
 
 initApp();
