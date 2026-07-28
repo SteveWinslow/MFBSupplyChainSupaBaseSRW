@@ -331,7 +331,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v9.4';
+const APP_VERSION = 'v9.5';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -373,8 +373,8 @@ let _sbUser = null;
     <button class="nav-item" id="nav-ins" data-label="Insurance" onclick="switchTab('ins')">
       <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l5 2v4c0 3-2 6-5 7C5 14 3 11 3 8V4l5-2z"/></svg><span>Insurance</span></div><span class="nav-count" id="nc-ins">—</span>
     </button>
-    <button class="nav-item" id="nav-analytics" data-label="Analytics" onclick="switchTab('analytics')">
-      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="8" width="3" height="6"/><rect x="6.5" y="5" width="3" height="9"/><rect x="11" y="2" width="3" height="12"/></svg><span>Analytics</span></div>
+    <button class="nav-item" id="nav-analytics" data-label="Performance Reviews" onclick="switchTab('analytics')">
+      <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="8" width="3" height="6"/><rect x="6.5" y="5" width="3" height="9"/><rect x="11" y="2" width="3" height="12"/></svg><span>Performance Reviews</span></div>
     </button>
     <button class="nav-item" id="nav-changes" data-label="Recent Changes" onclick="switchTab('changes')">
       <div class="nav-item-l"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 4v4l2.5 2.5"/><circle cx="8" cy="8" r="6"/></svg><span>Recent Changes</span></div>
@@ -442,7 +442,7 @@ let _sbUser = null;
     <div class="tab" id="tab-pending"><div class="page-hd"><div><h1>Expiring Soon</h1><p>Insurance certificates due to expire within 90 days — most urgent first</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Type</th><th>Trade</th><th>Expires</th><th style="width:110px">Time Left</th></tr></thead><tbody id="pending-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-dnu"><div class="page-hd"><div><h1>Do Not Use</h1><p>Do not engage without clearance</p></div></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>Reason</th><th style="width:150px">Set by</th><th style="width:110px">Last Used</th></tr></thead><tbody id="dnu-tbody"></tbody></table></div></div></div>
     <div class="tab" id="tab-ins"><div class="page-hd"><div><h1>Insurance Monitor</h1><p>Open a row to update expiry dates inline</p></div></div><div class="metrics" id="metrics-ins"></div><div class="card"><div class="card-scroll"><table><thead><tr><th>Company</th><th>Trade</th><th>EL Expiry</th><th>PL Expiry</th><th>PI Expiry</th><th>Issue</th></tr></thead><tbody id="ins-tbody"></tbody></table></div></div></div>
-    <div class="tab" id="tab-analytics"><div class="page-hd"><div><h1>Analytics</h1><p>Contractor performance overview</p></div></div><div id="analytics-content"></div></div>
+    <div class="tab" id="tab-analytics"><div class="page-hd"><div><h1>Performance Reviews</h1><p>Contractor performance overview</p></div></div><div id="analytics-content"></div></div>
     <div class="tab" id="tab-changes"><div class="page-hd"><div><h1>Recent Changes</h1><p>New suppliers, approvals, reviews, and DNU changes — newest first</p></div></div><div id="changes-content"></div></div>
     <div class="tab" id="tab-matrix"><div class="page-hd"><div><h1>Rating Matrix</h1><p>McFeggan Supplier Chain Rating Matrix — reference for scoring</p></div></div><div id="matrix-content"></div></div>
     <div class="tab" id="tab-certreview"><div class="page-hd"><div><h1>Targeted Supplier Review</h1><p>Temporary list — tick each supplier as it is reviewed. Completed rows disappear; the tab clears when all are done.</p></div></div><div id="certreview-content"></div></div>
@@ -885,7 +885,6 @@ function overallRating(s){
 // ── Editable, audit-logged ratings ───────────────────────────────────────────
 let _ratingEditField=null; // field currently being edited in the drawer, or null
 let _showRatingAudit=false; // global toggle — controls whether "last changed by" shows for ALL ratings at once
-function toggleRatingAudit(idx){ _showRatingAudit=!_showRatingAudit; buildDrawer(idx); }
 function ratingRow(idx,s,field){
   const label=RATING_FIELD_LABELS[field];
   const val=s[field];
@@ -1898,7 +1897,6 @@ function buildDrawer(idx){
       h+=`<div style="font-size:11px;font-weight:600;color:var(--text3);margin:${gi?'12px':'0'} 0 6px">${esc(g.label)} ${ga!=null?rp(ga):''}</div>`;
       g.fields.forEach(f=>{ h+=ratingRow(idx,s,f); });
     });
-    h+=`<div style="margin-top:10px"><button onclick="toggleRatingAudit(${idx})" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;color:var(--accent);padding:0;text-decoration:underline">${_showRatingAudit?'Hide audit info':'Show audit info'}</button></div>`;
     h+=`</div>`;
   }
   // Performance reviews
@@ -1926,7 +1924,7 @@ function buildDrawer(idx){
           <span class="review-score ${cls}">${esc(r.performance)}</span>
           <span style="font-size:12px;color:var(--text2)">${esc(r.reviewedBy)} · ${esc(r.dept)}</span>
           <span style="font-size:10px;color:var(--text3);margin-left:auto;font-family:'DM Mono',monospace">${fmtTs(r.ts)}</span>
-          <button class="btn-danger" onclick="delReview(${idx},${ri},event)">✕</button>
+          ${isSuperuser()?`<button class="btn-danger" onclick="delReview(${idx},${ri},event)">✕</button>`:''}
         </div>
         ${r.project?`<div style="font-size:11px;color:var(--text3);margin-bottom:4px">${esc(r.project)}</div>`:''}
         ${qs?`<div style="margin-bottom:5px">${qs}</div>`:''}
@@ -1937,11 +1935,6 @@ function buildDrawer(idx){
     }).join('');
   } else h+='<div class="empty-state" style="padding:16px 0">No reviews yet.</div>';
   h+=`</div>`;
-  // Change History — loaded on demand, so it only appears once fetched
-  h+=`<div class="detail-section">
-    <div class="section-hd">Change History <button class="btn btn-sm" onclick="loadSupplierHistory(${idx})">Show</button></div>
-    <div id="hist-${idx}"><div style="font-size:12px;color:var(--text3)">Click Show to load recent changes for this supplier.</div></div>
-  </div>`;
   // Comments / Notes — using LFE comment thread pattern
   const notes=s._notes||[];
   h+=`<div class="detail-section">
@@ -1972,6 +1965,11 @@ function buildDrawer(idx){
       <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="addNote(${idx})">Post</button>
     </div>
   </div></div>`;
+  // Change History — loaded on demand, so it only appears once fetched
+  h+=`<div class="detail-section">
+    <div class="section-hd">Change History <button class="btn btn-sm" onclick="loadSupplierHistory(${idx})">Show</button></div>
+    <div id="hist-${idx}"><div style="font-size:12px;color:var(--text3)">Click Show to load recent changes for this supplier.</div></div>
+  </div>`;
   document.getElementById('drawer-bd').innerHTML=h;
 }
 
@@ -2018,8 +2016,13 @@ function addNote(idx){
 }
 function delNote(idx,ni,e){ e.stopPropagation(); if(!isSuperuser()){ toast('Only a Superuser can delete comments','err'); return; } if(!confirm('Delete this comment?'))return; const removed=DB[idx]._notes[ni]; DB[idx]._notes.splice(ni,1); logFieldChange(DB[idx],'comment',(removed&&removed.text?'"'+(removed.text.length>60?removed.text.slice(0,60)+'…':removed.text)+'"':'a comment'),'(deleted)'); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Comment deleted'); }
 function delReview(idx,ri,e){
-  e.stopPropagation(); if(!confirm('Delete this review?'))return;
-  DB[idx]._reviews.splice(ri,1); saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Review deleted');
+  e.stopPropagation();
+  if(!isSuperuser()){ toast('Only a Superuser can delete reviews','err'); return; }
+  if(!confirm('Delete this review?'))return;
+  const removed=DB[idx]._reviews[ri];
+  DB[idx]._reviews.splice(ri,1);
+  logFieldChange(DB[idx],'review',(removed?`Review by ${removed.reviewedBy||'?'} (${removed.performance||'?'})`:'a review'),'(deleted)');
+  saveDB(); schedSync(DB[idx]._id); buildDrawer(idx); toast('Review deleted');
   if(document.getElementById('tab-analytics').classList.contains('active')) renderAnalytics();
 }
 
@@ -2124,7 +2127,7 @@ function clearForm(){
   document.getElementById('m-by-name').value=localStorage.getItem('mfb_last_author')||'';
   document.getElementById('m-by-dept').value=localStorage.getItem('mfb_last_dept')||'';
 }
-function saveSupplier(){
+async function saveSupplier(){
   const name=(document.getElementById('m-name').value||'').trim(); if(!name){toast('Name required','err');return;}
   const dup=DB.find(s=>s.name.trim().toLowerCase()===name.toLowerCase());
   if(dup){
@@ -2151,9 +2154,14 @@ function saveSupplier(){
   const newSupplier={_id:Date.now(),_local:true,added_by:byName,added_dept:byDept,added_ts:nowIso,_notes:noteEntry,_reviews:[],pending_signoff:false,rating_meta:ratingMeta,insurance_signoff_current:{},...fields,...insuranceFields,...ratingFields,cis:'',last_used:null,safe_contractor:'',safe_contractor_expiry:null,constructionline:'',constructionline_expiry:null};
   DB.unshift(newSupplier);
   localStorage.setItem('mfb_last_author',byName); localStorage.setItem('mfb_last_dept',byDept);
-  saveDB(); schedSync(newSupplier._id); updateCounts(); renderMetrics(); applyFilters(); closeModal();
+  saveDB(); updateCounts(); renderMetrics(); applyFilters(); closeModal();
   toast('Supplier added');
-  queueEmail('new_supplier',newSupplier._id,{supplierName:newSupplier.name,addedBy:byName,addedDept:byDept,tradeCategory:cat,tradeSub:sub,appUrl:location.href});
+  // Flush this new supplier to the database NOW (not on the debounced timer) so
+  // its row exists before we queue the email — email_outbox.supplier_id has a
+  // foreign key to suppliers(id), so queueing first would be rejected.
+  _dirty.add(newSupplier._id);
+  await flushSync();
+  queueEmail('new_supplier',newSupplier._id,{supplierName:newSupplier.name,addedBy:byName,addedDept:byDept,tradeCategory:cat,tradeSub:sub,subbie:isSubbie,appUrl:location.href});
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -2162,7 +2170,7 @@ function switchTab(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   const ni=document.getElementById('nav-'+name); if(ni)ni.classList.add('active');
-  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Expiring Soon',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Analytics',changes:'Recent Changes',matrix:'Rating Matrix',certreview:'Targeted Supplier Review',pqq:'PQQ Review'};
+  const titles={all:'All Suppliers',sc:'Subcontractors',suppliers:'Suppliers',shortlist:'Shortlist',pending:'Expiring Soon',dnu:'Do Not Use',ins:'Insurance Monitor',analytics:'Performance Reviews',changes:'Recent Changes',matrix:'Rating Matrix',certreview:'Targeted Supplier Review',pqq:'PQQ Review'};
   document.getElementById('topbar-title').textContent=titles[name]||name;
   if(name==='shortlist') renderShortlist();
   if(name==='pending') renderPending();
