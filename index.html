@@ -17,6 +17,8 @@
   --purple:#7C3AED;--purple-bg:#EDE9FE;
   --teal:#0D9488;--teal-bg:#CCFBF1;
   --orange:#C2410C;--orange-bg:#FFEDD5;
+  --rg-fin:#EEF3FD;--rg-sal:#FEF3C7;--rg-des:#EDE9FE;--rg-ops:#DCFCE7;
+  --rg-hover:#F5F8FF;--rg-focus:rgba(37,99,235,.18);
   --radius:10px;--radius-lg:14px;
   --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
   --shadow-md:0 4px 20px rgba(0,0,0,.1),0 1px 4px rgba(0,0,0,.04);
@@ -331,7 +333,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v9.5';
+const APP_VERSION = 'v9.11';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -508,6 +510,10 @@ let _sbUser = null;
     <div class="field"><label>Project / Contract Reference</label><input id="rv-project" placeholder="e.g. MFB55-Bristol-Q2"></div>
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Performance Questions</div>
     <div id="rv-questions"></div>
+    <div id="rv-sales-section" style="display:none">
+      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;margin-top:8px;border-top:1px solid var(--border)">Sales / Pre-Award <span id="rv-sales-lock" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)"></span></div>
+      <div id="rv-sales-questions"></div>
+    </div>
     <div id="rv-avg-display" class="ai-rec" style="display:none;align-items:center;justify-content:space-between;padding:14px 16px">
       <span style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.06em">Average Score</span>
       <span id="rv-avg-num" style="font-size:28px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace;line-height:1">—</span>
@@ -572,6 +578,14 @@ const RQ = [
   {id:'q3',label:'Health & Safety',           sub:'Did they comply with site H&S requirements and RAMS?'},
   {id:'q4',label:'Communication',             sub:'Responsive and proactive in communication?'}
 ];
+// Sales criteria for the project review — mirrors the Rating Matrix (tender /
+// pre-award side). Shown to everyone reviewing, but only editable by Sales
+// (Sales Lead / Superuser); others see them read-only for reference.
+const RQ_SALES = [
+  {id:'s1',label:'Response',              sub:'Completeness and quality of their tender response.'},
+  {id:'s2',label:'Price Competitiveness', sub:'Accuracy, transparency and competitiveness of pricing.'},
+  {id:'s3',label:'Technical Capability',  sub:'Relevant experience and ability to deliver the works.'}
+];
 const LS='mfb_sup_v4', SLK='mfb_shortlist';
 
 // ── Roles & permissions ──────────────────────────────────────────────────────
@@ -609,7 +623,7 @@ const RATING_GROUPS = [
 const RATING_MATRIX = {"matrix":[{"group":"Finance","criterion":"Insurances","scores":{"4":"Insurance\nEL & PL > £5.5m\nPI > £2m","3":"Insurance\nEL & PL < £5.5m\nPI < £2m","2":"Expired Insurance","1":"No Valid Insurances","0":"No Feedback/Not interacted yet"}},{"group":"Finance","criterion":"Credit Score Band","scores":{"4":"Excellent","3":"Good","2":"Fair","1":"Poor","0":""}},{"group":"Finance","criterion":"Invoicing","scores":{"4":"Accurate, compliant, and consistently efficient invoicing.","3":"Accurate and compliant invoicing.","2":"Occasional errors requiring correction.","1":"Frequent errors or non-compliant invoices.\nNo CIS verified","0":""}},{"group":"Sales/Design","criterion":"Response","scores":{"4":"Exceptional, detailed response that exceeds requirements, demonstrates strong understanding, and provides high-quality supporting information.","3":"Comprehensive and well-presented response addressing all key requirements with appropriate supporting information.","2":"Response addresses most requirements but lacks detail or supporting evidence. Some concerns regarding quality or completeness.","1":"Response is incomplete, late, or fails to address key requirements. Limited engagement or supporting information provided.","0":""}},{"group":"Sales/Design","criterion":"Price Competitiveness / Accuracy","scores":{"4":"Highly competitive, accurate, transparent, and commercially robust pricing with no material concerns.","3":"Competitive, accurate, and well-structured pricing with only minor clarifications required.","2":"Pricing is generally competitive but includes minor inaccuracies, assumptions, or insufficient cost breakdown.","1":"Pricing is uncompetitive, contains significant errors or omissions, or lacks sufficient detail and transparency.","0":""}},{"group":"Sales/Design","criterion":"Technical Capability","scores":{"4":"Extensive relevant experience, proven technical expertise, excellent project references, and high confidence in successful delivery.","3":"Strong evidence of relevant experience, competent technical team, and ability to successfully deliver the required works.","2":"Demonstrates some relevant experience and capability but has gaps in technical expertise or supporting evidence.","1":"Insufficient capability or relevant experience.","0":""}},{"group":"Ops","criterion":"H&S","scores":{"4":"Always use PPE and enforce safety rules. Good housekeeping and site safety","3":"Always use PPE and enforce safety rules but poor housekeeping and site safety","2":"Never use PPE or enforce safety rules. Poor housekeeping and no up-to-date H&S licenses and permits for operations","1":"Continued failure to address issues. Yellow & red cards issued","0":""}},{"group":"Ops","criterion":"Quality","scores":{"4":"No known issues","3":"Some quality Issues but usually resolved efficiently with no questions asked","2":"Issues with quality that do not get readily get resolved","1":"No intent to resolve issues. Resolution is at cost to McFB","0":""}},{"group":"Ops","criterion":"Time","scores":{"4":"Works always progressing on schedule, with timely site arrivals and excellent responsiveness to program changes","3":"Works offten behind the schedule, late site arrivals but excellent responsiveness to program changes","2":"Works or deliveries frequently delayed without chance of recovery. Lots of extra costs outside their price given that should be included","1":"Works always delayed without chance of recovery. Pooor timekeeping & attitude of personnel","0":""}},{"group":"Ops","criterion":"Cost","scores":{"4":"Very well priced with no hidden additional costs. Willingness to negotiate and work with us","3":"Reasonably priced but sometimes hit us with additional hidden costs. Willingness to negotiate and settle within limited ompact to MCFB","2":"Repeat behaviour of frequently claiming additional costs. Limited intent to negotiate and settle","1":"Additional costs claims submitted as soon as they step on the site. Poor attitude to resolution","0":""}}],"labels":{"4":"Excellent","3":"Good","2":"Issues","1":"Do Not Use","0":"Not interacted yet"}};
 let myRoles=new Set(); // a person can hold multiple roles — set after login from user_roles table
 let myDisplayName=null;
-function canEditRating(field){ const allowed=RATING_FIELD_ROLES[field]; return allowed && allowed.some(r=>myRoles.has(r)); }
+function canEditRating(field){ if(isSuperuser())return true; const allowed=RATING_FIELD_ROLES[field]; return allowed && allowed.some(r=>myRoles.has(r)); }
 // Insurance information is controlled by Finance-type roles (or Superuser) only.
 const FINANCE_ROLES=['Finance Director','Finance'];
 function canEditInsurance(){ return isSuperuser()||FINANCE_ROLES.some(r=>myRoles.has(r)); }
@@ -928,7 +942,7 @@ async function saveRatingEdit(idx,field){
   if(!canEditRating(field)){toast('You do not have permission to edit this rating','err');return;}
   const s=DB[idx];
   const oldVal=s[field];
-  const actingRole=RATING_FIELD_ROLES[field].find(r=>myRoles.has(r))||[...myRoles][0]||'';
+  const actingRole=RATING_FIELD_ROLES[field].find(r=>myRoles.has(r))||(isSuperuser()?'Superuser':[...myRoles][0])||'';
   const nowIso=new Date().toISOString();
   s[field]=n;
   s.rating_meta=s.rating_meta||{};
@@ -1495,14 +1509,17 @@ function clearMatchCache(){ matchSupplierIdx._cache=null; }
 function myReviewDepts(){
   const d=[];
   if(isSuperuser()||myRoles.has('Finance Director')||myRoles.has('Finance')) d.push('Finance');
+  if(isSuperuser()||myRoles.has('Sales Lead')) d.push('Sales');
   if(isSuperuser()||myRoles.has('Operations Director')) d.push('Ops');
+  if(isSuperuser()||myRoles.has('Design Lead')) d.push('Design');
   return d;
 }
+const REVIEW_DEPTS=['Finance','Sales','Ops','Design'];
 function reviewKey(nm){ return normLoose(nm)||norm(nm); }
-function isRowComplete(nm){ const r=REVIEW_DONE[reviewKey(nm)]||{}; return r.Finance&&r.Ops; }
+function isRowComplete(nm){ const r=REVIEW_DONE[reviewKey(nm)]||{}; return REVIEW_DEPTS.every(d=>r[d]); }
 function toggleReviewByIdx(li,dept){ const nm=CERT_REVIEW_LIST[li]; if(nm!=null) toggleReview(nm,dept); }
 async function toggleReview(nm,dept){
-  if(!myReviewDepts().includes(dept)){ toast(`Only ${dept==='Finance'?'Finance':'Ops'} can tick that`,'err'); return; }
+  if(!myReviewDepts().includes(dept)){ toast(`You can't tick ${dept} — that's for the ${dept} role`,'err'); return; }
   const key=reviewKey(nm);
   const cur=REVIEW_DONE[key]||{};
   if(cur[dept]){
@@ -1528,43 +1545,145 @@ async function renderCertReview(){
   const rows = _showReviewComplete ? completed : outstanding;
   clearMatchCache();
   const mine=myReviewDepts();
-  const hint=mine.length?`You can tick: ${mine.join(' & ')}`:'View only — no review role';
+  const hint=mine.length?`You can tick / rate: ${mine.join(' & ')}`:'View only — no review role';
   const toggleBtn=`<button class="btn btn-sm" onclick="toggleShowReviewComplete()">${_showReviewComplete?'‹ Back to outstanding':`Show completed (${doneCount})`}</button>`;
-  // Everything outstanding is done, and we're not viewing completed: celebrate.
   if(!_showReviewComplete && !outstanding.length){
-    el.innerHTML=`<div class="card" style="padding:32px;text-align:center"><div style="font-size:15px;font-weight:600;color:var(--green)">✓ All suppliers reviewed</div><div style="font-size:13px;color:var(--text3);margin-top:6px">Both Finance and Ops have signed off every supplier. You can remove this tab.</div><div style="margin-top:14px">${toggleBtn}</div></div>`;
+    el.innerHTML=`<div class="card" style="padding:32px;text-align:center"><div style="font-size:15px;font-weight:600;color:var(--green)">✓ All suppliers reviewed</div><div style="font-size:13px;color:var(--text3);margin-top:6px">Finance, Sales, Ops and Design have signed off every supplier. You can remove this tab.</div><div style="margin-top:14px">${toggleBtn}</div></div>`;
     return;
   }
   const matchedCount=rows.filter(nm=>matchSupplierIdx(nm)!==undefined).length;
+
   const tickCell=(nm,li,dept)=>{
     const done=(REVIEW_DONE[reviewKey(nm)]||{})[dept];
     const canTick=mine.includes(dept);
     const box=`<span style="display:inline-block;width:16px;height:16px;border-radius:4px;border:1.5px solid ${done?'var(--green)':'var(--border2)'};background:${done?'var(--green)':'transparent'};color:#fff;font-size:11px;line-height:14px;text-align:center">${done?'✓':''}</span>`;
     const title=done?`${dept} reviewed by ${esc(done.by)}`:(canTick?`Mark ${dept} reviewed`:`${dept} only`);
     if(!canTick) return `<span title="${title}" style="opacity:${done?'1':'.4'}">${box}</span>`;
-    // Pass the list index, not the name — supplier names contain quotes and
-    // ampersands that would break an inline onclick string.
     return `<button onclick="toggleReviewByIdx(${li},'${dept}')" title="${title}" style="background:none;border:none;cursor:pointer;padding:0">${box}</button>`;
   };
+
+  // Inline rating cell for the bulk grid. Editable only if the signed-in user's
+  // role permits that criterion (same gating as the drawer). Saves on change
+  // with an auto-reason so there's no per-cell modal — fast bulk entry — but
+  // still fully logged to rating_history and Recent Changes.
+  // Tab-local shorter column labels (this grid only — the drawer & matrix keep
+  // their fuller names). Sales & Design both read Response / Price / Capability.
+  const GRID_LABELS={
+    sales_response_rating:'Response', sales_price_rating:'Price', sales_technical_rating:'Capability',
+    design_response_rating:'Response', design_price_rating:'Price', design_technical_rating:'Capability'
+  };
+  const gridLabel=f=>GRID_LABELS[f]||RATING_FIELD_LABELS[f];
+  const scoreClass=v=>''; // score numbers are no longer colour-coded (colour lives in the group headers instead)
+  const rateCell=(dbIdx,field,first)=>{
+    const b=first?' grp-first':'';
+    if(dbIdx===undefined) return `<td class="rg-cell${b}"><span class="rg-dash">—</span></td>`;
+    const s=DB[dbIdx];
+    const val=s[field];
+    const canEdit=canEditRating(field);
+    if(!canEdit){
+      return `<td class="rg-cell rg-ro${b}" title="${esc(RATING_FIELD_LABELS[field])} — not your department"><span class="${scoreClass(val)}">${val!=null?val:'·'}</span></td>`;
+    }
+    return `<td class="rg-cell${b}"><input class="rg-input ${scoreClass(val)}" type="number" min="0" max="4" value="${val!=null?val:''}" onchange="bulkRate(${dbIdx},'${field}',this.value)" title="${esc(RATING_FIELD_LABELS[field])}"></td>`;
+  };
+
   const heading=_showReviewComplete?`${completed.length} completed`:`${outstanding.length} to review`;
   const sub=_showReviewComplete
-    ? `Both departments signed off. Click a green box to un-tick and return a supplier to the list. · ${esc(hint)}`
+    ? `All three departments signed off. Click a green box to un-tick and return a supplier to the list. · ${esc(hint)}`
     : `${doneCount} complete · ${rows.length-matchedCount} not in database · ${esc(hint)}`;
-  let h=`<div class="card"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div><h2>${heading}</h2><span style="font-size:12px;color:var(--text3)">${sub}</span></div>${toggleBtn}</div><div class="card-scroll"><table><thead><tr><th style="width:64px;text-align:center">Finance</th><th style="width:64px;text-align:center">Ops</th><th>Supplier</th><th>In database?</th></tr></thead><tbody>`;
+
+  // build grouped rating column headers (13 criteria across 4 groups)
+  const GTINT={finance:'var(--rg-fin)',sales:'var(--rg-sal)',design:'var(--rg-des)',ops:'var(--rg-ops)'};
+  let ratingHead='';
+  RATING_GROUPS.forEach(g=>{
+    g.fields.forEach((f,fi)=>{
+      ratingHead+=`<th class="rg-h${fi===0?' grp-first':''}" style="background:${GTINT[g.key]}" title="${esc(g.label)} — ${esc(RATING_FIELD_LABELS[f])}">${esc(gridLabel(f))}</th>`;
+    });
+  });
+  const RG_CSS=`<style>
+    .rg-wrap{overflow-x:auto;border-radius:10px}
+    .rg-tbl{border-collapse:separate;border-spacing:0;min-width:1080px;width:100%;font-size:12px}
+    .rg-tbl th,.rg-tbl td{border-bottom:1px solid var(--border)}
+    .rg-tbl thead th{position:sticky;top:0;z-index:3;background:var(--surface2);padding:7px 4px;font-weight:600;color:var(--text2)}
+    .rg-tbl thead tr:first-child th{font-size:11px;letter-spacing:.03em;text-transform:uppercase}
+    .rg-h{width:48px;text-align:center;font-size:9.5px;line-height:1.2;letter-spacing:.02em;color:var(--text)!important}
+    .grp-first{border-left:2px solid var(--border2)}
+    .rg-tick{width:46px;text-align:center}
+    .rg-name{min-width:210px;position:sticky;left:0;z-index:2;background:var(--surface);font-weight:600}
+    .rg-tbl thead .rg-name{z-index:4;background:var(--surface2)}
+    .rg-tbl tbody tr:nth-child(even) td{background:var(--surface2)}
+    .rg-tbl tbody tr:nth-child(even) .rg-name{background:var(--surface2)}
+    .rg-tbl tbody tr:hover td{background:var(--rg-hover)}
+    .rg-tbl tbody tr:hover .rg-name{background:var(--rg-hover)}
+    .rg-cell{text-align:center;padding:3px;vertical-align:middle}
+    .rg-ro{font-family:'DM Mono',monospace;opacity:.5}
+    .rg-dash{color:var(--text3)}
+    .rg-input{width:40px;height:28px;text-align:center;padding:2px;border:1px solid var(--border2);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;background:var(--surface);transition:border-color .12s,box-shadow .12s}
+    .rg-input:hover{border-color:var(--text3)}
+    .rg-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--rg-focus)}
+    .rg-input::-webkit-inner-spin-button{opacity:.4}
+    .sc-red{color:var(--red);font-weight:700}
+    .sc-amber{color:var(--amber);font-weight:700}
+    .sc-green{color:var(--green);font-weight:700}
+  </style>`;
+  let h=`${RG_CSS}<div class="card"><div class="card-header" style="display:flex;align-items:center;justify-content:space-between"><div><h2>${heading}</h2><span style="font-size:12px;color:var(--text3)">${sub}</span></div>${toggleBtn}</div>
+  <div style="font-size:11px;color:var(--text3);padding:0 14px 10px">Scale 0–4 · 0 not interacted · 1 Do Not Use · 2 Issues · 3 Good · 4 Excellent. Only cells for your role are editable; the rest are greyed for reference.</div>
+  <div class="rg-wrap"><table class="rg-tbl"><thead>
+    <tr>
+      <th rowspan="2" class="rg-tick">Fin</th>
+      <th rowspan="2" class="rg-tick">Sales</th>
+      <th rowspan="2" class="rg-tick">Ops</th>
+      <th rowspan="2" class="rg-tick">Des</th>
+      <th rowspan="2" class="rg-name">Supplier</th>
+      ${RATING_GROUPS.map(g=>`<th colspan="${g.fields.length}" class="grp-first" style="text-align:center;background:${GTINT[g.key]};color:var(--text)">${esc(g.label)}</th>`).join('')}
+    </tr>
+    <tr>${ratingHead}</tr>
+  </thead><tbody>`;
   rows.forEach(nm=>{
-    const idx=matchSupplierIdx(nm);
-    const link = idx!==undefined
-      ? `<button class="btn btn-sm" onclick="openDrawer(${idx})">Open</button>`
-      : '<span style="font-size:12px;color:var(--amber)">not in database</span>';
+    const li=CERT_REVIEW_LIST.indexOf(nm);
+    const dbIdx=matchSupplierIdx(nm);
+    const nameCell = dbIdx!==undefined
+      ? `<strong>${esc(nm)}</strong>`
+      : `<strong>${esc(nm)}</strong> <span style="font-size:11px;color:var(--amber)">· not in database</span>`;
+    let ratingCells='';
+    RATING_GROUPS.forEach(g=>{
+      g.fields.forEach((f,fi)=>{ ratingCells += rateCell(dbIdx,f,fi===0); });
+    });
     h+=`<tr>
-      <td style="text-align:center">${tickCell(nm,CERT_REVIEW_LIST.indexOf(nm),'Finance')}</td>
-      <td style="text-align:center">${tickCell(nm,CERT_REVIEW_LIST.indexOf(nm),'Ops')}</td>
-      <td><strong>${esc(nm)}</strong></td>
-      <td>${link}</td>
+      <td class="rg-tick">${tickCell(nm,li,'Finance')}</td>
+      <td class="rg-tick">${tickCell(nm,li,'Sales')}</td>
+      <td class="rg-tick">${tickCell(nm,li,'Ops')}</td>
+      <td class="rg-tick">${tickCell(nm,li,'Design')}</td>
+      <td class="rg-name">${nameCell}</td>
+      ${ratingCells}
     </tr>`;
   });
   h+='</tbody></table></div></div>';
   el.innerHTML=h;
+}
+
+// Fast bulk rating save from the review grid — no modal, auto-reason, but
+// still writes rating_history + Recent Changes so the audit trail is intact.
+async function bulkRate(dbIdx,field,raw){
+  const s=DB[dbIdx];
+  if(!canEditRating(field)){ toast('Not your department to rate','err'); renderCertReview(); return; }
+  if(raw===''){ return; } // leave blank as-is
+  const n=Number(raw);
+  if(isNaN(n)||n<0||n>4){ toast('Score must be 0–4','err'); renderCertReview(); return; }
+  const oldVal=s[field];
+  if(oldVal===n) return; // no change
+  const actingRole=RATING_FIELD_ROLES[field].find(r=>myRoles.has(r))||(isSuperuser()?'Superuser':[...myRoles][0])||'';
+  s[field]=n;
+  s.rating_meta=s.rating_meta||{};
+  s.rating_meta[field]={by:myName(),why:'Bulk review',ts:new Date().toISOString()};
+  saveDB(); schedSync(s._id);
+  // Ratings still write to rating_history (per-field audit is preserved), but we
+  // deliberately DON'T call logFieldChange here — this bulk review tab would
+  // otherwise flood the Recent Changes feed. The drawer edits still log.
+  await sbCall(_sb.from('rating_history').insert({
+    supplier_id:s._id, field, old_value:oldVal, new_value:n,
+    changed_by_user_id:_sbUser.id, changed_by_name:myName(), changed_by_role:actingRole, reason:'Bulk review'
+  }),'Saving rating history');
+  toast(`${RATING_FIELD_LABELS[field]} set to ${n}`);
 }
 
 // PQQ Annual Review — suppliers loaded over a year ago (or a year since their
@@ -1908,7 +2027,7 @@ function buildDrawer(idx){
     h+=reviews.slice().reverse().map((r,i)=>{
       const ri=reviews.length-1-i;
       const cls={Good:'rs-good',OK:'rs-ok',Poor:'rs-poor'}[r.performance]||'rs-ok';
-      const qs=RQ.map(q=>{
+      const qs=RQ.concat(RQ_SALES).map(q=>{
         const v=r.questions?.[q.id];
         if(v===undefined)return'';
         if(typeof v==='boolean')return`<span style="font-size:11px;color:var(--text3);margin-right:8px">${esc(q.label)}: <strong style="color:${v?'var(--green)':'var(--red)'}">${v?'Y':'N'}</strong></span>`;
@@ -1917,7 +2036,7 @@ function buildDrawer(idx){
       return`<div class="review-card" style="display:flex;gap:14px;align-items:flex-start">
         ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=3?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:8px 14px;min-width:64px">
           <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=3?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
-          <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">avg /6</div>
+          <div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">avg /4</div>
         </div>`:''}
         <div style="flex:1;min-width:0">
         <div class="review-hd">
@@ -2045,6 +2164,18 @@ function openReviewModal(idx){
         <span class="rq-score-sub">/4</span>
       </div>
     </div>`).join('');
+  // Sales section — always shown, but editable only by Sales (Sales Lead / Superuser).
+  const canSales=isSuperuser()||myRoles.has('Sales Lead');
+  document.getElementById('rv-sales-section').style.display='block';
+  document.getElementById('rv-sales-lock').textContent=canSales?'':'· view only (Sales edits these)';
+  document.getElementById('rv-sales-questions').innerHTML=RQ_SALES.map(q=>`
+    <div class="rq-row">
+      <div><div class="rq-label">${esc(q.label)}</div><div class="rq-sub">${esc(q.sub)}</div></div>
+      <div class="rq-btns">
+        <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="4" placeholder="–" ${canSales?`oninput="setRQ('${q.id}',this.value)"`:'disabled style="opacity:.5;cursor:not-allowed"'}>
+        <span class="rq-score-sub">/4</span>
+      </div>
+    </div>`).join('');
   updateRvAvgDisplay();
   document.getElementById('review-modal').classList.add('open');
 }
@@ -2058,7 +2189,8 @@ function setRQ(id,raw){
   updateRvAvgDisplay();
 }
 function rvAverage(){
-  const vals=RQ.map(q=>rqState[q.id]).filter(v=>v!=null&&!isNaN(v));
+  const all=RQ.concat(RQ_SALES);
+  const vals=all.map(q=>rqState[q.id]).filter(v=>v!=null&&!isNaN(v));
   if(!vals.length)return null;
   return Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*10)/10;
 }
