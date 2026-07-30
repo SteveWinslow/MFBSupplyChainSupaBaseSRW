@@ -333,7 +333,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v9.12';
+const APP_VERSION = 'v9.13';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -2382,9 +2382,17 @@ let _insNotified=null; // Set of "supplierId|policy|threshold|expiry" already no
 // Load the dedup records so we never re-send the same alert. Keyed by
 // supplier + policy + threshold + the specific expiry date, so a RENEWED
 // policy (new expiry date) correctly notifies again at each threshold.
+function _insKey(sid,policy,threshold,expiry){
+  // Normalise: id as string, expiry to YYYY-MM-DD only (dates can arrive as
+  // "2026-05-01" or "2026-05-01T00:00:00+00:00").
+  const d=String(expiry||'').slice(0,10);
+  return `${sid}|${policy}|${threshold}|${d}`;
+}
 async function loadInsNotified(){
-  const {data}=await sbCall(_sb.from('insurance_notified').select('supplier_id,policy,threshold,expiry_date'),'Loading insurance notifications');
-  _insNotified=new Set((data||[]).map(r=>`${r.supplier_id}|${r.policy}|${r.threshold}|${r.expiry_date}`));
+  const {data,error}=await sbCall(_sb.from('insurance_notified').select('supplier_id,policy,threshold,expiry_date'),'Loading insurance notifications');
+  if(error){ _insNotified=null; return false; } // signal failure — caller must NOT send
+  _insNotified=new Set((data||[]).map(r=>_insKey(r.supplier_id,r.policy,r.threshold,r.expiry_date)));
+  return true;
 }
 
 async function checkInsuranceNotify(s,field,label){
@@ -2394,19 +2402,23 @@ async function checkInsuranceNotify(s,field,label){
   if(d<0){ threshold='expired'; kind='insurance_expired'; }
   else if(INS_THRESHOLDS.includes(d)){ threshold=String(d); kind='insurance_expiring'; payloadExtra={daysLeft:d}; }
   else return; // not at a checkpoint
-  const key=`${s._id}|${label}|${threshold}|${expiry}`;
-  if(_insNotified && _insNotified.has(key)) return; // already told them — don't repeat
+  // Fail-safe: if we don't have a loaded dedup set, DO NOT SEND. Better silent
+  // than a flood.
+  if(!(_insNotified instanceof Set)) return;
+  const key=_insKey(s._id,label,threshold,expiry);
+  if(_insNotified.has(key)) return; // already told them — don't repeat
   // record FIRST (so a double-run in the same session can't double-send), then queue
-  _insNotified && _insNotified.add(key);
-  const {error}=await _sb.from('insurance_notified').insert({supplier_id:s._id,policy:label,threshold,expiry_date:expiry});
-  if(error) return; // if the insert was rejected (e.g. a race inserted it first), skip the email too
+  _insNotified.add(key);
+  const {error}=await _sb.from('insurance_notified').insert({supplier_id:s._id,policy:label,threshold,expiry_date:String(expiry).slice(0,10)});
+  if(error) return; // insert rejected (likely a race — already notified) → skip the email
   queueEmail(kind,s._id,{supplierName:s.name,insType:label,expiryDate:fmtDate(s[field]),appUrl:location.href,...payloadExtra});
 }
 
 async function runInsuranceChecks(){
   // App-triggered (no server cron), but now de-duplicated: each (supplier,
   // policy, threshold, expiry) alert is sent at most once, ever.
-  await loadInsNotified();
+  const ok=await loadInsNotified();
+  if(!ok || !(_insNotified instanceof Set)){ console.warn('Insurance dedup unavailable — skipping checks to avoid a flood'); return; }
   for(const s of DB.filter(s=>s.subbie)){
     await checkInsuranceNotify(s,'el_expiry','EL');
     await checkInsuranceNotify(s,'pl_expiry','PL');
