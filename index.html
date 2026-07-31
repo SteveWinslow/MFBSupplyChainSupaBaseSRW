@@ -333,7 +333,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v9.13';
+const APP_VERSION = 'v9.16';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -524,12 +524,12 @@ let _sbUser = null;
 <div class="modal-overlay" id="roles-modal" onclick="if(event.target===this)closeRolesModal()">
   <div class="modal"><div class="modal-head"><h3>Manage Roles</h3><button class="btn-icon" onclick="closeRolesModal()">&#10005;</button></div>
   <div class="modal-body">
-    <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Superuser: full control, including who has which role — visible to Superusers only. Finance Director: edit Insurance/Credit/Invoicing ratings, sign off insurance &amp; new suppliers. Operations Director: edit H&amp;S/Quality/Time/Cost ratings. A person can hold more than one role — add each separately below.</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Superuser: full control, including who has which role — visible to Superusers only. Finance: edit Insurance/Credit/Invoicing ratings, sign off insurance. Operations Director / Ops: edit H&amp;S/Quality/Time/Cost ratings. Sales: edit Sales ratings. Design Lead: edit Design ratings. A person can hold more than one role — add each separately below.</div>
     <div id="roles-list" style="display:flex;flex-direction:column;gap:8px"></div>
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;border-top:1px solid var(--border)">Add a Role by Email</div>
     <div class="fg2">
       <div class="field"><label>Email *</label><input id="role-email" placeholder="name@mcfegganbrown.co.uk"></div>
-      <div class="field"><label>Role *</label><select id="role-select"><option value="">Select&hellip;</option><option>Superuser</option><option>Finance Director</option><option>Finance</option><option>Sales Lead</option><option>Design Lead</option><option>Project Manager</option><option>Operations Director</option></select></div>
+      <div class="field"><label>Role *</label><select id="role-select"><option value="">Select&hellip;</option><option>Superuser</option><option>Finance</option><option>Sales</option><option>Design Lead</option><option>Project Manager</option><option>Operations Director</option><option>Ops</option></select></div>
     </div>
     <div class="field"><label>Display Name *</label><input id="role-name" placeholder="How their name should appear"></div>
   </div><div class="modal-foot"><button class="btn" onclick="closeRolesModal()">Close</button><button class="btn btn-primary" onclick="saveRole()">Add Role</button></div></div></div>
@@ -580,7 +580,7 @@ const RQ = [
 ];
 // Sales criteria for the project review — mirrors the Rating Matrix (tender /
 // pre-award side). Shown to everyone reviewing, but only editable by Sales
-// (Sales Lead / Superuser); others see them read-only for reference.
+// (Sales / Superuser); others see them read-only for reference.
 const RQ_SALES = [
   {id:'s1',label:'Response',              sub:'Completeness and quality of their tender response.'},
   {id:'s2',label:'Price Competitiveness', sub:'Accuracy, transparency and competitiveness of pricing.'},
@@ -589,23 +589,23 @@ const RQ_SALES = [
 const LS='mfb_sup_v4', SLK='mfb_shortlist';
 
 // ── Roles & permissions ──────────────────────────────────────────────────────
-const ROLES = ['Finance Director','Finance','Sales Lead','Design Lead','Project Manager','Operations Director'];
-const ALL_ROLE_NAMES = ['Superuser','Finance Director','Finance','Sales Lead','Design Lead','Project Manager','Operations Director'];
+const ROLES = ['Finance','Sales','Design Lead','Project Manager','Operations Director','Ops'];
+const ALL_ROLE_NAMES = ['Superuser','Finance','Sales','Design Lead','Project Manager','Operations Director','Ops'];
 // Which role(s) may edit which rating fields.
 const RATING_FIELD_ROLES = {
-  ins_rating:     ['Finance Director','Finance'],
-  credit_rating:  ['Finance Director','Finance'],
-  invoice_rating: ['Finance Director','Finance'],
-  sales_response_rating:  ['Sales Lead'],
-  sales_price_rating:     ['Sales Lead'],
-  sales_technical_rating: ['Sales Lead'],
+  ins_rating:     ['Finance'],
+  credit_rating:  ['Finance'],
+  invoice_rating: ['Finance'],
+  sales_response_rating:  ['Sales'],
+  sales_price_rating:     ['Sales'],
+  sales_technical_rating: ['Sales'],
   design_response_rating:  ['Design Lead'],
   design_price_rating:     ['Design Lead'],
   design_technical_rating: ['Design Lead'],
-  hs_rating:      ['Operations Director'],
-  quality_rating: ['Operations Director'],
-  time_rating:    ['Operations Director'],
-  cost_rating:    ['Operations Director']
+  hs_rating:      ['Operations Director','Ops'],
+  quality_rating: ['Operations Director','Ops'],
+  time_rating:    ['Operations Director','Ops'],
+  cost_rating:    ['Operations Director','Ops']
 };
 const RATING_FIELD_LABELS = {
   ins_rating:'Insurance', credit_rating:'Credit', invoice_rating:'Invoicing',
@@ -625,7 +625,7 @@ let myRoles=new Set(); // a person can hold multiple roles — set after login f
 let myDisplayName=null;
 function canEditRating(field){ if(isSuperuser())return true; const allowed=RATING_FIELD_ROLES[field]; return allowed && allowed.some(r=>myRoles.has(r)); }
 // Insurance information is controlled by Finance-type roles (or Superuser) only.
-const FINANCE_ROLES=['Finance Director','Finance'];
+const FINANCE_ROLES=['Finance'];
 function canEditInsurance(){ return isSuperuser()||FINANCE_ROLES.some(r=>myRoles.has(r)); }
 function isSuperuser(){
   // Tolerant of casing/spacing variants in the user_roles table
@@ -682,7 +682,7 @@ function renderRoleBadge(){
     el.textContent=list.length?list.join(', '):'No role assigned';
     el.style.color=list.length?'var(--accent)':'var(--text3)';
   }
-  // Manage Roles is Superuser-only — Finance Director no longer sees it.
+  // Manage Roles is Superuser-only.
   const rb=document.getElementById('nav-roles-btn');
   if(rb) rb.style.display=isSuperuser()?'':'none';
 }
@@ -1463,7 +1463,7 @@ function renderAnalytics(){
 // Deliberately excludes routine field edits (name/city/contact etc).
 
 
-const CERT_REVIEW_LIST = ["2 TECK LIMITED","361 DEGREES LTD","A C Ceramics","A DOOR ADDITIONS LTD","A.D Colbert Ltd","A1 Fire and Security Ltd","A2 ELECTRICAL LTD","Abbey Electrical (Swindon) Limited","ABILITY LIFTS LIMITED","ACCESS CONTRACTING LIMITED","ACCESS FLOORING SOLUTIONS 21 LTD","ACE SYSTEMS LIMITED","ACS CONTROLLED DEMOLITION LTD","Adex Drilling Service","AGA SCAFFOLDING LTD","AJS SUSPENDED CEILINGS LIMITED","ALDWORTH ROOFING CONTRACTS LTD","All Mastic Ltd","ALL SEASONS ROOFING GROUP LTD","AMELIO UTILITIES (GLOUCESTER) LIMITED","APR Group Ltd","Aqua Libra S/A","ARTISTIC BLINDS","AURA","B & H PLUMBING & HEATING SERVICES LIMITED","B.R DAY GROUNDWORKS LIMITED","Baldwin & Bleakley","BAMBURY METAL FABRICATIONS LIMITED","BASE LIFT SERVICES LTD","BATH CITY SCAFFOLDING LIMITED","Bath Drain & Jetting Services Ltd T/A Mega-Rod","BC Floors & Walls S/C","BEN MASON T/A ADHERE","Bespoke Detection Services Ltd","Blenheim Plumbing & Heating S/C","Borders Flooring Services","Britannia Retail Limited","Britson Ltd S/C","BRONEV LIFTS LIMITED","C A Services (NI) Ltd","CANNON SECURITY LIMITED","Carma UK Construction Ltd","Ceaton Security Services","Cedrics Labouring Service Ltd S/C","Chamberlain Bros Construction Ltd S/C","CHAPEL BATH ENGINEERING LTD","Chapel Drilling Ltd","Churches Fire Security Ltd","CINTRIX SYSTEMS LIMITED","CLARKE-RENDALL BUSINESS FURNITURE LIMITED","CML Commercial Cleaning Specialists","COMPRESSED AIR SYSTEMS LIMITED","COMPRESSED AIR SYSTEMS LTD","CONTRACT FLOORING SERVICES (CAMBRIDGE) LIMITED","Convery Ceilings Ltd","Coolstream UK Ltd S/C","Coolstream Vent (SW) Ltd S/C","COOL-THERM (UK) LIMITED","Core Drill Ltd S/C","Core-Ect Diamond Drilling Ltd","CorHol Property Services","CRBS (SW) Limited","Creatif Architectural Products Limited","Cubed Interior Projects Ltd","D P Controls Limited (pinnock services)","D.J. MAYHEAD ELECTRICAL SERVICES LIMITED","D.J.Mayhead Electrical Services Ltd S/C","Dart & Co. Limited","DOOR SERVICES (BRISTOL) LIMITED","Drillcut (UK) Ltd","Eamonn Kilby Decorators S/C","Economic Drain Repairs","ECS Systems Ltd","ELECSEC UK LTD","Elite Partitions & Ceilings","ELLIOTT ENVIRONMENTAL SERVICES LIMITED","ENVIRA-MECH SERVICES LIMITED","ENVIROTECH ALARMS LTD","Eton Environmental Group Ltd","Extreme Clean","FIRECARE FIRE ALARM SERVICES LIMITED","Five Star Door Systems","Fuller Plumbing & Heating S/C","FUSELAND ELECTRICAL SERVICES LIMITED","Future Mastics","Gartec Limited","Gas2o Ltd","Gatehouse Architectural Aluminium S/C","GLENFIELD ELECTRICAL LTD","GRP X LTD","H W Groundworks","HARRINGTON DEVELOPMENTS LTD","Hawkins Insulation Limited S/C","HS ELECTRICAL SERVICES (WAKEFIELD) LTD","HYAK LTD T/A Castle Scaffolding","IB FIRE PROTECTION LTD","ICONIC FLOORING (LEEDS) LTD","Ideal Interiors Southern Ltd","IDH Direct Ltd","Inspired Worx Ltd S/C","IntegraIQ","Integrated Laboratory Services Ltd S/C","INTERIOR RESOLUTIONS LIMITED","Intersign Partitions Ltd","INVALIFTS LIMITED","INVICTA STORAGE SYSTEMS LIMITED","IO CONTROLS LIMITED","JAMIESONS SERVICES LTD","JN Services Electrical Ltd S/C","Jones & Woolman UK Ltd","Jones Weatherproofing Ltd","Jordon Hicks S/C","K R F Metals Limited","Kev Kenny","KINETIC SYSTEMS (BRISTOL) LIMITED","KINGSCOURT CLADDING SERVICES LTD","Kingston Landscape Group Ltd","Komfort Partitioning Ltd","KW INTERIORS (SOUTH WEST & WALES) LTD","Lansdowne Surveys Limited","Lawmans Demolition S/C","Lazer Flooring Ltd","Lightning Protection Testing UK","LINARDS LAUZUMS","LS Surface Repairs","LSF Commercial S/C","LT SMART LTD","Lucas Communications (SW) Ltd","M2 FLOORING SOLUTIONS LIMITED","Magic Man ltd","Magicman Holdings Limited","MagicMan Holdings ltd","Maintain a Drain","Martin Boyle Painting Contractors","MATT DURBIN ASSOCIATES LIMITED","Mays Way Ltd","MECSOL LTD","Medical Piped Gases Limited","Merit Cleaning Services Ltd","METELEC SERVICES LTD","Mezztechnic S/C","MG Carpentry & Construction Ltd","MIDLAND COMMERCIAL ENVIRONMENTAL SERVICES LTD","MIDLANDS FLOORING LIMITED","Minton Communications","MIRAGE INTERIORS LIMITED","MITCHELL PLUMBING AND HEATING CONTRACTORS LTD","Modular Safety Systems Ltd","Monument Site Management","Morban Ltd","Morclad Roofing Ltd S/C","Moveable Wall Solutions","MR C J & MRS M T MORGAN","Mr C J Morgan & Mrs M T Morgan","Multigas Installations Ltd S/C","N.C. CERAMICS LIMITED","Nailsea Fencing & Gardens Ltd S/C","Nash Glass Ltd S/C","NO GREY AREA LTD","North Bristol Plastering Ltd","NORTHVILLE SCAFFOLDING LTD","OAKDALE TECHNICAL SERVICES LTD","OASIS PLANTS LIMITED","OneFifty","ONSITE CENTRAL LIMITED","Optima Property Services Limited","Optimum Laboratory Installations Ltd","Orbital Electrical (South West) Ltd S/C","P Harvey & Sons Ltd","Paul Kimble Flooring","Paul West Carpentry","PBG Projects Ltd","PC Flooring Ltd","PCD SERVICES LIMITED","PDH Fire and Security","PFP RESOURCING LTD","POW WORKSHOPS LIMITED","Powerite Contracting Ltd","PRNS BUILDING SERVICES LTD","PROCTER BROTHERS LTD","Q Fabs Ltd","RAREKIND LTD","RB Flooring Ltd","REACTIVE MAINTENANCE SERVICES LIMITED","REGALE REFRIGERATION AND AIR CONDITIONING LIMITED","REGALE REFRIGERATION AND AIR CONDITIONING LIMITED (Royal Air Conditioning)","RICHARDSON DECORATING CONTRACTORS","RIDGEWELL FLAT ROOFING LIMITED","Rightway Enviromental Ltd S/C","RJW INTERIORS LTD","Rob Maidment Flooring","Robert Scott","Rock and Stone Consulting Ltd T/A Silex UK","S and W Property Solutions Edinburgh","S.J.C.Flooring","S.J.M DECORATORS LTD","SCEPTRE NETWORKING LIMITED","Scott Wall","Sealant Applications (Cymru) Ltd","Sealant Applications Ltd","Selo Construction Ltd","SENEVO DESIGNS LTD","Sids Labour Worx Ltd","Sight and Sound Services Ltd","SIV Fire Protection Limited","South West Stainless Ltd","SOUTHAM ELECTRICAL BROS LIMITED","SPAN ROOFING CONTRACTORS LIMITED","SPURWAY SCAFFOLDING LIMITED","Stancold PLC","STEELGRAM FABRICATIONS LIMITED","Stertil UK Ltd","Steven O'Brien","Steven O'Brien Decorators","SUREBOND SURFACES (UK) LTD","Sweet Joinery Limited","T & H CONTRACT SERVICES LIMITED","TABLEFORM LTD","TANDY ELECTRICAL CONTRACTORS LTD","Tapper Interiors Ltd S/C","Taurus Electrical Installations Ltd","TCGB Plumbing & HEating","TEKTA UK LIMITED","Thames Cryogenics Limited","The Fume Cupboard Company","The Fume Cupboard Company S/C","TPT FIRE PROJECTS LTD","Triangle Lift Services Ltd","UK Roller Shutters Ltd","UMBERSLADE BUSINESS SERVICES LIMITED","Universal Ceilings & Partitions Ltd S/C","Urban Cleaning Ltd","Valeriu Alexandru Cojocaru","VALLEYS ROOFING & CLADDING LTD","VALVE FORCE LIMITED","West Drywall - Mike West","XL Commercial Interiors S/C"];
+const CERT_REVIEW_LIST = ["2 TECK LIMITED","361 DEGREES LTD","A DOOR ADDITIONS LTD","A.D Colbert Ltd","A2 ELECTRICAL LTD","Abbey Electrical (Swindon) Limited","ABILITY LIFTS LIMITED","ACCESS CONTRACTING LIMITED","ACCESS FLOORING SOLUTIONS 21 LTD","ACE SYSTEMS LIMITED","ACS CONTROLLED DEMOLITION LTD","Adex Drilling Service","AGA SCAFFOLDING LTD","AJS SUSPENDED CEILINGS LIMITED","ALDWORTH ROOFING CONTRACTS LTD","All Mastic Ltd","ALL SEASONS ROOFING GROUP LTD","AMELIO UTILITIES (GLOUCESTER) LIMITED","APR Group Ltd","Aqua Libra S/A","ARTISTIC BLINDS","AURA","B & H PLUMBING & HEATING SERVICES LIMITED","B.R DAY GROUNDWORKS LIMITED","Baldwin & Bleakley","BAMBURY METAL FABRICATIONS LIMITED","BASE LIFT SERVICES LTD","BATH CITY SCAFFOLDING LIMITED","Bath Drain & Jetting Services Ltd T/A Mega-Rod","BC Floors & Walls S/C","BEN MASON T/A ADHERE","Blenheim Plumbing & Heating S/C","Borders Flooring Services","Britannia Retail Limited","Britson Ltd S/C","BRONEV LIFTS LIMITED","C A Services (NI) Ltd","CANNON SECURITY LIMITED","Carma UK Construction Ltd","Ceaton Security Services","Cedrics Labouring Service Ltd S/C","Chamberlain Bros Construction Ltd S/C","CHAPEL BATH ENGINEERING LTD","Chapel Drilling Ltd","Churches Fire Security Ltd","CINTRIX SYSTEMS LIMITED","CLARKE-RENDALL BUSINESS FURNITURE LIMITED","CML Commercial Cleaning Specialists","COMPRESSED AIR SYSTEMS LIMITED","COMPRESSED AIR SYSTEMS LTD","CONTRACT FLOORING SERVICES (CAMBRIDGE) LIMITED","Convery Ceilings Ltd","Coolstream UK Ltd S/C","Coolstream Vent (SW) Ltd S/C","COOL-THERM (UK) LIMITED","Core Drill Ltd S/C","Core-Ect Diamond Drilling Ltd","CorHol Property Services","CRBS (SW) Limited","Creatif Architectural Products Limited","Cubed Interior Projects Ltd","D P Controls Limited (pinnock services)","D.J. MAYHEAD ELECTRICAL SERVICES LIMITED","D.J.Mayhead Electrical Services Ltd S/C","Dart & Co. Limited","DOOR SERVICES (BRISTOL) LIMITED","Drillcut (UK) Ltd","Eamonn Kilby Decorators S/C","Economic Drain Repairs","ECS Systems Ltd","ELECSEC UK LTD","Elite Partitions & Ceilings","ELLIOTT ENVIRONMENTAL SERVICES LIMITED","ENVIRA-MECH SERVICES LIMITED","ENVIROTECH ALARMS LTD","Eton Environmental Group Ltd","Extreme Clean","FIRECARE FIRE ALARM SERVICES LIMITED","Five Star Door Systems","Fuller Plumbing & Heating S/C","FUSELAND ELECTRICAL SERVICES LIMITED","Future Mastics","Gartec Limited","Gas2o Ltd","Gatehouse Architectural Aluminium S/C","GLENFIELD ELECTRICAL LTD","GRP X LTD","H W Groundworks","HARRINGTON DEVELOPMENTS LTD","Hawkins Insulation Limited S/C","HS ELECTRICAL SERVICES (WAKEFIELD) LTD","HYAK LTD T/A Castle Scaffolding","IB FIRE PROTECTION LTD","ICONIC FLOORING (LEEDS) LTD","Ideal Interiors Southern Ltd","IDH Direct Ltd","Inspired Worx Ltd S/C","IntegraIQ","Integrated Laboratory Services Ltd S/C","INTERIOR RESOLUTIONS LIMITED","Intersign Partitions Ltd","INVALIFTS LIMITED","INVICTA STORAGE SYSTEMS LIMITED","IO CONTROLS LIMITED","JAMIESONS SERVICES LTD","JN Services Electrical Ltd S/C","Jones Weatherproofing Ltd","Jordon Hicks S/C","K R F Metals Limited","Kev Kenny","KINETIC SYSTEMS (BRISTOL) LIMITED","KINGSCOURT CLADDING SERVICES LTD","Komfort Partitioning Ltd","KW INTERIORS (SOUTH WEST & WALES) LTD","Lansdowne Surveys Limited","Lawmans Demolition S/C","Lazer Flooring Ltd","Lightning Protection Testing UK","LINARDS LAUZUMS","LS Surface Repairs","LSF Commercial S/C","LT SMART LTD","Lucas Communications (SW) Ltd","M2 FLOORING SOLUTIONS LIMITED","Magicman Holdings Limited","MagicMan Holdings ltd","Maintain a Drain","Martin Boyle Painting Contractors","MATT DURBIN ASSOCIATES LIMITED","Mays Way Ltd","MECSOL LTD","Medical Piped Gases Limited","Merit Cleaning Services Ltd","METELEC SERVICES LTD","Mezztechnic S/C","MG Carpentry & Construction Ltd","MIDLAND COMMERCIAL ENVIRONMENTAL SERVICES LTD","MIDLANDS FLOORING LIMITED","Minton Communications","MIRAGE INTERIORS LIMITED","MITCHELL PLUMBING AND HEATING CONTRACTORS LTD","Modular Safety Systems Ltd","Monument Site Management","Morban Ltd","Morclad Roofing Ltd S/C","Moveable Wall Solutions","MR C J & MRS M T MORGAN","Multigas Installations Ltd S/C","N.C. CERAMICS LIMITED","Nailsea Fencing & Gardens Ltd S/C","Nash Glass Ltd S/C","NO GREY AREA LTD","North Bristol Plastering Ltd","NORTHVILLE SCAFFOLDING LTD","OAKDALE TECHNICAL SERVICES LTD","OASIS PLANTS LIMITED","OneFifty","ONSITE CENTRAL LIMITED","Optima Property Services Limited","Optimum Laboratory Installations Ltd","Orbital Electrical (South West) Ltd S/C","P Harvey & Sons Ltd","Paul Kimble Flooring","Paul West Carpentry","PBG Projects Ltd","PC Flooring Ltd","PCD SERVICES LIMITED","PDH Fire and Security","POW WORKSHOPS LIMITED","Powerite Contracting Ltd","PRNS BUILDING SERVICES LTD","PROCTER BROTHERS LTD","Q Fabs Ltd","RAREKIND LTD","RB Flooring Ltd","REACTIVE MAINTENANCE SERVICES LIMITED","REGALE REFRIGERATION AND AIR CONDITIONING LIMITED","REGALE REFRIGERATION AND AIR CONDITIONING LIMITED (Royal Air Conditioning)","RICHARDSON DECORATING CONTRACTORS","RIDGEWELL FLAT ROOFING LIMITED","Rightway Enviromental Ltd S/C","RJW INTERIORS LTD","Rob Maidment Flooring","Robert Scott","S.J.C.Flooring","S.J.M DECORATORS LTD","Scott Wall","Sealant Applications (Cymru) Ltd","Sealant Applications Ltd","Selo Construction Ltd","SENEVO DESIGNS LTD","Sids Labour Worx Ltd","Sight and Sound Services Ltd","SIV Fire Protection Limited","South West Stainless Ltd","SOUTHAM ELECTRICAL BROS LIMITED","SPAN ROOFING CONTRACTORS LIMITED","SPURWAY SCAFFOLDING LIMITED","Stancold PLC","STEELGRAM FABRICATIONS LIMITED","Stertil UK Ltd","Steven O'Brien","Steven O'Brien Decorators","SUREBOND SURFACES (UK) LTD","Sweet Joinery Limited","T & H CONTRACT SERVICES LIMITED","TABLEFORM LTD","TANDY ELECTRICAL CONTRACTORS LTD","Tapper Interiors Ltd S/C","Taurus Electrical Installations Ltd","TCGB Plumbing & HEating","TEKTA UK LIMITED","Thames Cryogenics Limited","The Fume Cupboard Company","The Fume Cupboard Company S/C","TPT FIRE PROJECTS LTD","Triangle Lift Services Ltd","UK Roller Shutters Ltd","UMBERSLADE BUSINESS SERVICES LIMITED","Universal Ceilings & Partitions Ltd S/C","Urban Cleaning Ltd","VALVE FORCE LIMITED","West Drywall - Mike West","XL Commercial Interiors S/C"];
 // Targeted Supplier Review — a shared staff exercise. Each supplier needs a
 // Finance review AND an Ops review; a row shows both ticks and only drops off
 // once both are done. Completions live in the targeted_review table so they
@@ -1508,9 +1508,9 @@ function clearMatchCache(){ matchSupplierIdx._cache=null; }
 // Which department the signed-in user may tick. Superuser may tick both.
 function myReviewDepts(){
   const d=[];
-  if(isSuperuser()||myRoles.has('Finance Director')||myRoles.has('Finance')) d.push('Finance');
-  if(isSuperuser()||myRoles.has('Sales Lead')) d.push('Sales');
-  if(isSuperuser()||myRoles.has('Operations Director')) d.push('Ops');
+  if(isSuperuser()||myRoles.has('Finance')) d.push('Finance');
+  if(isSuperuser()||myRoles.has('Sales')) d.push('Sales');
+  if(isSuperuser()||myRoles.has('Operations Director')||myRoles.has('Ops')) d.push('Ops');
   if(isSuperuser()||myRoles.has('Design Lead')) d.push('Design');
   return d;
 }
@@ -1693,7 +1693,7 @@ function pqqDueList(){ return DB.filter(s=>pqqReviewDue(s)&&!s.dnu); }
 function renderPQQ(){
   const el=document.getElementById('pqq-content');
   const due=pqqDueList();
-  const canAct=isSuperuser()||myRoles.has('Operations Director');
+  const canAct=isSuperuser()||myRoles.has('Operations Director')||myRoles.has('Ops');
   if(!due.length){
     el.innerHTML='<div class="card" style="padding:32px;text-align:center"><div style="font-size:15px;font-weight:600;color:var(--green)">✓ No PQQ reviews outstanding</div><div style="font-size:13px;color:var(--text3);margin-top:6px">Nothing is currently due its annual review.</div></div>';
     return;
@@ -2164,8 +2164,8 @@ function openReviewModal(idx){
         <span class="rq-score-sub">/4</span>
       </div>
     </div>`).join('');
-  // Sales section — always shown, but editable only by Sales (Sales Lead / Superuser).
-  const canSales=isSuperuser()||myRoles.has('Sales Lead');
+  // Sales section — always shown, but editable only by Sales (Sales / Superuser).
+  const canSales=isSuperuser()||myRoles.has('Sales');
   document.getElementById('rv-sales-section').style.display='block';
   document.getElementById('rv-sales-lock').textContent=canSales?'':'· view only (Sales edits these)';
   document.getElementById('rv-sales-questions').innerHTML=RQ_SALES.map(q=>`
@@ -2323,7 +2323,7 @@ function toggleSidebar(){
 function openSidebar(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('mob-overlay').classList.add('open'); }
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('mob-overlay').classList.remove('open'); }
 
-// ── Roles admin (Finance Director only) ──────────────────────────────────────
+// ── Roles admin (Superuser only) ─────────────────────────────────────────────
 function openRolesModal(){
   if(!isSuperuser()){ toast('Only a Superuser can manage roles','err'); return; }
   renderRolesList();
