@@ -333,7 +333,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v9.16';
+const APP_VERSION = 'v9.18';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -795,7 +795,7 @@ function soonestInsuranceExpiry(s){
   return ds.reduce((a,b)=>a<b?a:b).toISOString().slice(0,10);
 }
 function insExpiryCell(s){
-  if(!s.subbie)return'<span style="color:var(--text3)">—</span>'; // only subbies carry insurance
+  if(!showsInsurance(s))return'<span style="color:var(--text3)">—</span>'; // nothing recorded
   const soon=soonestInsuranceExpiry(s);
   if(!soon)return'<span style="color:var(--text3)">—</span>';
   const dleft=daysUntil(soon);
@@ -811,6 +811,16 @@ function typetag(s){ const t=[]; if(s.subbie)t.push('<span class="type-tag type-
 // An expired certificate blocks the supplier; one nearing expiry raises an
 // early warning but doesn't block.
 const INS_WARN_DAYS = 90; // "expiring soon" threshold
+// Insurance is not a subcontractor-only concept: hire and supply-only accounts
+// frequently carry EL/PL cover too, and that cover matters when placing an
+// order. Display and monitoring therefore follow the DATA — any record holding
+// insurance values shows and is monitored. Blocking (isBlocked/DNU) and the
+// alert emails deliberately stay subcontractor-only.
+function hasInsuranceData(s){
+  return [s.el_value,s.el_expiry,s.pl_value,s.pl_expiry,s.pi_value,s.pi_expiry]
+    .some(v=>v!==null&&v!==undefined&&v!=='');
+}
+function showsInsurance(s){ return !!s.subbie||hasInsuranceData(s); }
 function insExpiredTypes(s){
   if(!s.subbie)return [];
   return [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']]
@@ -818,7 +828,7 @@ function insExpiredTypes(s){
     .map(([t])=>t);
 }
 function insExpiringTypes(s){
-  if(!s.subbie)return [];
+  if(!showsInsurance(s))return [];
   return [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']]
     .filter(([,f])=>{ const x=daysUntil(s[f]); return x!==null&&x>=0&&x<INS_WARN_DAYS; })
     .map(([t])=>t);
@@ -963,7 +973,7 @@ async function saveRatingEdit(idx,field){
 function updateCounts(){
   document.getElementById('nc-all').textContent=DB.length;
   document.getElementById('nc-dnu').textContent=DB.filter(isBlocked).length;
-  document.getElementById('nc-ins').textContent=DB.filter(s=>s.subbie&&insIssue(s)).length;
+  document.getElementById('nc-ins').textContent=DB.filter(s=>showsInsurance(s)&&insIssue(s)).length;
   document.getElementById('nc-sl').textContent=SL.length;
   document.getElementById('nc-pending').textContent=countExpiringSoon();
   const nco=certReviewOutstanding().length; const el1=document.getElementById('nc-certreview'); if(el1) el1.textContent=nco;
@@ -1261,7 +1271,7 @@ function renderPending(){
   const items=[];
   DB.forEach(s=>{
     const idx=DB.indexOf(s);
-    if(!s.subbie)return;
+    if(!showsInsurance(s))return;
     [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']].forEach(([type,expField])=>{
       const x=daysUntil(s[expField]);
       if(x!==null&&x>=0&&x<INS_WARN_DAYS){
@@ -1289,7 +1299,7 @@ function renderPending(){
 
 // ── Insurance table ───────────────────────────────────────────────────────────
 function renderIns(){
-  document.getElementById('ins-tbody').innerHTML=DB.filter(s=>s.subbie&&insIssue(s)).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong>${esc(s.name)}</strong></td><td>${subPill(s)}</td><td class="${insCls(s.el_expiry)}" style="font-size:12px">${fmtDate(s.el_expiry)}</td><td class="${insCls(s.pl_expiry)}" style="font-size:12px">${fmtDate(s.pl_expiry)}</td><td class="${insCls(s.pi_expiry)}" style="font-size:12px">${fmtDate(s.pi_expiry)}</td><td>${insStatusBadge(s)}</td></tr>`).join('');
+  document.getElementById('ins-tbody').innerHTML=DB.filter(s=>showsInsurance(s)&&insIssue(s)).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong>${esc(s.name)}</strong></td><td>${subPill(s)}</td><td class="${insCls(s.el_expiry)}" style="font-size:12px">${fmtDate(s.el_expiry)}</td><td class="${insCls(s.pl_expiry)}" style="font-size:12px">${fmtDate(s.pl_expiry)}</td><td class="${insCls(s.pi_expiry)}" style="font-size:12px">${fmtDate(s.pi_expiry)}</td><td>${insStatusBadge(s)}</td></tr>`).join('');
 }
 
 // ── Shortlist ─────────────────────────────────────────────────────────────────
@@ -1950,8 +1960,9 @@ function buildDrawer(idx){
       <div class="field"><label>Office</label><input id="ed-office-${idx}" value="${esc(s.office_number||'')}" onblur="saveField(${idx},'office_number',this.value)"${ro()}></div>
     </div>
   </div>`;
-  // Insurance (subcontractors)
-  if(s.subbie){
+  // Insurance — shown for subcontractors, and for any other record that
+  // actually holds cover (hire/supply accounts such as Algeco).
+  if(showsInsurance(s)){
     // Insurance is Finance-controlled: editable inline only when the drawer is
     // in edit mode AND the user holds a Finance role (or Superuser). Everyone
     // else sees read-only values, and editors from other departments see a
@@ -2089,9 +2100,48 @@ function buildDrawer(idx){
     <div class="section-hd">Change History <button class="btn btn-sm" onclick="loadSupplierHistory(${idx})">Show</button></div>
     <div id="hist-${idx}"><div style="font-size:12px;color:var(--text3)">Click Show to load recent changes for this supplier.</div></div>
   </div>`;
+  // Delete — Superuser only, and kept at the very bottom so it is never next
+  // to a routine control. The database enforces the same restriction.
+  if(isSuperuser()){
+    h+=`<div class="detail-section">
+      <div class="section-hd" style="color:var(--red)">Delete supplier</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Removes <strong>${esc(s.name)}</strong> and its change history, rating history, insurance alert records and queued emails. This cannot be undone.</div>
+      <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="deleteSupplier(${idx})">Delete permanently</button>
+    </div>`;
+  }
   document.getElementById('drawer-bd').innerHTML=h;
 }
 
+// Re-render the list plus whichever tab is currently on screen. Used after a
+// record is removed, since every table indexes into DB by position.
+function refreshViews(){
+  updateCounts(); renderMetrics(); applyFilters();
+  const active=document.querySelector('.tab.active');
+  if(active) switchTab(active.id.replace(/^tab-/,''));
+}
+// ── Delete a supplier (Superuser only) ───────────────────────────────────────
+// Permanent. The database cascades to field_history, rating_history,
+// insurance_notified, insurance_signoff and email_outbox, and enforces the
+// Superuser restriction itself via the suppliers_delete RLS policy — so this
+// check is the friendly front door, not the lock.
+async function deleteSupplier(idx){
+  if(!isSuperuser()){ toast('Only a Superuser can delete a supplier','err'); return; }
+  const s=DB[idx];
+  if(!s){ return; }
+  if(!confirm(`Permanently delete "${s.name}"?\n\nThis also removes its change history, rating history, insurance alert records and any queued emails.\n\nThis cannot be undone.`)) return;
+  if(!s._local){
+    const {error}=await sbCall(_sb.from('suppliers').delete().eq('id',s._id),'Deleting supplier');
+    if(error) return; // sbCall has already explained the failure; leave the row alone
+  }
+  _dirty.delete(s._id);              // a queued edit must not resurrect the row
+  const wasStarred=SL.includes(s._id);
+  if(wasStarred) SL=SL.filter(x=>x!==s._id);
+  DB.splice(idx,1);
+  closeDrawer();
+  if(wasStarred) saveSL();
+  saveDB(); refreshViews();
+  toast(`"${s.name}" deleted`);
+}
 function toggleBox(id){ const el=document.getElementById(id); if(el)el.style.display=el.style.display==='none'?'block':'none'; }
 // Per-supplier change history, fetched on demand from field_history.
 async function loadSupplierHistory(idx){
