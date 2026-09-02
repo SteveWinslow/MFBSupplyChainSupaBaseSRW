@@ -112,6 +112,8 @@ tbody tr:hover td{background:var(--hover)}
 /* Toolbar */
 .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .tlabel{font-size:12px;color:var(--text3);font-weight:500}
+.tgl{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);font-weight:500;cursor:pointer;user-select:none;white-space:nowrap}
+.tgl input{cursor:pointer;margin:0}
 .sel{font-size:13px;padding:4px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);height:30px;font-family:inherit;cursor:pointer}
 .sel:focus{outline:2px solid var(--accent);outline-offset:1px}
 .s-wrap{position:relative}
@@ -186,6 +188,7 @@ tbody tr:hover td{background:var(--hover)}
 .ai-source-ref{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0;white-space:nowrap}
 /* Edit pill */
 .edit-pill{font-size:11px;font-weight:500;font-family:inherit;padding:3px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .12s}
+.r-src{font-size:10px;font-weight:600;color:var(--teal,#07B59B);background:rgba(7,181,155,.1);padding:1px 7px;border-radius:99px;letter-spacing:.02em}
 .edit-pill:hover{background:var(--accent-bg);color:var(--accent);border-color:rgba(37,99,235,.3)}
 /* Comments thread */
 .comments-thread{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
@@ -425,6 +428,8 @@ let _sbUser = null;
           <span class="tlabel">Sub-trade</span><select class="sel" id="f-sub" onchange="applyFilters()"><option value="">All</option></select>
           <span class="tlabel">Region</span><select class="sel" id="f-region" onchange="applyFilters()"></select>
           <span class="tlabel">Status</span><select class="sel" id="f-status" onchange="applyFilters()"><option value="">All</option><option value="active">Active</option><option value="dnu">DNU</option></select>
+          <label class="tgl"><input type="checkbox" id="f-bestscore" onchange="applyFilters()"> Best score</label>
+          <label class="tgl"><input type="checkbox" id="f-dnubottom" onchange="applyFilters()"> DNU to bottom</label>
           <button class="btn btn-sm" onclick="clearFilters()">Clear</button>
         </div></div>
         <div class="card-scroll"><table><thead><tr>
@@ -435,6 +440,10 @@ let _sbUser = null;
           <th onclick="sortBy('city')" data-col="city">Office</th>
           <th onclick="sortBy('regions')" data-col="regions">Operating Region</th>
           <th onclick="sortBy('_ins')" data-col="_ins">1st Ins' Exp'</th>
+          <th onclick="sortBy('_fin')" data-col="_fin" title="Finance average" style="text-align:center">Fin</th>
+          <th onclick="sortBy('_sal')" data-col="_sal" title="Sales average" style="text-align:center">Sal</th>
+          <th onclick="sortBy('_ops')" data-col="_ops" title="Ops average (review-driven)" style="text-align:center">Ops</th>
+          <th onclick="sortBy('_des')" data-col="_des" title="Design average" style="text-align:center">Des</th>
           <th>Type</th><th>Last Review</th><th>Status</th><th style="width:48px"></th>
         </tr></thead><tbody id="supplier-tbody"></tbody></table></div>
         <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)"><span id="page-info" style="flex:1"></span><div style="display:flex;gap:4px" id="page-btns"></div></div>
@@ -454,7 +463,7 @@ let _sbUser = null;
 </div>
 <div id="overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none;cursor:pointer" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer"><div class="drawer-hd"><div><div class="drawer-title" id="drawer-title"></div><div class="drawer-sub" id="drawer-sub"></div></div><div style="display:flex;gap:6px;align-items:center"><button class="btn btn-sm" id="drawer-edit-btn" onclick="toggleDrawerEdit()">Edit</button><button class="btn btn-sm" id="drawer-review-btn" onclick="openReviewModal(drawerIdx)">Add Review</button><button class="btn-icon" onclick="closeDrawer()">&#10005;</button></div></div><div class="drawer-bd" id="drawer-bd"></div></div>
-<div class="modal-overlay" id="supplier-modal" onclick="if(event.target===this)closeModal()">
+<div class="modal-overlay" id="supplier-modal">
   <div class="modal"><div class="modal-head"><h3 id="modal-title">Add Supplier</h3><button class="btn-icon" onclick="closeModal()">&#10005;</button></div>
   <div class="modal-body">
     <div class="field"><label>Business Name *</label><input id="m-name" placeholder="Full company name"></div>
@@ -502,7 +511,7 @@ let _sbUser = null;
     <div class="fg2"><div class="field"><label>Your Name *</label><input id="m-by-name"></div><div class="field"><label>Department *</label><select id="m-by-dept"><option value="">Select&hellip;</option><option value="Design">Design</option><option value="Operations">Operations</option><option value="Finance">Finance</option><option value="Sales / Pre-Con">Sales / Pre-Con</option><option value="Senior Management">Senior Management</option><option value="Other">Other</option></select></div></div>
     <div class="field"><label>Initial Note (optional)</label><textarea id="m-init-note" rows="2" placeholder="Added to the comments thread"></textarea></div>
   </div><div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSupplier()">Save</button></div></div></div>
-<div class="modal-overlay" id="review-modal" onclick="if(event.target===this)closeReviewModal()">
+<div class="modal-overlay" id="review-modal">
   <div class="modal"><div class="modal-head"><h3>Contractor Performance Review</h3><button class="btn-icon" onclick="closeReviewModal()">&#10005;</button></div>
   <div class="modal-body">
     <div class="fg2"><div class="field"><label>Date</label><input type="date" id="rv-date"></div><div class="field"><label>Contractor *</label><select id="rv-supplier"><option value="">Select contractor&hellip;</option></select></div></div>
@@ -521,7 +530,7 @@ let _sbUser = null;
     <div class="field"><label>Areas for Improvement</label><textarea id="rv-improvements" rows="3" placeholder="Key areas that need attention&hellip;"></textarea></div>
     <div class="field"><label>Recommendations</label><textarea id="rv-recommendations" rows="2" placeholder="Would you use again? Any caveats?"></textarea></div>
   </div><div class="modal-foot"><button class="btn" onclick="closeReviewModal()">Cancel</button><button class="btn btn-primary" onclick="saveReview()">Save Review</button></div></div></div>
-<div class="modal-overlay" id="roles-modal" onclick="if(event.target===this)closeRolesModal()">
+<div class="modal-overlay" id="roles-modal">
   <div class="modal"><div class="modal-head"><h3>Manage Roles</h3><button class="btn-icon" onclick="closeRolesModal()">&#10005;</button></div>
   <div class="modal-body">
     <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Superuser: full control, including who has which role — visible to Superusers only. Finance: edit Insurance/Credit/Invoicing ratings, sign off insurance. Operations Director / Ops: edit H&amp;S/Quality/Time/Cost ratings. Sales: edit Sales ratings. Design Lead: edit Design ratings. A person can hold more than one role — add each separately below.</div>
@@ -572,12 +581,32 @@ function populateVocabDropdowns(){
   if(fr) fr.innerHTML='<option value="">All</option>'+REGIONS.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');
 }
 const DEPTS = ['Design','Operations','Finance','Sales / Pre-Con','Senior Management','Other'];
-const RQ = [
-  {id:'q1',label:'Adherence to Programme',   sub:'Did they meet agreed milestones?'},
-  {id:'q2',label:'Quality of Workmanship',    sub:'Was the standard acceptable, snagging minimal?'},
-  {id:'q3',label:'Health & Safety',           sub:'Did they comply with site H&S requirements and RAMS?'},
-  {id:'q4',label:'Communication',             sub:'Responsive and proactive in communication?'}
+// Review questions are grouped under the four Ops pillars (H&S, Quality, Time,
+// Cost). Each pillar's score is the mean of its questions. These pillar scores
+// are what drive the Ops ratings (see reviewOpsScores). The four original
+// questions are retained verbatim, each paired with a companion.
+const RQ_PILLARS = [
+  {pillar:'hs_rating',      label:'Health & Safety', questions:[
+    {id:'q3', label:'Site H&S Compliance',   sub:'Did they comply with site H&S requirements and RAMS?'},
+    {id:'q5', label:'Safety Documentation',  sub:'Were method statements and risk assessments provided and followed?'},
+  ]},
+  {pillar:'quality_rating', label:'Quality', questions:[
+    {id:'q2', label:'Quality of Workmanship', sub:'Was the standard acceptable, snagging minimal?'},
+    {id:'q4', label:'Communication',          sub:'Responsive and proactive in communication?'},
+  ]},
+  {pillar:'time_rating',    label:'Time', questions:[
+    {id:'q1', label:'Adherence to Programme', sub:'Did they meet agreed milestones?'},
+    {id:'q6', label:'Labour & Resource',      sub:'Did they provide enough labour to keep to programme?'},
+  ]},
+  {pillar:'cost_rating',    label:'Cost', questions:[
+    {id:'q7', label:'Cost Control',      sub:'Did they price accurately and control variations?'},
+    {id:'q8', label:'Commercial Conduct', sub:'Were applications and accounts handled fairly?'},
+  ]},
 ];
+// Flat list of all questions (used by the modal + averaging), preserving order.
+const RQ = RQ_PILLARS.flatMap(p=>p.questions);
+// Map each Ops rating field -> its question ids, for review-driven averaging.
+const OPS_PILLAR_QIDS = Object.fromEntries(RQ_PILLARS.map(p=>[p.pillar, p.questions.map(q=>q.id)]));
 // Sales criteria for the project review — mirrors the Rating Matrix (tender /
 // pre-award side). Shown to everyone reviewing, but only editable by Sales
 // (Sales / Superuser); others see them read-only for reference.
@@ -795,7 +824,7 @@ function soonestInsuranceExpiry(s){
   return ds.reduce((a,b)=>a<b?a:b).toISOString().slice(0,10);
 }
 function insExpiryCell(s){
-  if(!showsInsurance(s))return'<span style="color:var(--text3)">—</span>'; // nothing recorded
+  if(!s.subbie)return'<span style="color:var(--text3)">—</span>'; // only subbies carry insurance
   const soon=soonestInsuranceExpiry(s);
   if(!soon)return'<span style="color:var(--text3)">—</span>';
   const dleft=daysUntil(soon);
@@ -804,23 +833,13 @@ function insExpiryCell(s){
 }
 function fmtTs(ts){ if(!ts)return''; const d=new Date(ts); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
 function fmtMoney(v){ if(!v)return'—'; return v>=1000000?'£'+(v/1000000).toFixed(0)+'M':v>=1000?'£'+(v/1000).toFixed(0)+'K':'£'+v; }
-function rp(v){ if(v==null||v===''||v===0)return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; return`<span class="rating-pill ${n<=2?'r-low':n<=3?'r-mid':'r-good'}">${n}</span>`; }
+function rp(v){ if(v==null||v===''||v===0||v==='0')return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; const disp=Number.isInteger(n)?n:n.toFixed(1); return`<span class="rating-pill ${n<=2?'r-low':n<=3?'r-mid':'r-good'}">${disp}</span>`; }
 function typetag(s){ const t=[]; if(s.subbie)t.push('<span class="type-tag type-sc">S/C</span>'); if(s.supplier)t.push('<span class="type-tag type-sup">SUP</span>'); if(s.hire)t.push('<span class="type-tag type-hire">HIRE</span>'); return t.join(' ')||'<span class="type-tag" style="background:var(--surface2);color:var(--text3)">—</span>'; }
 // Insurance is date-driven: anything on the database has already been
 // supplied to and checked by Finance, so there's no separate sign-off step.
 // An expired certificate blocks the supplier; one nearing expiry raises an
 // early warning but doesn't block.
 const INS_WARN_DAYS = 90; // "expiring soon" threshold
-// Insurance is not a subcontractor-only concept: hire and supply-only accounts
-// frequently carry EL/PL cover too, and that cover matters when placing an
-// order. Display and monitoring therefore follow the DATA — any record holding
-// insurance values shows and is monitored. Blocking (isBlocked/DNU) and the
-// alert emails deliberately stay subcontractor-only.
-function hasInsuranceData(s){
-  return [s.el_value,s.el_expiry,s.pl_value,s.pl_expiry,s.pi_value,s.pi_expiry]
-    .some(v=>v!==null&&v!==undefined&&v!=='');
-}
-function showsInsurance(s){ return !!s.subbie||hasInsuranceData(s); }
 function insExpiredTypes(s){
   if(!s.subbie)return [];
   return [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']]
@@ -828,7 +847,7 @@ function insExpiredTypes(s){
     .map(([t])=>t);
 }
 function insExpiringTypes(s){
-  if(!showsInsurance(s))return [];
+  if(!s.subbie)return [];
   return [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']]
     .filter(([,f])=>{ const x=daysUntil(s[f]); return x!==null&&x>=0&&x<INS_WARN_DAYS; })
     .map(([t])=>t);
@@ -897,7 +916,48 @@ function groupRating(s,key){
 function financeRating(s){ return groupRating(s,'finance'); }
 function salesRating(s){ return groupRating(s,'sales'); }
 function designRating(s){ return groupRating(s,'design'); }
-function opsRating(s){ return groupRating(s,'ops'); }
+
+// ── Review-driven Ops scoring ────────────────────────────────────────────────
+// Each Ops pillar (H&S/Quality/Time/Cost) resolves by precedence:
+//   1. Superuser override (pinned in rating_meta.ops_overrides[field])
+//   2. Review average — mean of that pillar's question scores across ALL the
+//      supplier's reviews (a review only counts toward a pillar if it scored
+//      at least one of that pillar's questions). One decimal.
+//   3. Manual line-item score (s[field]) — unchanged fallback when no reviews.
+// Returns {value, source:'override'|'review'|'manual'|null, count} where count
+// is how many reviews contributed (source==='review' only).
+function opsFieldScore(s, field){
+  const ov=(s.rating_meta&&s.rating_meta.ops_overrides)||{};
+  if(ov[field]!=null&&ov[field]!==''){ return {value:Number(ov[field]), source:'override', count:0}; }
+  const qids=OPS_PILLAR_QIDS[field]||[];
+  const reviews=s._reviews||[];
+  const perReview=[]; // one pillar-score per review that scored this pillar
+  reviews.forEach(r=>{
+    const q=r.questions||{};
+    const vals=qids.map(id=>q[id]).filter(v=>v!=null&&!isNaN(v));
+    if(vals.length) perReview.push(vals.reduce((a,b)=>a+Number(b),0)/vals.length);
+  });
+  if(perReview.length){
+    const avg=perReview.reduce((a,b)=>a+b,0)/perReview.length;
+    return {value:Math.round(avg*10)/10, source:'review', count:perReview.length};
+  }
+  const m=s[field];
+  if(m!=null&&m!==''&&m!==0) return {value:Number(m), source:'manual', count:0};
+  return {value:null, source:null, count:0};
+}
+// Is this Ops cell driven by reviews or an override (i.e. locked to manual edit)?
+function opsFieldLocked(s, field){
+  const sc=opsFieldScore(s,field);
+  return sc.source==='review'||sc.source==='override';
+}
+// Ops department average — mean of the four pillar scores that have a value,
+// to one decimal. Uses the resolved (review-driven) pillar scores.
+function opsRating(s){
+  const vals=['hs_rating','quality_rating','time_rating','cost_rating']
+    .map(f=>opsFieldScore(s,f).value).filter(v=>v!=null);
+  if(!vals.length)return null;
+  return (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1).replace(/\.0$/,'');
+}
 // Overall is the average of the four group averages, so each department
 // counts equally regardless of how many criteria it scores against.
 function overallRating(s){
@@ -911,14 +971,25 @@ let _ratingEditField=null; // field currently being edited in the drawer, or nul
 let _showRatingAudit=false; // global toggle — controls whether "last changed by" shows for ALL ratings at once
 function ratingRow(idx,s,field){
   const label=RATING_FIELD_LABELS[field];
-  const val=s[field];
-  const canEdit=canEditRating(field);
   const meta=(s.rating_meta||{})[field];
   const editing=_ratingEditField===field;
+  const isOps=OPS_PILLAR_QIDS.hasOwnProperty(field);
+  // For Ops fields, resolve via the review-driven layer; others use the raw value.
+  const sc=isOps?opsFieldScore(s,field):{value:s[field],source:'manual',count:0};
+  const val=sc.value;
+  const locked=isOps&&(sc.source==='review'||sc.source==='override');
+  const canEdit=canEditRating(field);
+  // A locked (review-driven) Ops cell can only be changed by a Superuser pinning
+  // an override; a normal editor sees it as read-only.
+  const showEdit=_drawerEdit&&!editing&&(locked?isSuperuser():canEdit);
+  const editLabel=locked?'Override':'Edit';
+  let srcTag='';
+  if(sc.source==='review') srcTag=`<span class="r-src" title="Average of ${sc.count} review${sc.count===1?'':'s'}">avg · ${sc.count} review${sc.count===1?'':'s'}</span>`;
+  else if(sc.source==='override') srcTag=`<span class="r-src" title="Pinned by a Superuser">pinned</span>`;
   let row=`<div class="r-row" style="align-items:flex-start;flex-wrap:wrap">
     <div class="r-row-label" style="padding-top:3px">${esc(label)}</div>
-    <div style="display:flex;align-items:center;gap:6px">${rp(val)}
-      ${_drawerEdit&&canEdit&&!editing?`<button class="edit-pill" onclick="startRatingEdit(${idx},'${field}')">Edit</button>`:''}
+    <div style="display:flex;align-items:center;gap:6px">${rp(val)}${srcTag}
+      ${showEdit?`<button class="edit-pill" onclick="startRatingEdit(${idx},'${field}')">${editLabel}</button>`:''}
     </div>`;
   if(_showRatingAudit&&meta&&meta.by){
     row+=`<div class="r-row-note" style="flex-basis:100%;margin-top:2px">Last changed by ${esc(meta.by)}${meta.ts?' · '+fmtTs(meta.ts):''}${meta.why?'<br><span style="font-style:italic">"'+esc(meta.why)+'"</span>':''}</div>`;
@@ -927,12 +998,15 @@ function ratingRow(idx,s,field){
   }
   row+=`</div>`;
   if(editing){
+    const ovActive=isOps&&sc.source==='override';
     row+=`<div class="quick-box" style="margin-top:4px;margin-bottom:8px">
-      <span class="quick-box-label">Update ${esc(label)} Rating</span>
-      <div class="quick-row"><span style="width:auto">Score</span><input type="number" min="0" max="4" id="rt-val-${field}" value="${val!=null?val:''}" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace"></div>
+      <span class="quick-box-label">${locked?'Override':'Update'} ${esc(label)} Rating</span>
+      ${locked?`<div class="r-row-note" style="margin:2px 0 6px">This score is review-driven${sc.source==='review'?` (avg of ${sc.count})`:''}. Saving pins a manual override until cleared.</div>`:''}
+      <div class="quick-row"><span style="width:auto">Score</span><input type="number" min="0" max="4" step="0.1" id="rt-val-${field}" value="${val!=null?val:''}" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace"></div>
       <div class="field" style="margin-top:6px"><label>Reason for change *</label><textarea id="rt-reason-${field}" rows="2" placeholder="Required — why is this rating changing?"></textarea></div>
       <div class="quick-row" style="margin-top:8px">
         <button class="btn btn-sm btn-primary" onclick="saveRatingEdit(${idx},'${field}')">Save</button>
+        ${ovActive?`<button class="btn btn-sm" onclick="clearOpsOverride(${idx},'${field}')">Clear override</button>`:''}
         <button class="btn btn-sm" onclick="cancelRatingEdit(${idx})">Cancel</button>
       </div>
     </div>`;
@@ -941,6 +1015,25 @@ function ratingRow(idx,s,field){
 }
 function startRatingEdit(idx,field){ _ratingEditField=field; buildDrawer(idx); setTimeout(()=>{const el=document.getElementById('rt-val-'+field); if(el)el.focus();},0); }
 function cancelRatingEdit(idx){ _ratingEditField=null; buildDrawer(idx); }
+async function clearOpsOverride(idx,field){
+  if(!isSuperuser()){toast('Only a Superuser can clear an override','err');return;}
+  const s=DB[idx];
+  const ov=(s.rating_meta&&s.rating_meta.ops_overrides)||{};
+  if(ov[field]==null){ _ratingEditField=null; buildDrawer(idx); return; }
+  const oldVal=Number(ov[field]);
+  delete s.rating_meta.ops_overrides[field];
+  if(s.rating_meta[field]&&s.rating_meta[field].override) delete s.rating_meta[field];
+  saveDB(); schedSync(s._id);
+  const newResolved=opsFieldScore(s,field).value;
+  await sbCall(_sb.from('rating_history').insert({
+    supplier_id:s._id, field, old_value:oldVal, new_value:newResolved,
+    changed_by_user_id:_sbUser.id, changed_by_name:myName(), changed_by_role:'Superuser',
+    reason:'Override cleared — reverted to review-driven score'
+  }),'Saving rating history');
+  _ratingEditField=null;
+  buildDrawer(idx); renderMetrics(); applyFilters();
+  toast(RATING_FIELD_LABELS[field]+' override cleared');
+}
 async function saveRatingEdit(idx,field){
   const valEl=document.getElementById('rt-val-'+field), reasonEl=document.getElementById('rt-reason-'+field);
   const raw=valEl.value;
@@ -949,14 +1042,28 @@ async function saveRatingEdit(idx,field){
   if(isNaN(n)||n<0||n>4){toast('Score must be between 0 and 4','err');return;}
   const reason=(reasonEl.value||'').trim();
   if(!reason){toast('Reason is required','err');return;}
-  if(!canEditRating(field)){toast('You do not have permission to edit this rating','err');return;}
   const s=DB[idx];
-  const oldVal=s[field];
-  const actingRole=RATING_FIELD_ROLES[field].find(r=>myRoles.has(r))||(isSuperuser()?'Superuser':[...myRoles][0])||'';
+  const isOps=OPS_PILLAR_QIDS.hasOwnProperty(field);
+  const wasLocked=isOps&&opsFieldLocked(s,field);
+  // Permission: a locked (review-driven) Ops cell can only be changed by a
+  // Superuser (as an override); otherwise normal rating permission applies.
+  if(wasLocked){ if(!isSuperuser()){toast('This score is review-driven — only a Superuser can override it','err');return;} }
+  else if(!canEditRating(field)){toast('You do not have permission to edit this rating','err');return;}
+  const oldResolved=isOps?opsFieldScore(s,field).value:s[field];
+  const actingRole=isSuperuser()?'Superuser':(RATING_FIELD_ROLES[field].find(r=>myRoles.has(r))||[...myRoles][0]||'');
   const nowIso=new Date().toISOString();
-  s[field]=n;
-  s.rating_meta=s.rating_meta||{};
-  s.rating_meta[field]={by:myName(),why:reason,ts:nowIso};
+  if(wasLocked){
+    // Store as a Superuser override, leaving the manual value untouched.
+    s.rating_meta=s.rating_meta||{};
+    s.rating_meta.ops_overrides=s.rating_meta.ops_overrides||{};
+    s.rating_meta.ops_overrides[field]=n;
+    s.rating_meta[field]={by:myName(),why:reason,ts:nowIso,override:true};
+  } else {
+    s[field]=n;
+    s.rating_meta=s.rating_meta||{};
+    s.rating_meta[field]={by:myName(),why:reason,ts:nowIso};
+  }
+  const oldVal=oldResolved;
   saveDB(); schedSync(s._id);
   await sbCall(_sb.from('rating_history').insert({
     supplier_id:s._id, field, old_value:oldVal, new_value:n,
@@ -973,7 +1080,7 @@ async function saveRatingEdit(idx,field){
 function updateCounts(){
   document.getElementById('nc-all').textContent=DB.length;
   document.getElementById('nc-dnu').textContent=DB.filter(isBlocked).length;
-  document.getElementById('nc-ins').textContent=DB.filter(s=>showsInsurance(s)&&insIssue(s)).length;
+  document.getElementById('nc-ins').textContent=DB.filter(s=>s.subbie&&insIssue(s)).length;
   document.getElementById('nc-sl').textContent=SL.length;
   document.getElementById('nc-pending').textContent=countExpiringSoon();
   const nco=certReviewOutstanding().length; const el1=document.getElementById('nc-certreview'); if(el1) el1.textContent=nco;
@@ -1164,10 +1271,28 @@ function applyFilters(){
     if(dnuF==='dnu'&&!isBlocked(s))return false;
     return true;
   });
+  const bestScore=document.getElementById('f-bestscore')&&document.getElementById('f-bestscore').checked;
+  const dnuBottom=document.getElementById('f-dnubottom')&&document.getElementById('f-dnubottom').checked;
+  // Computed numeric columns (department averages + overall).
+  const DEPT_COL={_fin:financeRating,_sal:salesRating,_ops:opsRating,_des:designRating};
+  const numOrNull=v=>{ const n=Number(v); return (v==null||v===''||isNaN(n))?null:n; };
   filtered.sort((a,b)=>{
-    // _ins is a computed column (soonest insurance expiry), not a stored field.
-    let av = sortCol==='_ins' ? soonestInsuranceExpiry(a) : a[sortCol];
-    let bv = sortCol==='_ins' ? soonestInsuranceExpiry(b) : b[sortCol];
+    // DNU-to-bottom takes precedence over any sort: hard DNU and soft DNU sink.
+    if(dnuBottom){
+      const ad=isBlocked(a)||a.soft_dnu?1:0, bd=isBlocked(b)||b.soft_dnu?1:0;
+      if(ad!==bd) return ad-bd;
+    }
+    // Best-score sort: by overall average, highest first (nulls last).
+    if(bestScore){
+      const ao=numOrNull(overallRating(a)), bo=numOrNull(overallRating(b));
+      if(ao==null&&bo==null){} else if(ao==null) return 1; else if(bo==null) return -1;
+      else if(ao!==bo) return bo-ao;
+    }
+    // Column sort. _ins and the dept-average columns are computed, not stored.
+    let av,bv;
+    if(sortCol==='_ins'){ av=soonestInsuranceExpiry(a); bv=soonestInsuranceExpiry(b); }
+    else if(DEPT_COL[sortCol]){ av=numOrNull(DEPT_COL[sortCol](a)); bv=numOrNull(DEPT_COL[sortCol](b)); }
+    else { av=a[sortCol]; bv=b[sortCol]; }
     if(av==null)av=sortDir>0?'zzz':''; if(bv==null)bv=sortDir>0?'zzz':'';
     if(typeof av==='number'&&typeof bv==='number')return(av-bv)*sortDir;
     return String(av).localeCompare(String(bv))*sortDir;
@@ -1191,6 +1316,7 @@ function clearSearch(){
 }
 function clearFilters(){
   ['f-search','f-cat','f-sub','f-region','f-status'].forEach(id=>{const el=document.getElementById(id); if(el)el.value='';});
+  ['f-bestscore','f-dnubottom'].forEach(id=>{const el=document.getElementById(id); if(el)el.checked=false;});
   document.getElementById('f-sub').innerHTML='<option value="">All sub-trades</option>';
   toggleSearchClear();
   applyFilters();
@@ -1201,7 +1327,7 @@ function renderTable(){
   const start=(page-1)*PAGE, slice=filtered.slice(start,start+PAGE);
   const tbody=document.getElementById('supplier-tbody');
   if(!slice.length){
-    tbody.innerHTML='<tr><td colspan="11" class="empty-state">No suppliers match your filters</td></tr>';
+    tbody.innerHTML='<tr><td colspan="15" class="empty-state">No suppliers match your filters</td></tr>';
     document.getElementById('page-info').textContent='';
     document.getElementById('page-btns').innerHTML='';
     return;
@@ -1216,6 +1342,10 @@ function renderTable(){
       <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
       <td style="font-size:12px;color:var(--text3)">${regionCell(s)}</td>
       <td>${insExpiryCell(s)}</td>
+      <td style="text-align:center">${rp(financeRating(s))}</td>
+      <td style="text-align:center">${rp(salesRating(s))}</td>
+      <td style="text-align:center">${rp(opsRating(s))}</td>
+      <td style="text-align:center">${rp(designRating(s))}</td>
       <td>${typetag(s)}</td>
       <td>${lastReviewBadge(s)}</td>
       <td>${statusBadge(s)}</td>
@@ -1271,7 +1401,7 @@ function renderPending(){
   const items=[];
   DB.forEach(s=>{
     const idx=DB.indexOf(s);
-    if(!showsInsurance(s))return;
+    if(!s.subbie)return;
     [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']].forEach(([type,expField])=>{
       const x=daysUntil(s[expField]);
       if(x!==null&&x>=0&&x<INS_WARN_DAYS){
@@ -1299,7 +1429,7 @@ function renderPending(){
 
 // ── Insurance table ───────────────────────────────────────────────────────────
 function renderIns(){
-  document.getElementById('ins-tbody').innerHTML=DB.filter(s=>showsInsurance(s)&&insIssue(s)).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong>${esc(s.name)}</strong></td><td>${subPill(s)}</td><td class="${insCls(s.el_expiry)}" style="font-size:12px">${fmtDate(s.el_expiry)}</td><td class="${insCls(s.pl_expiry)}" style="font-size:12px">${fmtDate(s.pl_expiry)}</td><td class="${insCls(s.pi_expiry)}" style="font-size:12px">${fmtDate(s.pi_expiry)}</td><td>${insStatusBadge(s)}</td></tr>`).join('');
+  document.getElementById('ins-tbody').innerHTML=DB.filter(s=>s.subbie&&insIssue(s)).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong>${esc(s.name)}</strong></td><td>${subPill(s)}</td><td class="${insCls(s.el_expiry)}" style="font-size:12px">${fmtDate(s.el_expiry)}</td><td class="${insCls(s.pl_expiry)}" style="font-size:12px">${fmtDate(s.pl_expiry)}</td><td class="${insCls(s.pi_expiry)}" style="font-size:12px">${fmtDate(s.pi_expiry)}</td><td>${insStatusBadge(s)}</td></tr>`).join('');
 }
 
 // ── Shortlist ─────────────────────────────────────────────────────────────────
@@ -1415,55 +1545,64 @@ function copyShortlist(){
 function clearShortlist(){ if(confirm('Clear entire shortlist?')){SL=[];slPref=null;saveSL();renderShortlist();} }
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
+// Performance Reviews tab — reviews only. A filter bar (supplier · department ·
+// DNU · date · rating band) narrows a flat, newest-first list of every review.
+let _revFilter={supplier:'',dept:'',dnu:'',from:'',to:'',band:''};
+function setRevFilter(k,v){ _revFilter[k]=v; renderAnalytics(); }
+function clearRevFilter(){ _revFilter={supplier:'',dept:'',dnu:'',from:'',to:'',band:''}; renderAnalytics(); }
 function renderAnalytics(){
   const sc=DB.filter(s=>s.subbie);
-  const allR=sc.flatMap(s=>(s._reviews||[]).map(r=>r.performance));
-  const good=allR.filter(r=>r==='Good').length, ok=allR.filter(r=>r==='OK').length, poor=allR.filter(r=>r==='Poor').length;
-  const total=allR.length, pct=n=>total?Math.round(n/total*100):0;
-  const recent=sc.flatMap(s=>(s._reviews||[]).map(r=>({...r,sName:s.name,sIdx:DB.indexOf(s)}))).sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,8);
-  const R=70,cx=90,cy=90;
-  function arc(s,e,col){
-    if(e-s<=0)return'';
-    const sr=s*Math.PI/180,er=e*Math.PI/180;
-    const x1=cx+R*Math.sin(sr),y1=cy-R*Math.cos(sr),x2=cx+R*Math.sin(er),y2=cy-R*Math.cos(er);
-    return`<path d="M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${e-s>180?1:0},1 ${x2},${y2} Z" fill="${col}"/>`;
-  }
-  let d=0;
-  const svgArcs=total?arc(d,d+=pct(good)*3.6,'#16A34A')+arc(d,d+=pct(ok)*3.6,'#D97706')+arc(d,d+=pct(poor)*3.6,'#DC2626'):`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#F2F1EE"/>`;
-  const donut=`<svg width="180" height="180" viewBox="0 0 180 180">${svgArcs}<circle cx="${cx}" cy="${cy}" r="40" fill="white"/><text x="${cx}" y="86" text-anchor="middle" font-size="20" font-weight="600" fill="#1C1B18">${total}</text><text x="${cx}" y="100" text-anchor="middle" font-size="10" fill="#9B9890">reviews</text></svg>`;
+  // Flatten every review with its supplier context.
+  let rows=sc.flatMap(s=>(s._reviews||[]).map(r=>({...r,sName:s.name,sIdx:DB.indexOf(s),_s:s})));
+  const total=rows.length;
+  // Apply filters.
+  const f=_revFilter;
+  if(f.supplier) rows=rows.filter(r=>String(r.sIdx)===f.supplier);
+  if(f.dept) rows=rows.filter(r=>r.dept===f.dept);
+  if(f.dnu==='dnu') rows=rows.filter(r=>isBlocked(r._s)||r._s.soft_dnu);
+  if(f.dnu==='active') rows=rows.filter(r=>!(isBlocked(r._s)||r._s.soft_dnu));
+  if(f.from) rows=rows.filter(r=>(r.date||r.ts||'').slice(0,10)>=f.from);
+  if(f.to) rows=rows.filter(r=>(r.date||r.ts||'').slice(0,10)<=f.to);
+  if(f.band==='low') rows=rows.filter(r=>r.avgScore!=null&&r.avgScore<=2);
+  else if(f.band==='mid') rows=rows.filter(r=>r.avgScore!=null&&r.avgScore>2&&r.avgScore<=3);
+  else if(f.band==='high') rows=rows.filter(r=>r.avgScore!=null&&r.avgScore>3);
+  rows.sort((a,b)=>new Date(b.ts||b.date)-new Date(a.ts||a.date));
+  const supOpts=sc.slice().sort((a,b)=>a.name.localeCompare(b.name))
+    .map(s=>`<option value="${DB.indexOf(s)}" ${f.supplier===String(DB.indexOf(s))?'selected':''}>${esc(s.name)}</option>`).join('');
+  const deptOpts=['Design','Operations','Finance','Sales / Pre-Con','Senior Management','Other']
+    .map(d=>`<option value="${d}" ${f.dept===d?'selected':''}>${esc(d)}</option>`).join('');
+  const filterBar=`
+    <div class="card" style="margin-bottom:16px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px">
+      <span class="tlabel">Supplier</span>
+      <select class="sel" onchange="setRevFilter('supplier',this.value)"><option value="">All</option>${supOpts}</select>
+      <span class="tlabel">Dept</span>
+      <select class="sel" onchange="setRevFilter('dept',this.value)"><option value="">All</option>${deptOpts}</select>
+      <span class="tlabel">Status</span>
+      <select class="sel" onchange="setRevFilter('dnu',this.value)"><option value="">All</option><option value="active" ${f.dnu==='active'?'selected':''}>Active</option><option value="dnu" ${f.dnu==='dnu'?'selected':''}>DNU</option></select>
+      <span class="tlabel">Score</span>
+      <select class="sel" onchange="setRevFilter('band',this.value)"><option value="">All</option><option value="low" ${f.band==='low'?'selected':''}>≤2 (poor)</option><option value="mid" ${f.band==='mid'?'selected':''}>2–3</option><option value="high" ${f.band==='high'?'selected':''}>&gt;3 (good)</option></select>
+      <span class="tlabel">From</span><input type="date" class="sel" value="${f.from}" onchange="setRevFilter('from',this.value)">
+      <span class="tlabel">To</span><input type="date" class="sel" value="${f.to}" onchange="setRevFilter('to',this.value)">
+      <button class="btn btn-sm" onclick="clearRevFilter()">Clear</button>
+    </div></div>`;
+  const list=rows.length?rows.map(r=>{
+    const cls={Good:'rs-good',OK:'rs-ok',Poor:'rs-poor',Excellent:'rs-good',Issues:'rs-ok','Do Not Use':'rs-poor'}[r.performance]||'rs-ok';
+    return`<div class="review-card" style="cursor:pointer;display:flex;gap:14px;align-items:flex-start" onclick="openDrawer(${r.sIdx})">
+      ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=3?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:6px 12px;min-width:56px">
+        <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=3?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
+        <div style="font-size:8px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">avg /4</div>
+      </div>`:''}
+      <div style="flex:1;min-width:0">
+      <div class="review-hd"><strong style="font-size:13px">${esc(r.sName)}</strong><span class="review-score ${cls}">${esc(r.performance)}</span><span style="font-size:10px;color:var(--text3);margin-left:auto;font-family:'DM Mono',monospace">${fmtTs(r.ts)}</span></div>
+      <div style="font-size:12px;color:var(--text2)">By ${esc(r.reviewedBy)} · ${esc(r.dept)}${r.project?' · '+esc(r.project):''}</div>
+      ${r.improvements?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${esc(r.improvements)}</div>`:''}
+      </div>
+    </div>`;
+  }).join(''):`<div class="empty-state">${total?'No reviews match these filters.':'No reviews yet. Click "+ New Review" to start.'}</div>`;
   document.getElementById('analytics-content').innerHTML=`
-    <div class="card"><div class="card-header"><h2>Recent Reviews</h2><button class="btn btn-sm btn-primary" onclick="openReviewModal(null)">+ New Review</button></div>
-      <div style="padding:16px">${recent.length?recent.map(r=>{
-        const cls={Good:'rs-good',OK:'rs-ok',Poor:'rs-poor'}[r.performance]||'rs-ok';
-        return`<div class="review-card" style="cursor:pointer;display:flex;gap:14px;align-items:flex-start" onclick="openDrawer(${r.sIdx})">
-          ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=3?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:6px 12px;min-width:56px">
-            <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=3?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
-            <div style="font-size:8px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">avg /6</div>
-          </div>`:''}
-          <div style="flex:1;min-width:0">
-          <div class="review-hd"><strong style="font-size:13px">${esc(r.sName)}</strong><span class="review-score ${cls}">${esc(r.performance)}</span><span style="font-size:10px;color:var(--text3);margin-left:auto;font-family:'DM Mono',monospace">${fmtTs(r.ts)}</span></div>
-          <div style="font-size:12px;color:var(--text2)">By ${esc(r.reviewedBy)} · ${esc(r.dept)}${r.project?' · '+esc(r.project):''}</div>
-          ${r.improvements?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${esc(r.improvements)}</div>`:''}
-          </div>
-        </div>`;
-      }).join(''):'<div class="empty-state">No reviews yet. Click "+ New Review" to start.</div>'}
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
-      <div class="card" style="margin:0"><div class="card-header"><h2>Contractor Performance</h2></div>
-        <div class="chart-area">${donut}
-          <div class="chart-legend">
-            <div class="legend-row"><div class="legend-dot" style="background:#16A34A"></div>Good — ${good} (${pct(good)}%)</div>
-            <div class="legend-row"><div class="legend-dot" style="background:#D97706"></div>OK — ${ok} (${pct(ok)}%)</div>
-            <div class="legend-row"><div class="legend-dot" style="background:#DC2626"></div>Poor — ${poor} (${pct(poor)}%)</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:6px">${total} reviews · ${sc.filter(s=>(s._reviews||[]).length>0).length} subcontractors</div>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="margin:0"><div class="card-header"><h2>Subcontractor Summary</h2></div>
-        <div style="overflow-x:auto"><table><thead><tr><th>Company</th><th>Overall</th><th>Finance</th><th>Sales</th><th>Design</th><th>Ops</th><th>Reviews</th><th>Last</th></tr></thead>
-        <tbody>${sc.map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})" style="cursor:pointer"><td style="font-size:13px">${esc(s.name)}</td><td>${rp(overallRating(s))}</td><td>${rp(financeRating(s))}</td><td>${rp(salesRating(s))}</td><td>${rp(designRating(s))}</td><td>${rp(opsRating(s))}</td><td style="font-size:12px;color:var(--text3);text-align:center">${(s._reviews||[]).length}</td><td>${lastReviewBadge(s)}</td></tr>`).join('')}</tbody></table></div>
-      </div>
+    ${filterBar}
+    <div class="card"><div class="card-header"><h2>Reviews <span style="font-weight:400;font-size:13px;color:var(--text3)">(${rows.length}${rows.length!==total?' of '+total:''})</span></h2><button class="btn btn-sm btn-primary" onclick="openReviewModal(null)">+ New Review</button></div>
+      <div style="padding:16px">${list}</div>
     </div>`;
 }
 
@@ -1588,6 +1727,18 @@ async function renderCertReview(){
     const b=first?' grp-first':'';
     if(dbIdx===undefined) return `<td class="rg-cell${b}"><span class="rg-dash">—</span></td>`;
     const s=DB[dbIdx];
+    const isOps=OPS_PILLAR_QIDS.hasOwnProperty(field);
+    // Review-driven / overridden Ops cells are locked — they show the computed
+    // value read-only and can't be typed over here (change them via a review,
+    // or a Superuser override in the drawer).
+    if(isOps){
+      const scr=opsFieldScore(s,field);
+      if(scr.source==='review'||scr.source==='override'){
+        const dv=scr.value==null?'·':(Number.isInteger(scr.value)?scr.value:scr.value.toFixed(1));
+        const tt=scr.source==='review'?`Review-driven · avg of ${scr.count}`:'Pinned override';
+        return `<td class="rg-cell rg-locked${b}" title="${esc(RATING_FIELD_LABELS[field])} — ${tt}"><span class="rg-lockval">${dv}</span></td>`;
+      }
+    }
     const val=s[field];
     const canEdit=canEditRating(field);
     if(!canEdit){
@@ -1627,6 +1778,8 @@ async function renderCertReview(){
     .rg-cell{text-align:center;padding:3px;vertical-align:middle}
     .rg-ro{font-family:'DM Mono',monospace;opacity:.5}
     .rg-dash{color:var(--text3)}
+    .rg-locked{background:rgba(7,181,155,.06)}
+    .rg-lockval{font-family:'DM Mono',monospace;font-size:13px;color:var(--teal,#07B59B);font-weight:600}
     .rg-input{width:40px;height:28px;text-align:center;padding:2px;border:1px solid var(--border2);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;background:var(--surface);transition:border-color .12s,box-shadow .12s}
     .rg-input:hover{border-color:var(--text3)}
     .rg-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--rg-focus)}
@@ -1960,9 +2113,8 @@ function buildDrawer(idx){
       <div class="field"><label>Office</label><input id="ed-office-${idx}" value="${esc(s.office_number||'')}" onblur="saveField(${idx},'office_number',this.value)"${ro()}></div>
     </div>
   </div>`;
-  // Insurance — shown for subcontractors, and for any other record that
-  // actually holds cover (hire/supply accounts such as Algeco).
-  if(showsInsurance(s)){
+  // Insurance (subcontractors)
+  if(s.subbie){
     // Insurance is Finance-controlled: editable inline only when the drawer is
     // in edit mode AND the user holds a Finance role (or Superuser). Everyone
     // else sees read-only values, and editors from other departments see a
@@ -2100,48 +2252,9 @@ function buildDrawer(idx){
     <div class="section-hd">Change History <button class="btn btn-sm" onclick="loadSupplierHistory(${idx})">Show</button></div>
     <div id="hist-${idx}"><div style="font-size:12px;color:var(--text3)">Click Show to load recent changes for this supplier.</div></div>
   </div>`;
-  // Delete — Superuser only, and kept at the very bottom so it is never next
-  // to a routine control. The database enforces the same restriction.
-  if(isSuperuser()){
-    h+=`<div class="detail-section">
-      <div class="section-hd" style="color:var(--red)">Delete supplier</div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Removes <strong>${esc(s.name)}</strong> and its change history, rating history, insurance alert records and queued emails. This cannot be undone.</div>
-      <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="deleteSupplier(${idx})">Delete permanently</button>
-    </div>`;
-  }
   document.getElementById('drawer-bd').innerHTML=h;
 }
 
-// Re-render the list plus whichever tab is currently on screen. Used after a
-// record is removed, since every table indexes into DB by position.
-function refreshViews(){
-  updateCounts(); renderMetrics(); applyFilters();
-  const active=document.querySelector('.tab.active');
-  if(active) switchTab(active.id.replace(/^tab-/,''));
-}
-// ── Delete a supplier (Superuser only) ───────────────────────────────────────
-// Permanent. The database cascades to field_history, rating_history,
-// insurance_notified, insurance_signoff and email_outbox, and enforces the
-// Superuser restriction itself via the suppliers_delete RLS policy — so this
-// check is the friendly front door, not the lock.
-async function deleteSupplier(idx){
-  if(!isSuperuser()){ toast('Only a Superuser can delete a supplier','err'); return; }
-  const s=DB[idx];
-  if(!s){ return; }
-  if(!confirm(`Permanently delete "${s.name}"?\n\nThis also removes its change history, rating history, insurance alert records and any queued emails.\n\nThis cannot be undone.`)) return;
-  if(!s._local){
-    const {error}=await sbCall(_sb.from('suppliers').delete().eq('id',s._id),'Deleting supplier');
-    if(error) return; // sbCall has already explained the failure; leave the row alone
-  }
-  _dirty.delete(s._id);              // a queued edit must not resurrect the row
-  const wasStarred=SL.includes(s._id);
-  if(wasStarred) SL=SL.filter(x=>x!==s._id);
-  DB.splice(idx,1);
-  closeDrawer();
-  if(wasStarred) saveSL();
-  saveDB(); refreshViews();
-  toast(`"${s.name}" deleted`);
-}
 function toggleBox(id){ const el=document.getElementById(id); if(el)el.style.display=el.style.display==='none'?'block':'none'; }
 // Per-supplier change history, fetched on demand from field_history.
 async function loadSupplierHistory(idx){
@@ -2206,13 +2319,17 @@ function openReviewModal(idx){
   if(ld) document.getElementById('rv-dept').value=ld;
   document.getElementById('rv-date').value=new Date().toISOString().slice(0,10);
   ['rv-project','rv-improvements','rv-recommendations'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('rv-questions').innerHTML=RQ.map(q=>`
-    <div class="rq-row">
-      <div><div class="rq-label">${esc(q.label)}</div><div class="rq-sub">${esc(q.sub)}</div></div>
-      <div class="rq-btns">
-        <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="4" placeholder="–" oninput="setRQ('${q.id}',this.value)">
-        <span class="rq-score-sub">/4</span>
-      </div>
+  document.getElementById('rv-questions').innerHTML=RQ_PILLARS.map(p=>`
+    <div style="margin-top:6px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2)">${esc(p.label)}${p.questions.length>1?' <span style="font-weight:400;color:var(--text3)">· averaged</span>':''}</div>
+      ${p.questions.map(q=>`
+        <div class="rq-row">
+          <div><div class="rq-label">${esc(q.label)}</div><div class="rq-sub">${esc(q.sub)}</div></div>
+          <div class="rq-btns">
+            <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="4" placeholder="–" oninput="setRQ('${q.id}',this.value)">
+            <span class="rq-score-sub">/4</span>
+          </div>
+        </div>`).join('')}
     </div>`).join('');
   // Sales section — always shown, but editable only by Sales (Sales / Superuser).
   const canSales=isSuperuser()||myRoles.has('Sales');
@@ -2556,7 +2673,11 @@ document.addEventListener('keydown',e=>{
     // Escape clears the query first; a second press closes the palette.
     if(e.key==='Escape'&&document.getElementById('cmdk-input').value){ e.preventDefault(); clearCmdK(); return; }
   }
-  if(e.key==='Escape'){closeCmdK();closeDrawer();closeModal();closeReviewModal();closeRolesModal();}
+  // Escape closes the command palette and the (read-only) detail drawer, but
+  // deliberately does NOT close the data-entry modals (review / add-supplier /
+  // roles) — those hold unsaved work and must be closed via their Cancel/×
+  // button so a stray keypress can't discard what you've typed.
+  if(e.key==='Escape'){closeCmdK();closeDrawer();}
 });
 
 initApp();
