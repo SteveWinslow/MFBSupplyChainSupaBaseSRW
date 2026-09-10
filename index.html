@@ -7,21 +7,34 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 
+/* ============================================================
+   Palette shared with the MFB CDE and Warehouse Audit apps, so
+   the estate reads as one system: green-grey neutrals, teal for
+   anything active or authoritative, lime for a settled/good
+   state, amber for attention, clay red for a problem.
+   ============================================================ */
 :root{
-  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F2F1EE;--border:#E4E2DC;--border2:#D0CEC7;
-  --text:#1C1B18;--text2:#6B6861;--text3:#9B9890;--hover:#FAFAF8;
-  --accent:#2563EB;--accent-bg:#EEF3FD;
-  --green:#16A34A;--green-bg:#DCFCE7;
-  --amber:#D97706;--amber-bg:#FEF3C7;
-  --red:#DC2626;--red-bg:#FEE2E2;
-  --purple:#7C3AED;--purple-bg:#EDE9FE;
-  --teal:#0D9488;--teal-bg:#CCFBF1;
-  --orange:#C2410C;--orange-bg:#FFEDD5;
-  --rg-fin:#EEF3FD;--rg-sal:#FEF3C7;--rg-des:#EDE9FE;--rg-ops:#DCFCE7;
-  --rg-hover:#F5F8FF;--rg-focus:rgba(37,99,235,.18);
+  --bg:#F5F7F6;--surface:#FFFFFF;--surface2:#EFF3F1;--border:#DFE5E2;--border2:#C7D1CD;
+  --text:#15211E;--text2:#5C6B67;--text3:#8E9C98;--hover:#F7FBF9;
+  --accent:#04836F;--accent-bg:#E2F5F1;--brand:#07B59B;
+  --lime:#B4D55D;--lime-ink:#5C8615;--lime-bg:#F1F7E1;
+  --green:#5C8615;--green-bg:#F1F7E1;
+  --amber:#B7791F;--amber-bg:#FDF3D7;
+  --red:#C0392B;--red-bg:#FBE7E4;
+  /* Retained so existing .bg-purple / .bg-orange / type tags keep working,
+     re-pitched onto the new palette rather than left as off-estate hues. */
+  --purple:#3F6E63;--purple-bg:#E4EDEA;
+  --teal:#04836F;--teal-bg:#E2F5F1;
+  --orange:#A2542A;--orange-bg:#F7E8DE;
+  /* Rating-group column tints. Three hues plus one neutral — the palette has
+     no fourth signal colour, and inventing one would break the estate. */
+  --rg-fin:#E2F5F1;--rg-sal:#FDF3D7;--rg-des:#EFF3F1;--rg-ops:#F1F7E1;
+  --rg-hover:#F7FBF9;--rg-focus:rgba(4,131,111,.18);
   --radius:10px;--radius-lg:14px;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-  --shadow-md:0 4px 20px rgba(0,0,0,.1),0 1px 4px rgba(0,0,0,.04);
+  --sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'DM Mono',ui-monospace,Consolas,monospace;
+  --shadow:0 1px 3px rgba(15,40,35,.07),0 1px 2px rgba(15,40,35,.04);
+  --shadow-md:0 4px 20px rgba(15,40,35,.12),0 1px 4px rgba(15,40,35,.05);
 }
 :root{--sb:220px}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -33,9 +46,11 @@ body{font-family:'DM Sans',system-ui,sans-serif;font-size:14px;color:var(--text)
 .sidebar.collapsed{width:52px}
 .main{margin-left:var(--sb);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .2s ease}
 .sidebar.collapsed~.main,.body-collapsed .main{margin-left:52px}
-.sidebar-logo{padding:14px 14px 12px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;min-height:52px}
+.sidebar-logo{padding:14px 14px 12px;border-bottom:2px solid var(--lime);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;min-height:52px}
 .logo-mark{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;transition:opacity .15s}
-.logo-sub{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.03em;white-space:nowrap;overflow:hidden;transition:opacity .15s}
+.logo-sub{font-size:9.5px;color:var(--text3);margin-top:2px;letter-spacing:.06em;text-transform:uppercase;line-height:1.35;overflow:hidden;transition:opacity .15s}
+.brand-logo{width:120px;height:auto;display:block;margin-bottom:5px}
+.sidebar.collapsed .brand-logo{display:none}
 .logo-text{display:flex;flex-direction:column;overflow:hidden}
 .sidebar.collapsed .logo-mark,.sidebar.collapsed .logo-sub{opacity:0;width:0}
 .sidebar.collapsed .logo-text{width:0;opacity:0}
@@ -57,14 +72,14 @@ body{font-family:'DM Sans',system-ui,sans-serif;font-size:14px;color:var(--text)
 .sidebar.collapsed .nav-item::after{content:attr(data-label);position:absolute;left:54px;top:50%;transform:translateY(-50%);background:var(--text);color:#fff;font-size:12px;padding:4px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .1s;z-index:200}
 .sidebar.collapsed .nav-item:hover::after{opacity:1}
 .nav-count{font-family:'DM Mono',monospace;font-size:10px;background:var(--surface2);color:var(--text3);padding:1px 6px;border-radius:99px;flex-shrink:0}
-.nav-item.active .nav-count{background:rgba(37,99,235,.12);color:var(--accent)}
+.nav-item.active .nav-count{background:rgba(4,131,111,.13);color:var(--accent)}
 .sidebar-footer{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
 .sync-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0;transition:background .3s}
 .sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}.sync-dot.spin{background:var(--amber);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 /* Topbar */
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);box-shadow:inset 0 -3px 0 var(--brand);padding:0 20px;height:50px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
 .topbar-title{font-size:15px;font-weight:600;flex:1}
 .content{padding:20px 24px;flex:1}
 /* Tabs */
@@ -79,10 +94,10 @@ body{font-family:'DM Sans',system-ui,sans-serif;font-size:14px;color:var(--text)
 .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
 .metric-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
 .metric-value{font-size:22px;font-weight:600;letter-spacing:-.5px;line-height:1}
-.metric.green{border-color:rgba(22,163,74,.3);background:var(--green-bg)}.metric.green .metric-label,.metric.green .metric-value{color:var(--green)}
-.metric.amber{border-color:rgba(217,119,6,.3);background:var(--amber-bg)}.metric.amber .metric-label,.metric.amber .metric-value{color:var(--amber)}
-.metric.red{border-color:rgba(220,38,38,.3);background:var(--red-bg)}.metric.red .metric-label,.metric.red .metric-value{color:var(--red)}
-.metric.blue{border-color:rgba(37,99,235,.3);background:var(--accent-bg)}.metric.blue .metric-label,.metric.blue .metric-value{color:var(--accent)}
+.metric.green{border-color:rgba(92,134,21,.35);background:var(--lime-bg)}.metric.green .metric-label,.metric.green .metric-value{color:var(--green)}
+.metric.amber{border-color:rgba(183,121,31,.3);background:var(--amber-bg)}.metric.amber .metric-label,.metric.amber .metric-value{color:var(--amber)}
+.metric.red{border-color:rgba(192,57,43,.3);background:var(--red-bg)}.metric.red .metric-label,.metric.red .metric-value{color:var(--red)}
+.metric.blue{border-color:rgba(4,131,111,.3);background:var(--accent-bg)}.metric.blue .metric-label,.metric.blue .metric-value{color:var(--accent)}
 /* Cards */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
 .card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -104,7 +119,7 @@ tbody tr:hover td{background:var(--hover)}
 .bg-orange{background:var(--orange-bg);color:var(--orange)}
 /* Buttons */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all .12s;font-family:inherit;white-space:nowrap}
-.btn:hover{background:var(--surface2)}.btn-primary{background:var(--text);color:#fff;border-color:var(--text)}.btn-primary:hover{background:#333}
+.btn:hover{background:var(--surface2)}.btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}.btn-primary:hover{background:var(--accent)}
 .btn-danger{color:var(--red);border-color:transparent;background:none;padding:4px 8px}.btn-danger:hover{background:var(--red-bg)}
 .btn-sm{padding:3px 9px;font-size:12px;border-radius:6px}
 .btn-icon{padding:4px 8px;border-radius:6px;font-size:13px;border:1px solid transparent;background:none;cursor:pointer;font-family:inherit;transition:all .1s}
@@ -112,6 +127,8 @@ tbody tr:hover td{background:var(--hover)}
 /* Toolbar */
 .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .tlabel{font-size:12px;color:var(--text3);font-weight:500}
+.tgl{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);font-weight:500;cursor:pointer;user-select:none;white-space:nowrap}
+.tgl input{cursor:pointer;margin:0}
 .sel{font-size:13px;padding:4px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);height:30px;font-family:inherit;cursor:pointer}
 .sel:focus{outline:2px solid var(--accent);outline-offset:1px}
 .s-wrap{position:relative}
@@ -139,7 +156,7 @@ tbody tr:hover td{background:var(--hover)}
 .field input[type=checkbox]:disabled{opacity:.55;cursor:default}
 .field input[type=checkbox],.field input[type=radio]{width:15px;height:15px;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
 .field textarea{resize:vertical;min-height:70px;line-height:1.55}
-.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(4,131,111,.12)}
 .field input::placeholder,.field textarea::placeholder{color:var(--text3)}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -186,11 +203,14 @@ tbody tr:hover td{background:var(--hover)}
 .ai-source-ref{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0;white-space:nowrap}
 /* Edit pill */
 .edit-pill{font-size:11px;font-weight:500;font-family:inherit;padding:3px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .12s}
-.edit-pill:hover{background:var(--accent-bg);color:var(--accent);border-color:rgba(37,99,235,.3)}
+.r-src{font-size:10px;font-weight:600;color:var(--accent);background:rgba(7,181,155,.12);padding:1px 7px;border-radius:99px;letter-spacing:.02em}
+.pillar-warn{color:var(--red);font-size:12px;cursor:help}
+.row-warn{color:var(--red);font-size:12px;margin-left:4px;cursor:help}
+.edit-pill:hover{background:var(--accent-bg);color:var(--accent);border-color:rgba(4,131,111,.3)}
 /* Comments thread */
 .comments-thread{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .comment{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px}
-.comment.sales{background:var(--accent-bg);border-color:rgba(37,99,235,.2)}
+.comment.sales{background:var(--accent-bg);border-color:rgba(4,131,111,.2)}
 .comment-meta{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .comment-author{font-size:11px;font-weight:600;color:var(--text)}
 .comment-tag{font-size:10px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--accent);color:#fff;letter-spacing:.03em}
@@ -218,10 +238,10 @@ tbody tr:hover td{background:var(--hover)}
 
 /* ── Supplier DB additions to LFE design system ── */
 .star-btn{background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:2px 5px;border-radius:4px;transition:all .1s;color:var(--text3);font-family:inherit}
-.star-btn.on{color:#F59E0B}
+.star-btn.on{color:#D9A62E}
 .star-btn:hover{background:var(--surface2)}
 .type-tag{display:inline-flex;align-items:center;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.03em}
-.type-sc{background:var(--purple-bg);color:var(--purple)}.type-sup{background:var(--teal-bg);color:var(--teal)}.type-hire{background:var(--amber-bg);color:var(--amber)}
+.type-sc{background:var(--accent-bg);color:var(--accent)}.type-sup{background:var(--lime-bg);color:var(--lime-ink)}.type-hire{background:var(--amber-bg);color:var(--amber)}
 .trade-cat{display:inline-flex;padding:1px 8px;border-radius:4px;font-size:10px;font-weight:600;background:var(--accent-bg);color:var(--accent)}
 .trade-sub{display:inline-flex;padding:1px 8px;border-radius:4px;font-size:10px;font-weight:500;background:var(--surface2);color:var(--text2)}
 .rating-pill{display:inline-flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;min-width:28px;padding:2px 7px;border-radius:6px}
@@ -306,11 +326,11 @@ tbody tr:hover td{background:var(--hover)}
 .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
 .metric-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
 .metric-value{font-size:22px;font-weight:600;letter-spacing:-.5px;line-height:1}
-.metric.green{border-color:rgba(22,163,74,.3);background:var(--green-bg)}.metric.green .metric-label,.metric.green .metric-value{color:var(--green)}
-.metric.amber{border-color:rgba(217,119,6,.3);background:var(--amber-bg)}.metric.amber .metric-label,.metric.amber .metric-value{color:var(--amber)}
-.metric.red{border-color:rgba(220,38,38,.3);background:var(--red-bg)}.metric.red .metric-label,.metric.red .metric-value{color:var(--red)}
-.metric.blue{border-color:rgba(37,99,235,.3);background:var(--accent-bg)}.metric.blue .metric-label,.metric.blue .metric-value{color:var(--accent)}
-.metric.purple{border-color:rgba(124,58,237,.3);background:var(--purple-bg)}.metric.purple .metric-label,.metric.purple .metric-value{color:var(--purple)}
+.metric.green{border-color:rgba(92,134,21,.35);background:var(--lime-bg)}.metric.green .metric-label,.metric.green .metric-value{color:var(--green)}
+.metric.amber{border-color:rgba(183,121,31,.3);background:var(--amber-bg)}.metric.amber .metric-label,.metric.amber .metric-value{color:var(--amber)}
+.metric.red{border-color:rgba(192,57,43,.3);background:var(--red-bg)}.metric.red .metric-label,.metric.red .metric-value{color:var(--red)}
+.metric.blue{border-color:rgba(4,131,111,.3);background:var(--accent-bg)}.metric.blue .metric-label,.metric.blue .metric-value{color:var(--accent)}
+.metric.purple{border-color:rgba(63,110,99,.3);background:var(--purple-bg)}.metric.purple .metric-label,.metric.purple .metric-value{color:var(--purple)}
 /* Added-new tag */
 .tag-new{display:inline-flex;align-items:center;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:600;background:var(--green-bg);color:var(--green);margin-left:6px;vertical-align:middle}
 /* Auth overlay */
@@ -321,8 +341,8 @@ tbody tr:hover td{background:var(--hover)}
 .auth-lbl{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
 .auth-input{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:14px}
 .auth-input:focus{outline:none;border-color:var(--accent)}
-.auth-btn{width:100%;padding:9px;background:var(--text);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px}
-.auth-btn:hover{background:#333}
+.auth-btn{width:100%;padding:9px;background:var(--brand);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px}
+.auth-btn:hover{background:var(--accent)}
 .auth-err{font-size:12px;color:var(--red);margin-top:10px;min-height:18px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -333,7 +353,7 @@ tbody tr:hover td{background:var(--hover)}
 const SUPABASE_URL = 'https://lroyvixfmztofgfjkmnh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Jlu5OfF4qNfi4WTxlyGnww_iz9Y5UgB';
 // Bump this when you deploy a new build so users can tell you what they're on.
-const APP_VERSION = 'v9.18';
+const APP_VERSION = 'v9.24';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let _sbUser = null;
 </script>
@@ -355,7 +375,7 @@ let _sbUser = null;
 <div class="shell">
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-text"><div class="logo-mark">MFB Supplier</div><div class="logo-sub">Database</div></div>
+    <div class="logo-text"><img class="brand-logo" src="data:image/png;base64,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" alt="McFeggan Brown"><div class="logo-sub">Supplier<br>database</div></div>
     <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path id="sb-toggle-icon" d="M8 2L4 6l4 4"/></svg></button>
   </div>
   <nav class="nav">
@@ -425,6 +445,8 @@ let _sbUser = null;
           <span class="tlabel">Sub-trade</span><select class="sel" id="f-sub" onchange="applyFilters()"><option value="">All</option></select>
           <span class="tlabel">Region</span><select class="sel" id="f-region" onchange="applyFilters()"></select>
           <span class="tlabel">Status</span><select class="sel" id="f-status" onchange="applyFilters()"><option value="">All</option><option value="active">Active</option><option value="dnu">DNU</option></select>
+          <label class="tgl"><input type="checkbox" id="f-bestscore" onchange="applyFilters()"> Best score</label>
+          <label class="tgl"><input type="checkbox" id="f-dnubottom" onchange="applyFilters()"> DNU to bottom</label>
           <button class="btn btn-sm" onclick="clearFilters()">Clear</button>
         </div></div>
         <div class="card-scroll"><table><thead><tr>
@@ -435,6 +457,10 @@ let _sbUser = null;
           <th onclick="sortBy('city')" data-col="city">Office</th>
           <th onclick="sortBy('regions')" data-col="regions">Operating Region</th>
           <th onclick="sortBy('_ins')" data-col="_ins">1st Ins' Exp'</th>
+          <th onclick="sortBy('_fin')" data-col="_fin" title="Finance average" style="text-align:center">Fin</th>
+          <th onclick="sortBy('_sal')" data-col="_sal" title="Sales average" style="text-align:center">Sal</th>
+          <th onclick="sortBy('_ops')" data-col="_ops" title="Ops average (review-driven)" style="text-align:center">Ops</th>
+          <th onclick="sortBy('_des')" data-col="_des" title="Design average" style="text-align:center">Des</th>
           <th>Type</th><th>Last Review</th><th>Status</th><th style="width:48px"></th>
         </tr></thead><tbody id="supplier-tbody"></tbody></table></div>
         <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)"><span id="page-info" style="flex:1"></span><div style="display:flex;gap:4px" id="page-btns"></div></div>
@@ -454,7 +480,7 @@ let _sbUser = null;
 </div>
 <div id="overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;display:none;cursor:pointer" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer"><div class="drawer-hd"><div><div class="drawer-title" id="drawer-title"></div><div class="drawer-sub" id="drawer-sub"></div></div><div style="display:flex;gap:6px;align-items:center"><button class="btn btn-sm" id="drawer-edit-btn" onclick="toggleDrawerEdit()">Edit</button><button class="btn btn-sm" id="drawer-review-btn" onclick="openReviewModal(drawerIdx)">Add Review</button><button class="btn-icon" onclick="closeDrawer()">&#10005;</button></div></div><div class="drawer-bd" id="drawer-bd"></div></div>
-<div class="modal-overlay" id="supplier-modal" onclick="if(event.target===this)closeModal()">
+<div class="modal-overlay" id="supplier-modal">
   <div class="modal"><div class="modal-head"><h3 id="modal-title">Add Supplier</h3><button class="btn-icon" onclick="closeModal()">&#10005;</button></div>
   <div class="modal-body">
     <div class="field"><label>Business Name *</label><input id="m-name" placeholder="Full company name"></div>
@@ -466,8 +492,7 @@ let _sbUser = null;
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Contact</div>
     <div class="fg2"><div class="field"><label>Contact Name</label><input id="m-cname"></div><div class="field"><label>Email</label><input id="m-cemail" type="email"></div></div>
     <div class="fg2"><div class="field"><label>Phone</label><input id="m-cphone"></div><div class="field"><label>Office</label><input id="m-office"></div></div>
-    <div id="m-subbie-sections" style="display:none">
-      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Insurance</div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Insurance</div>
       <div class="fg3">
         <div class="field"><label>EL Value (£)</label><input id="m-el-value" type="number" min="0"></div>
         <div class="field"><label>EL Expiry</label><input id="m-el-expiry" type="date"></div>
@@ -483,6 +508,7 @@ let _sbUser = null;
         <div class="field"><label>PI Expiry</label><input id="m-pi-expiry" type="date"></div>
         <div></div>
       </div>
+    <div id="m-subbie-sections" style="display:none">
       <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Ratings (optional — out of 4; Sales &amp; Design scored in the supplier record)</div>
       <div class="fg3">
         <div class="field"><label>Insurance</label><input id="m-r-ins" type="number" min="0" max="4"></div>
@@ -502,7 +528,7 @@ let _sbUser = null;
     <div class="fg2"><div class="field"><label>Your Name *</label><input id="m-by-name"></div><div class="field"><label>Department *</label><select id="m-by-dept"><option value="">Select&hellip;</option><option value="Design">Design</option><option value="Operations">Operations</option><option value="Finance">Finance</option><option value="Sales / Pre-Con">Sales / Pre-Con</option><option value="Senior Management">Senior Management</option><option value="Other">Other</option></select></div></div>
     <div class="field"><label>Initial Note (optional)</label><textarea id="m-init-note" rows="2" placeholder="Added to the comments thread"></textarea></div>
   </div><div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSupplier()">Save</button></div></div></div>
-<div class="modal-overlay" id="review-modal" onclick="if(event.target===this)closeReviewModal()">
+<div class="modal-overlay" id="review-modal">
   <div class="modal"><div class="modal-head"><h3>Contractor Performance Review</h3><button class="btn-icon" onclick="closeReviewModal()">&#10005;</button></div>
   <div class="modal-body">
     <div class="fg2"><div class="field"><label>Date</label><input type="date" id="rv-date"></div><div class="field"><label>Contractor *</label><select id="rv-supplier"><option value="">Select contractor&hellip;</option></select></div></div>
@@ -510,10 +536,6 @@ let _sbUser = null;
     <div class="field"><label>Project / Contract Reference</label><input id="rv-project" placeholder="e.g. MFB55-Bristol-Q2"></div>
     <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:4px;border-top:1px solid var(--border)">Performance Questions</div>
     <div id="rv-questions"></div>
-    <div id="rv-sales-section" style="display:none">
-      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-top:10px;margin-top:8px;border-top:1px solid var(--border)">Sales / Pre-Award <span id="rv-sales-lock" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)"></span></div>
-      <div id="rv-sales-questions"></div>
-    </div>
     <div id="rv-avg-display" class="ai-rec" style="display:none;align-items:center;justify-content:space-between;padding:14px 16px">
       <span style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.06em">Average Score</span>
       <span id="rv-avg-num" style="font-size:28px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace;line-height:1">—</span>
@@ -521,7 +543,7 @@ let _sbUser = null;
     <div class="field"><label>Areas for Improvement</label><textarea id="rv-improvements" rows="3" placeholder="Key areas that need attention&hellip;"></textarea></div>
     <div class="field"><label>Recommendations</label><textarea id="rv-recommendations" rows="2" placeholder="Would you use again? Any caveats?"></textarea></div>
   </div><div class="modal-foot"><button class="btn" onclick="closeReviewModal()">Cancel</button><button class="btn btn-primary" onclick="saveReview()">Save Review</button></div></div></div>
-<div class="modal-overlay" id="roles-modal" onclick="if(event.target===this)closeRolesModal()">
+<div class="modal-overlay" id="roles-modal">
   <div class="modal"><div class="modal-head"><h3>Manage Roles</h3><button class="btn-icon" onclick="closeRolesModal()">&#10005;</button></div>
   <div class="modal-body">
     <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Superuser: full control, including who has which role — visible to Superusers only. Finance: edit Insurance/Credit/Invoicing ratings, sign off insurance. Operations Director / Ops: edit H&amp;S/Quality/Time/Cost ratings. Sales: edit Sales ratings. Design Lead: edit Design ratings. A person can hold more than one role — add each separately below.</div>
@@ -553,7 +575,7 @@ let _sbUser = null;
 </div>
 <div class="toast" id="toast"><div class="toast-dot"></div><span class="toast-text"></span></div>
 <script>
-const TAXONOMY = {"Data & Low Voltage":["Audio Visual","Security – Access Control","Security – CCTV","Structured Cabling / IT"],"Electrical":["EV Charging","Earthing & Lightning Protection","Electrical – Main Contractor","LV Distribution","Lighting","Solar PV","UPS / Generator"],"Enabling Works, Strip-Out & Demolition":["Asbestos Survey & Removal","Hoarding & Site Setup","Selective Demolition","Surveys & Investigations"],"Envelope & Façade":["Automatic Doors & Entrance","Cladding – Composite / Insulated","Roller Shutters & Loading Doors","Roofing – Flat","Roofing – Pitched / Metal","Rooflights & Glazed Canopies","Windows & Doors – Aluminium"],"External Works & Sundry":["Cleaning","External Metalwork","Landscaping / Hard Landscaping","Scaffold","Site sundries"],"Finishes":["Feature / Specialist Finishes","Ironmongery","Painting & Decorating","Plastering","Wall Coverings","Wall Tiling"],"Fire Protection":["Fire Detection & Alarm","Passive Fire Protection"],"Groundworks & Civil":["Fencing & Hoarding","Groundworks / Excavation","Highways & External Civils"],"Hire & Logistics":["Plant Hire"],"Internal Fit-Out":["Acoustic panels","Flooring – Carpet","Flooring – Hard","Flooring – Resilient","Flooring – Resin","Furniture Supply & Install","Joinery – Fitted","Kitchen / Breakout Fitout","Lab Fitout","Partitions – Demountable","Partitions – Drylining / SFS","Partitions – Glazed","Raised Access Floors","Signage & Wayfinding","Suspended Ceilings","Washrooms / WC Fitout"],"Mechanical":["BMS / Controls","Gas Services","HVAC – Air Handling","HVAC – Chilled Water / Cooling","HVAC – Heating","Insulation – Mechanical","Lab Gases & Compressed Air","Mechanical – Main Contractor"],"Plumbing":["Above-Ground Drainage","Hot & Cold Water Services","Insulation – Plumbing","Plumbing – Main Contractor","Rainwater Harvesting","Sanitary Ware","Specialist Drainage"],"Professional Services / Labour":["Labour Supply / Recruitment"],"Specialist / Laboratory":["Cleanroom / Controlled Environment","Laboratory Ventilation","Medical Gas"],"Structure":["Mezzanine Floors","Structural Steel"],"Vertical Transport":["Goods Hoists","Lifts / Elevators"],"Waste Management":["Waste Management & Disposal"]};
+const TAXONOMY = {"Consultant":["Acoustic Consultant", "Architect", "BREEAM/WELL/NABERS", "Building Control Consultant", "Commissioning Consultant", "Ecologist", "Electrical Engineer", "Environmental Consultant", "Fire Engineer", "Flood Risk Consultant", "Ground / Geotechnical Consultant", "IT / AV Consultant", "Lighting Consultant", "MEP Engineer", "Mechanical Engineer", "Planning Consultant", "Project Manager", "Quantity Surveyor / Cost Consultant", "Security Consultant", "Structural Engineer", "Sustainability Consultant", "Temporary Works Consultant", "Workplace Consultant", "Other"],"Data & Low Voltage":["Audio Visual","Security – Access Control","Security – CCTV","Structured Cabling / IT"],"Electrical":["EV Charging","Earthing & Lightning Protection","Electrical – Main Contractor","LV Distribution","Lighting","Solar PV","UPS / Generator"],"Enabling Works, Strip-Out & Demolition":["Asbestos Survey & Removal","Hoarding & Site Setup","Selective Demolition","Surveys & Investigations"],"Envelope & Façade":["Automatic Doors & Entrance","Cladding – Composite / Insulated","Roller Shutters & Loading Doors","Roofing – Flat","Roofing – Pitched / Metal","Rooflights & Glazed Canopies","Windows & Doors – Aluminium"],"External Works & Sundry":["Cleaning","External Metalwork","Landscaping / Hard Landscaping","Scaffold","Site sundries"],"Finishes":["Feature / Specialist Finishes","Ironmongery","Painting & Decorating","Plastering","Wall Coverings","Wall Tiling"],"Fire Protection":["Fire Detection & Alarm","Passive Fire Protection"],"Groundworks & Civil":["Fencing & Hoarding","Groundworks / Excavation","Highways & External Civils"],"Hire & Logistics":["Plant Hire"],"Internal Fit-Out":["Acoustic panels","Flooring – Carpet","Flooring – Hard","Flooring – Resilient","Flooring – Resin","Furniture Supply & Install","Joinery – Fitted","Kitchen / Breakout Fitout","Lab Fitout","Partitions – Demountable","Partitions – Drylining / SFS","Partitions – Glazed","Raised Access Floors","Signage & Wayfinding","Suspended Ceilings","Washrooms / WC Fitout"],"Mechanical":["BMS / Controls","Gas Services","HVAC – Air Handling","HVAC – Chilled Water / Cooling","HVAC – Heating","Insulation – Mechanical","Lab Gases & Compressed Air","Mechanical – Main Contractor"],"Plumbing":["Above-Ground Drainage","Hot & Cold Water Services","Insulation – Plumbing","Plumbing – Main Contractor","Rainwater Harvesting","Sanitary Ware","Specialist Drainage"],"Professional Services / Labour":["Labour Supply / Recruitment"],"Specialist / Laboratory":["Cleanroom / Controlled Environment","Laboratory Ventilation","Medical Gas"],"Structure":["Mezzanine Floors","Structural Steel"],"Vertical Transport":["Goods Hoists","Lifts / Elevators"],"Waste Management":["Waste Management & Disposal"]};
 
 // Regions — taken from the Contractor Trade Mapping, which is the authority
 // for both trade and region vocabulary.
@@ -572,12 +594,86 @@ function populateVocabDropdowns(){
   if(fr) fr.innerHTML='<option value="">All</option>'+REGIONS.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');
 }
 const DEPTS = ['Design','Operations','Finance','Sales / Pre-Con','Senior Management','Other'];
-const RQ = [
-  {id:'q1',label:'Adherence to Programme',   sub:'Did they meet agreed milestones?'},
-  {id:'q2',label:'Quality of Workmanship',    sub:'Was the standard acceptable, snagging minimal?'},
-  {id:'q3',label:'Health & Safety',           sub:'Did they comply with site H&S requirements and RAMS?'},
-  {id:'q4',label:'Communication',             sub:'Responsive and proactive in communication?'}
+// Review questions are grouped under the four Ops pillars (H&S, Quality, Time,
+// Cost). Each pillar's score is the mean of its questions. These pillar scores
+// are what drive the Ops ratings (see reviewOpsScores). The four original
+// questions are retained verbatim, each paired with a companion.
+// ── Unified review model ─────────────────────────────────────────────────────
+// Every department has reviewable pillars; each pillar maps to a rating field
+// and holds one or more questions. A pillar's score = mean of its answered
+// questions; the department's rating fields are then driven by reviews
+// (override → review avg → manual). Question ids are stable and unique so saved
+// reviews keep working. Ops keeps its original ids (q1–q8).
+const REVIEW_MODEL = [
+  {dept:'Operations', deptKey:'ops', roles:['Operations Director','Ops'], pillars:[
+    {pillar:'hs_rating', label:'Health & Safety', questions:[
+      {id:'q3', label:'Site H&S Compliance',   sub:'Did they comply with site H&S requirements and RAMS?'},
+      {id:'q5', label:'Safety Documentation',  sub:'Were method statements and risk assessments provided and followed?'},
+    ]},
+    {pillar:'quality_rating', label:'Quality', questions:[
+      {id:'q2', label:'Quality of Workmanship', sub:'Was the standard acceptable, snagging minimal?'},
+      {id:'q4', label:'Communication',          sub:'Responsive and proactive in communication?'},
+    ]},
+    {pillar:'time_rating', label:'Time', questions:[
+      {id:'q1', label:'Adherence to Programme', sub:'Did they meet agreed milestones?'},
+      {id:'q6', label:'Labour & Resource',      sub:'Did they provide enough labour to keep to programme?'},
+    ]},
+    {pillar:'cost_rating', label:'Cost', questions:[
+      {id:'q7', label:'Cost Control',       sub:'Did they price accurately and control variations?'},
+      {id:'q8', label:'Commercial Conduct', sub:'Were applications and accounts handled fairly?'},
+    ]},
+  ]},
+  {dept:'Finance', deptKey:'finance', roles:['Finance'], pillars:[
+    {pillar:'ins_rating',     label:'Insurance Validity', questions:[
+      {id:'f1', label:'Insurance Validity', sub:'Were EL/PL/PI in place, valid and adequate?'},
+    ]},
+    {pillar:'credit_rating',  label:'Credit Standing', questions:[
+      {id:'f2', label:'Credit Standing', sub:'Is their credit position and financial standing sound?'},
+    ]},
+    {pillar:'invoice_rating', label:'Invoicing Accuracy', questions:[
+      {id:'f3', label:'Invoicing Accuracy', sub:'Were invoices accurate, timely and correctly supported?'},
+    ]},
+  ]},
+  {dept:'Sales / Pre-Con', deptKey:'sales', roles:['Sales'], pillars:[
+    {pillar:'sales_response_rating',  label:'Response', questions:[
+      {id:'s1', label:'Response',              sub:'Completeness and quality of their tender response.'},
+    ]},
+    {pillar:'sales_price_rating',     label:'Price Competitiveness', questions:[
+      {id:'s2', label:'Price Competitiveness', sub:'Accuracy, transparency and competitiveness of pricing.'},
+    ]},
+    {pillar:'sales_technical_rating', label:'Technical Capability', questions:[
+      {id:'s3', label:'Technical Capability',  sub:'Relevant experience and ability to deliver the works.'},
+    ]},
+  ]},
+  {dept:'Design', deptKey:'design', roles:['Design Lead'], pillars:[
+    {pillar:'design_response_rating',  label:'Design Quality', questions:[
+      {id:'d1', label:'Design Quality', sub:'Standard and completeness of their design output.'},
+    ]},
+    {pillar:'design_price_rating',     label:'Coordination', questions:[
+      {id:'d2', label:'Coordination', sub:'How well did they coordinate with other disciplines?'},
+    ]},
+    {pillar:'design_technical_rating', label:'Responsiveness', questions:[
+      {id:'d3', label:'Responsiveness', sub:'Responsive to queries, changes and deadlines?'},
+    ]},
+  ]},
 ];
+// Lookups derived from the model.
+const DEPT_BY_KEY = Object.fromEntries(REVIEW_MODEL.map(d=>[d.deptKey,d]));
+const DEPT_BY_NAME = Object.fromEntries(REVIEW_MODEL.map(d=>[d.dept,d]));
+// Every rating field -> the question ids that feed it (across all departments).
+const PILLAR_QIDS = {};
+REVIEW_MODEL.forEach(d=>d.pillars.forEach(p=>{ PILLAR_QIDS[p.pillar]=p.questions.map(q=>q.id); }));
+// Back-compat alias (Ops-only callers).
+const OPS_PILLAR_QIDS = PILLAR_QIDS;
+// Which review dept a rating field belongs to.
+const FIELD_DEPTKEY = {};
+REVIEW_MODEL.forEach(d=>d.pillars.forEach(p=>{ FIELD_DEPTKEY[p.pillar]=d.deptKey; }));
+// Ops pillars, used by the modal's flat RQ for the current-questions list.
+const RQ_PILLARS = DEPT_BY_KEY.ops.pillars;
+// Flat list of ALL questions across all departments (for display of saved reviews).
+const RQ = REVIEW_MODEL.flatMap(d=>d.pillars.flatMap(p=>p.questions));
+// Which department a saved review belongs to (by its stored dept string).
+function reviewDeptKey(r){ const d=DEPT_BY_NAME[r&&r.dept]; return d?d.deptKey:null; }
 // Sales criteria for the project review — mirrors the Rating Matrix (tender /
 // pre-award side). Shown to everyone reviewing, but only editable by Sales
 // (Sales / Superuser); others see them read-only for reference.
@@ -804,7 +900,7 @@ function insExpiryCell(s){
 }
 function fmtTs(ts){ if(!ts)return''; const d=new Date(ts); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
 function fmtMoney(v){ if(!v)return'—'; return v>=1000000?'£'+(v/1000000).toFixed(0)+'M':v>=1000?'£'+(v/1000).toFixed(0)+'K':'£'+v; }
-function rp(v){ if(v==null||v===''||v===0)return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; return`<span class="rating-pill ${n<=2?'r-low':n<=3?'r-mid':'r-good'}">${n}</span>`; }
+function rp(v){ if(v==null||v===''||v===0||v==='0')return'<span class="rating-pill r-na">—</span>'; const n=Number(v); if(isNaN(n))return'<span class="rating-pill r-na">—</span>'; const disp=Number.isInteger(n)?n:n.toFixed(1); return`<span class="rating-pill ${n<=2?'r-low':n<=3?'r-mid':'r-good'}">${disp}</span>`; }
 function typetag(s){ const t=[]; if(s.subbie)t.push('<span class="type-tag type-sc">S/C</span>'); if(s.supplier)t.push('<span class="type-tag type-sup">SUP</span>'); if(s.hire)t.push('<span class="type-tag type-hire">HIRE</span>'); return t.join(' ')||'<span class="type-tag" style="background:var(--surface2);color:var(--text3)">—</span>'; }
 // Insurance is date-driven: anything on the database has already been
 // supplied to and checked by Finance, so there's no separate sign-off step.
@@ -813,14 +909,20 @@ function typetag(s){ const t=[]; if(s.subbie)t.push('<span class="type-tag type-
 const INS_WARN_DAYS = 90; // "expiring soon" threshold
 // Insurance is not a subcontractor-only concept: hire and supply-only accounts
 // frequently carry EL/PL cover too, and that cover matters when placing an
-// order. Display and monitoring therefore follow the DATA — any record holding
-// insurance values shows and is monitored. Blocking (isBlocked/DNU) and the
-// alert emails deliberately stay subcontractor-only.
+// order. DISPLAY and MONITORING therefore follow the DATA — any record holding
+// insurance values is shown and monitored. BLOCKING (insExpiredTypes → isBlocked
+// → DNU) and the alert emails (runInsuranceChecks) deliberately stay
+// subcontractor-only, so nothing new becomes DNU and no new emails fire.
 function hasInsuranceData(s){
   return [s.el_value,s.el_expiry,s.pl_value,s.pl_expiry,s.pi_value,s.pi_expiry]
     .some(v=>v!==null&&v!==undefined&&v!=='');
 }
 function showsInsurance(s){ return !!s.subbie||hasInsuranceData(s); }
+// A trading record of any type is expected to carry cover. Records with no
+// type ticked at all (consultants, one-off accounts) are left out of the
+// "not recorded" count so it stays a real worklist rather than noise.
+function expectsInsurance(s){ return !!(s.subbie||s.supplier||s.hire); }
+function insMissingList(){ return DB.filter(s=>expectsInsurance(s)&&!hasInsuranceData(s)); }
 function insExpiredTypes(s){
   if(!s.subbie)return [];
   return [['EL','el_expiry'],['PL','pl_expiry'],['PI','pi_expiry']]
@@ -881,8 +983,22 @@ function regionCell(s){
 }
 function insIssue(s){ const issues=new Set(); [s.el_expiry,s.pl_expiry,s.pi_expiry].filter(Boolean).forEach(d=>{ const x=daysUntil(d); if(x!==null&&x<0)issues.add('Expired'); else if(x!==null&&x<90)issues.add('<90d'); }); return[...issues].join(', '); }
 function insCls(d){ const x=daysUntil(d); if(x===null)return''; return x<0?'ins-expired':x<90?'ins-soon':''; }
-function insStatusBadge(s){ const iss=insIssue(s); if(!iss)return'<span class="badge bg-green">OK</span>'; return`<span class="badge ${iss.includes('Exp')?'bg-red':'bg-amber'}">${esc(iss)}</span>`; }
-function lastReviewBadge(s){ const r=s._reviews||[]; if(!r.length)return'<span class="badge bg-neutral">None</span>'; const p=r[r.length-1].performance; return`<span class="badge ${p==='Good'?'bg-green':p==='OK'?'bg-amber':'bg-red'}">${esc(p)}</span>`; }
+function insStatusBadge(s){
+  // Nothing on file is not the same as nothing wrong — it used to read "OK".
+  if(!hasInsuranceData(s)) return '<span class="badge bg-amber">Not recorded</span>';
+  const iss=insIssue(s);
+  if(!iss)return'<span class="badge bg-green">OK</span>';
+  return`<span class="badge ${iss.includes('Exp')?'bg-red':'bg-amber'}">${esc(iss)}</span>`;
+}
+// Review outcomes come from perfFromAvg as Do Not Use / Issues / Good /
+// Excellent. Older saved reviews still carry Poor / OK, so both vocabularies
+// are mapped here and every caller reads this one table — previously each
+// call site had its own partial map, which showed "Excellent" in red and
+// "Do Not Use" in amber.
+const PERF_TONE={'Excellent':'good','Good':'good','Issues':'warn','OK':'warn','Poor':'bad','Do Not Use':'bad'};
+function perfBadgeCls(p){ return {good:'bg-green',warn:'bg-amber',bad:'bg-red'}[PERF_TONE[p]]||'bg-neutral'; }
+function perfScoreCls(p){ return {good:'rs-good',warn:'rs-ok',bad:'rs-poor'}[PERF_TONE[p]]||'rs-ok'; }
+function lastReviewBadge(s){ const r=s._reviews||[]; if(!r.length)return'<span class="badge bg-neutral">None</span>'; const p=r[r.length-1].performance; return`<span class="badge ${perfBadgeCls(p)}">${esc(p)}</span>`; }
 function isStarred(s){ return SL.includes(s._id); }
 function avgArr(arr){ const v=arr.filter(x=>x!=null&&x!==0); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null; }
 // Live "Overall" score — average of every rating that's actually been set
@@ -890,14 +1006,82 @@ function avgArr(arr){ const v=arr.filter(x=>x!=null&&x!==0); return v.length?Mat
 // Time/Cost). Replaces the old static manually-typed rating field.
 // Each rating group is scored by different people against different criteria,
 // so they're shown as separate averages rather than one blended number.
-function groupRating(s,key){
-  const g=RATING_GROUPS.find(x=>x.key===key);
-  return g?avgArr(g.fields.map(f=>s[f])):null;
-}
 function financeRating(s){ return groupRating(s,'finance'); }
 function salesRating(s){ return groupRating(s,'sales'); }
 function designRating(s){ return groupRating(s,'design'); }
 function opsRating(s){ return groupRating(s,'ops'); }
+
+// ── Review-driven scoring (all departments) ──────────────────────────────────
+// Each rating field resolves by precedence:
+//   1. Superuser override (rating_meta.ops_overrides[field])
+//   2. Review average — mean, across the supplier's reviews, of that field's
+//      pillar score (a review contributes only if it scored the pillar). 1 dp.
+//   3. Manual line-item score (s[field]) — unchanged fallback.
+// Returns {value, source:'override'|'review'|'manual'|null, count}.
+function fieldScore(s, field){
+  const ov=(s.rating_meta&&s.rating_meta.ops_overrides)||{};
+  if(ov[field]!=null&&ov[field]!==''){ return {value:Number(ov[field]), source:'override', count:0}; }
+  const qids=PILLAR_QIDS[field]||[];
+  const reviews=s._reviews||[];
+  const perReview=[];
+  reviews.forEach(r=>{
+    const q=r.questions||{};
+    const vals=qids.map(id=>q[id]).filter(v=>v!=null&&!isNaN(v));
+    if(vals.length) perReview.push(vals.reduce((a,b)=>a+Number(b),0)/vals.length);
+  });
+  if(perReview.length){
+    const avg=perReview.reduce((a,b)=>a+b,0)/perReview.length;
+    return {value:Math.round(avg*10)/10, source:'review', count:perReview.length};
+  }
+  const m=s[field];
+  if(m!=null&&m!==''&&m!==0) return {value:Number(m), source:'manual', count:0};
+  return {value:null, source:null, count:0};
+}
+// Back-compat alias.
+function opsFieldScore(s, field){ return fieldScore(s, field); }
+// Is this cell driven by reviews or an override (locked to manual edit)?
+function opsFieldLocked(s, field){
+  const sc=fieldScore(s,field);
+  return sc.source==='review'||sc.source==='override';
+}
+function fieldLocked(s, field){ return opsFieldLocked(s, field); }
+// Department average — mean of that group's resolved field scores that have a
+// value, to one decimal.
+function groupRating(s, key){
+  const g=RATING_GROUPS.find(x=>x.key===key);
+  if(!g)return null;
+  const vals=g.fields.map(f=>fieldScore(s,f).value).filter(v=>v!=null);
+  if(!vals.length)return null;
+  const a=vals.reduce((x,y)=>x+y,0)/vals.length;
+  return Number.isInteger(a)?a:Math.round(a*10)/10;
+}
+// The lowest resolved field score for a supplier (across all departments), and
+// whether any pillar is a concern (<=2). Used for flagging.
+function lowestPillar(s){
+  let lo=null, loField=null;
+  RATING_GROUPS.forEach(g=>g.fields.forEach(f=>{
+    const v=fieldScore(s,f).value;
+    if(v!=null&&(lo==null||v<lo)){ lo=v; loField=f; }
+  }));
+  return {value:lo, field:loField, concern:lo!=null&&lo<=2};
+}
+// Which of a department's criteria are a concern (<=2). A supplier can be weak
+// in more than one department at once, so this returns all of them — the old
+// single flag beside the company name could only ever show the worst one.
+function groupConcerns(s,key){
+  const g=RATING_GROUPS.find(x=>x.key===key);
+  if(!g)return [];
+  return g.fields.map(f=>({field:f,value:fieldScore(s,f).value}))
+    .filter(x=>x.value!=null&&x.value<=2);
+}
+// The warning marker, rendered against that department's own score so it is
+// obvious which team it belongs to without hovering.
+function groupWarn(s,key){
+  const c=groupConcerns(s,key);
+  if(!c.length)return '';
+  const detail=c.map(x=>`${RATING_FIELD_LABELS[x.field]} ${x.value}`).join(', ');
+  return ` <span class="row-warn" title="${esc(detail)} — needs attention">&#9888;</span>`;
+}
 // Overall is the average of the four group averages, so each department
 // counts equally regardless of how many criteria it scores against.
 function overallRating(s){
@@ -911,14 +1095,26 @@ let _ratingEditField=null; // field currently being edited in the drawer, or nul
 let _showRatingAudit=false; // global toggle — controls whether "last changed by" shows for ALL ratings at once
 function ratingRow(idx,s,field){
   const label=RATING_FIELD_LABELS[field];
-  const val=s[field];
-  const canEdit=canEditRating(field);
   const meta=(s.rating_meta||{})[field];
   const editing=_ratingEditField===field;
+  const isReviewable=PILLAR_QIDS.hasOwnProperty(field);
+  // Resolve via the review-driven layer for any reviewable rating field.
+  const sc=isReviewable?fieldScore(s,field):{value:s[field],source:'manual',count:0};
+  const val=sc.value;
+  const locked=isReviewable&&(sc.source==='review'||sc.source==='override');
+  const concern=val!=null&&Number(val)<=2; // flag poor individual scores
+  const canEdit=canEditRating(field);
+  // A locked (review-driven) Ops cell can only be changed by a Superuser pinning
+  // an override; a normal editor sees it as read-only.
+  const showEdit=_drawerEdit&&!editing&&(locked?isSuperuser():canEdit);
+  const editLabel=locked?'Override':'Edit';
+  let srcTag='';
+  if(sc.source==='review') srcTag=`<span class="r-src" title="Average of ${sc.count} review${sc.count===1?'':'s'}">avg · ${sc.count} review${sc.count===1?'':'s'}</span>`;
+  else if(sc.source==='override') srcTag=`<span class="r-src" title="Pinned by a Superuser">pinned</span>`;
   let row=`<div class="r-row" style="align-items:flex-start;flex-wrap:wrap">
-    <div class="r-row-label" style="padding-top:3px">${esc(label)}</div>
-    <div style="display:flex;align-items:center;gap:6px">${rp(val)}
-      ${_drawerEdit&&canEdit&&!editing?`<button class="edit-pill" onclick="startRatingEdit(${idx},'${field}')">Edit</button>`:''}
+    <div class="r-row-label" style="padding-top:3px">${esc(label)}${concern?' <span class="pillar-warn" title="Low score — needs attention">&#9888;</span>':''}</div>
+    <div style="display:flex;align-items:center;gap:6px">${rp(val)}${srcTag}
+      ${showEdit?`<button class="edit-pill" onclick="startRatingEdit(${idx},'${field}')">${editLabel}</button>`:''}
     </div>`;
   if(_showRatingAudit&&meta&&meta.by){
     row+=`<div class="r-row-note" style="flex-basis:100%;margin-top:2px">Last changed by ${esc(meta.by)}${meta.ts?' · '+fmtTs(meta.ts):''}${meta.why?'<br><span style="font-style:italic">"'+esc(meta.why)+'"</span>':''}</div>`;
@@ -927,12 +1123,15 @@ function ratingRow(idx,s,field){
   }
   row+=`</div>`;
   if(editing){
+    const ovActive=isReviewable&&sc.source==='override';
     row+=`<div class="quick-box" style="margin-top:4px;margin-bottom:8px">
-      <span class="quick-box-label">Update ${esc(label)} Rating</span>
-      <div class="quick-row"><span style="width:auto">Score</span><input type="number" min="0" max="4" id="rt-val-${field}" value="${val!=null?val:''}" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace"></div>
+      <span class="quick-box-label">${locked?'Override':'Update'} ${esc(label)} Rating</span>
+      ${locked?`<div class="r-row-note" style="margin:2px 0 6px">This score is review-driven${sc.source==='review'?` (avg of ${sc.count})`:''}. Saving pins a manual override until cleared.</div>`:''}
+      <div class="quick-row"><span style="width:auto">Score</span><input type="number" min="0" max="4" step="0.1" id="rt-val-${field}" value="${val!=null?val:''}" style="width:70px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace"></div>
       <div class="field" style="margin-top:6px"><label>Reason for change *</label><textarea id="rt-reason-${field}" rows="2" placeholder="Required — why is this rating changing?"></textarea></div>
       <div class="quick-row" style="margin-top:8px">
         <button class="btn btn-sm btn-primary" onclick="saveRatingEdit(${idx},'${field}')">Save</button>
+        ${ovActive?`<button class="btn btn-sm" onclick="clearOpsOverride(${idx},'${field}')">Clear override</button>`:''}
         <button class="btn btn-sm" onclick="cancelRatingEdit(${idx})">Cancel</button>
       </div>
     </div>`;
@@ -941,6 +1140,25 @@ function ratingRow(idx,s,field){
 }
 function startRatingEdit(idx,field){ _ratingEditField=field; buildDrawer(idx); setTimeout(()=>{const el=document.getElementById('rt-val-'+field); if(el)el.focus();},0); }
 function cancelRatingEdit(idx){ _ratingEditField=null; buildDrawer(idx); }
+async function clearOpsOverride(idx,field){
+  if(!isSuperuser()){toast('Only a Superuser can clear an override','err');return;}
+  const s=DB[idx];
+  const ov=(s.rating_meta&&s.rating_meta.ops_overrides)||{};
+  if(ov[field]==null){ _ratingEditField=null; buildDrawer(idx); return; }
+  const oldVal=Number(ov[field]);
+  delete s.rating_meta.ops_overrides[field];
+  if(s.rating_meta[field]&&s.rating_meta[field].override) delete s.rating_meta[field];
+  saveDB(); schedSync(s._id);
+  const newResolved=opsFieldScore(s,field).value;
+  await sbCall(_sb.from('rating_history').insert({
+    supplier_id:s._id, field, old_value:oldVal, new_value:newResolved,
+    changed_by_user_id:_sbUser.id, changed_by_name:myName(), changed_by_role:'Superuser',
+    reason:'Override cleared — reverted to review-driven score'
+  }),'Saving rating history');
+  _ratingEditField=null;
+  buildDrawer(idx); renderMetrics(); applyFilters();
+  toast(RATING_FIELD_LABELS[field]+' override cleared');
+}
 async function saveRatingEdit(idx,field){
   const valEl=document.getElementById('rt-val-'+field), reasonEl=document.getElementById('rt-reason-'+field);
   const raw=valEl.value;
@@ -949,14 +1167,28 @@ async function saveRatingEdit(idx,field){
   if(isNaN(n)||n<0||n>4){toast('Score must be between 0 and 4','err');return;}
   const reason=(reasonEl.value||'').trim();
   if(!reason){toast('Reason is required','err');return;}
-  if(!canEditRating(field)){toast('You do not have permission to edit this rating','err');return;}
   const s=DB[idx];
-  const oldVal=s[field];
-  const actingRole=RATING_FIELD_ROLES[field].find(r=>myRoles.has(r))||(isSuperuser()?'Superuser':[...myRoles][0])||'';
+  const isOps=OPS_PILLAR_QIDS.hasOwnProperty(field);
+  const wasLocked=isOps&&opsFieldLocked(s,field);
+  // Permission: a locked (review-driven) Ops cell can only be changed by a
+  // Superuser (as an override); otherwise normal rating permission applies.
+  if(wasLocked){ if(!isSuperuser()){toast('This score is review-driven — only a Superuser can override it','err');return;} }
+  else if(!canEditRating(field)){toast('You do not have permission to edit this rating','err');return;}
+  const oldResolved=isOps?opsFieldScore(s,field).value:s[field];
+  const actingRole=isSuperuser()?'Superuser':(RATING_FIELD_ROLES[field].find(r=>myRoles.has(r))||[...myRoles][0]||'');
   const nowIso=new Date().toISOString();
-  s[field]=n;
-  s.rating_meta=s.rating_meta||{};
-  s.rating_meta[field]={by:myName(),why:reason,ts:nowIso};
+  if(wasLocked){
+    // Store as a Superuser override, leaving the manual value untouched.
+    s.rating_meta=s.rating_meta||{};
+    s.rating_meta.ops_overrides=s.rating_meta.ops_overrides||{};
+    s.rating_meta.ops_overrides[field]=n;
+    s.rating_meta[field]={by:myName(),why:reason,ts:nowIso,override:true};
+  } else {
+    s[field]=n;
+    s.rating_meta=s.rating_meta||{};
+    s.rating_meta[field]={by:myName(),why:reason,ts:nowIso};
+  }
+  const oldVal=oldResolved;
   saveDB(); schedSync(s._id);
   await sbCall(_sb.from('rating_history').insert({
     supplier_id:s._id, field, old_value:oldVal, new_value:n,
@@ -985,13 +1217,20 @@ function renderMetrics(){
   const sc=DB.filter(s=>s.subbie);
   const rated=sc.map(s=>overallRating(s)).filter(v=>v!=null);
   const avg=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length).toFixed(1):'—';
-  const exp=DB.filter(s=>s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<0;}));
-  const soon=DB.filter(s=>!exp.includes(s)&&s.subbie&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<90;}));
+  // The Insurance tab's tiles count the same population its table lists —
+  // every record that carries cover, not just subcontractors. Records with
+  // nothing on file are counted separately rather than passing as OK.
+  const insPop=DB.filter(hasInsuranceData);
+  const exp=insPop.filter(s=>[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<0;}));
+  const soon=insPop.filter(s=>!exp.includes(s)&&[s.el_expiry,s.pl_expiry,s.pi_expiry].some(d=>{const x=daysUntil(d);return x!==null&&x<90;}));
+  const missing=insMissingList();
   // Stat cards were removed from All Suppliers; the insurance tab keeps its own.
   const mAll=document.getElementById('metrics-all'); if(mAll) mAll.innerHTML='';
   const mSc=document.getElementById('metrics-sc'); if(mSc) mSc.innerHTML='';
   document.getElementById('metrics-ins').innerHTML=
-    met('red','Expired',exp.length)+met('amber','Expiring <90d',soon.length)+met('green','OK',sc.length-exp.length-soon.length);
+    met('red','Expired',exp.length)+met('amber','Expiring <90d',soon.length)+met('green','OK',insPop.length-exp.length-soon.length)
+    +`<div class="metric ${_insShowMissing?'amber':''}" onclick="toggleInsMissing()" style="cursor:pointer" title="${_insShowMissing?'Back to the expiry list':'List the records with no insurance on file'}">
+      <div class="metric-label">Not recorded ${_insShowMissing?'&#9679;':''}</div><div class="metric-value">${missing.length}</div></div>`;
 }
 function met(cls,label,val){ return`<div class="metric ${cls}"><div class="metric-label">${label}</div><div class="metric-value">${val}</div></div>`; }
 
@@ -1164,10 +1403,28 @@ function applyFilters(){
     if(dnuF==='dnu'&&!isBlocked(s))return false;
     return true;
   });
+  const bestScore=document.getElementById('f-bestscore')&&document.getElementById('f-bestscore').checked;
+  const dnuBottom=document.getElementById('f-dnubottom')&&document.getElementById('f-dnubottom').checked;
+  // Computed numeric columns (department averages + overall).
+  const DEPT_COL={_fin:financeRating,_sal:salesRating,_ops:opsRating,_des:designRating};
+  const numOrNull=v=>{ const n=Number(v); return (v==null||v===''||isNaN(n))?null:n; };
   filtered.sort((a,b)=>{
-    // _ins is a computed column (soonest insurance expiry), not a stored field.
-    let av = sortCol==='_ins' ? soonestInsuranceExpiry(a) : a[sortCol];
-    let bv = sortCol==='_ins' ? soonestInsuranceExpiry(b) : b[sortCol];
+    // DNU-to-bottom takes precedence over any sort: hard DNU and soft DNU sink.
+    if(dnuBottom){
+      const ad=isBlocked(a)||a.soft_dnu?1:0, bd=isBlocked(b)||b.soft_dnu?1:0;
+      if(ad!==bd) return ad-bd;
+    }
+    // Best-score sort: by overall average, highest first (nulls last).
+    if(bestScore){
+      const ao=numOrNull(overallRating(a)), bo=numOrNull(overallRating(b));
+      if(ao==null&&bo==null){} else if(ao==null) return 1; else if(bo==null) return -1;
+      else if(ao!==bo) return bo-ao;
+    }
+    // Column sort. _ins and the dept-average columns are computed, not stored.
+    let av,bv;
+    if(sortCol==='_ins'){ av=soonestInsuranceExpiry(a); bv=soonestInsuranceExpiry(b); }
+    else if(DEPT_COL[sortCol]){ av=numOrNull(DEPT_COL[sortCol](a)); bv=numOrNull(DEPT_COL[sortCol](b)); }
+    else { av=a[sortCol]; bv=b[sortCol]; }
     if(av==null)av=sortDir>0?'zzz':''; if(bv==null)bv=sortDir>0?'zzz':'';
     if(typeof av==='number'&&typeof bv==='number')return(av-bv)*sortDir;
     return String(av).localeCompare(String(bv))*sortDir;
@@ -1191,6 +1448,7 @@ function clearSearch(){
 }
 function clearFilters(){
   ['f-search','f-cat','f-sub','f-region','f-status'].forEach(id=>{const el=document.getElementById(id); if(el)el.value='';});
+  ['f-bestscore','f-dnubottom'].forEach(id=>{const el=document.getElementById(id); if(el)el.checked=false;});
   document.getElementById('f-sub').innerHTML='<option value="">All sub-trades</option>';
   toggleSearchClear();
   applyFilters();
@@ -1201,7 +1459,7 @@ function renderTable(){
   const start=(page-1)*PAGE, slice=filtered.slice(start,start+PAGE);
   const tbody=document.getElementById('supplier-tbody');
   if(!slice.length){
-    tbody.innerHTML='<tr><td colspan="11" class="empty-state">No suppliers match your filters</td></tr>';
+    tbody.innerHTML='<tr><td colspan="15" class="empty-state">No suppliers match your filters</td></tr>';
     document.getElementById('page-info').textContent='';
     document.getElementById('page-btns').innerHTML='';
     return;
@@ -1216,6 +1474,10 @@ function renderTable(){
       <td style="font-size:12px;color:var(--text3)">${esc(s.city||'—')}</td>
       <td style="font-size:12px;color:var(--text3)">${regionCell(s)}</td>
       <td>${insExpiryCell(s)}</td>
+      <td style="text-align:center;white-space:nowrap">${rp(financeRating(s))}${groupWarn(s,'finance')}</td>
+      <td style="text-align:center;white-space:nowrap">${rp(salesRating(s))}${groupWarn(s,'sales')}</td>
+      <td style="text-align:center;white-space:nowrap">${rp(opsRating(s))}${groupWarn(s,'ops')}</td>
+      <td style="text-align:center;white-space:nowrap">${rp(designRating(s))}${groupWarn(s,'design')}</td>
       <td>${typetag(s)}</td>
       <td>${lastReviewBadge(s)}</td>
       <td>${statusBadge(s)}</td>
@@ -1298,8 +1560,19 @@ function renderPending(){
 }
 
 // ── Insurance table ───────────────────────────────────────────────────────────
+// Two views behind one table: the expiry worklist (default), and the records
+// with no cover on file. Mixing them would bury the expiries — there are far
+// more blanks than expiries — so the "Not recorded" tile switches between them.
+let _insShowMissing=false;
+function toggleInsMissing(){ _insShowMissing=!_insShowMissing; renderMetrics(); renderIns(); }
 function renderIns(){
-  document.getElementById('ins-tbody').innerHTML=DB.filter(s=>showsInsurance(s)&&insIssue(s)).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong>${esc(s.name)}</strong></td><td>${subPill(s)}</td><td class="${insCls(s.el_expiry)}" style="font-size:12px">${fmtDate(s.el_expiry)}</td><td class="${insCls(s.pl_expiry)}" style="font-size:12px">${fmtDate(s.pl_expiry)}</td><td class="${insCls(s.pi_expiry)}" style="font-size:12px">${fmtDate(s.pi_expiry)}</td><td>${insStatusBadge(s)}</td></tr>`).join('');
+  const rows=_insShowMissing?insMissingList():DB.filter(s=>showsInsurance(s)&&insIssue(s));
+  const tb=document.getElementById('ins-tbody');
+  if(!rows.length){
+    tb.innerHTML=`<tr><td colspan="6" class="empty-state">${_insShowMissing?'Every trading record has insurance on file.':'No insurance expired or expiring in the next 90 days.'}</td></tr>`;
+    return;
+  }
+  tb.innerHTML=rows.sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})"><td><strong>${esc(s.name)}</strong> ${typetag(s)}</td><td>${subPill(s)}</td><td class="${insCls(s.el_expiry)}" style="font-size:12px">${fmtDate(s.el_expiry)}</td><td class="${insCls(s.pl_expiry)}" style="font-size:12px">${fmtDate(s.pl_expiry)}</td><td class="${insCls(s.pi_expiry)}" style="font-size:12px">${fmtDate(s.pi_expiry)}</td><td>${insStatusBadge(s)}</td></tr>`).join('');
 }
 
 // ── Shortlist ─────────────────────────────────────────────────────────────────
@@ -1381,9 +1654,9 @@ function renderShortlist(){
     tb+=row('Programme',s=>s.subbie?rp(s.time_rating):'<span style="color:var(--text3)">—</span>');
     tb+=row('H&amp;S',s=>s.subbie?rp(s.hs_rating):'<span style="color:var(--text3)">—</span>');
     tb+=secRow('Insurance');
-    tb+=row('EL (value / expiry)',s=>s.subbie?insCellVal(s.el_value,s.el_expiry):'<span style="color:var(--text3)">—</span>');
-    tb+=row('PL (value / expiry)',s=>s.subbie?insCellVal(s.pl_value,s.pl_expiry):'<span style="color:var(--text3)">—</span>');
-    tb+=row('PI (value / expiry)',s=>s.subbie?insCellVal(s.pi_value,s.pi_expiry):'<span style="color:var(--text3)">—</span>');
+    tb+=row('EL (value / expiry)',s=>insCellVal(s.el_value,s.el_expiry));
+    tb+=row('PL (value / expiry)',s=>insCellVal(s.pl_value,s.pl_expiry));
+    tb+=row('PI (value / expiry)',s=>insCellVal(s.pi_value,s.pi_expiry));
     tb+=secRow('Compliance');
     tb+=row('Safe Contractor',s=>s.subbie?compCell(s.safe_contractor):'<span style="color:var(--text3)">—</span>');
     tb+=row('Constructionline',s=>s.subbie?compCell(s.constructionline):'<span style="color:var(--text3)">—</span>');
@@ -1415,55 +1688,64 @@ function copyShortlist(){
 function clearShortlist(){ if(confirm('Clear entire shortlist?')){SL=[];slPref=null;saveSL();renderShortlist();} }
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
+// Performance Reviews tab — reviews only. A filter bar (supplier · department ·
+// DNU · date · rating band) narrows a flat, newest-first list of every review.
+let _revFilter={supplier:'',dept:'',dnu:'',from:'',to:'',band:''};
+function setRevFilter(k,v){ _revFilter[k]=v; renderAnalytics(); }
+function clearRevFilter(){ _revFilter={supplier:'',dept:'',dnu:'',from:'',to:'',band:''}; renderAnalytics(); }
 function renderAnalytics(){
   const sc=DB.filter(s=>s.subbie);
-  const allR=sc.flatMap(s=>(s._reviews||[]).map(r=>r.performance));
-  const good=allR.filter(r=>r==='Good').length, ok=allR.filter(r=>r==='OK').length, poor=allR.filter(r=>r==='Poor').length;
-  const total=allR.length, pct=n=>total?Math.round(n/total*100):0;
-  const recent=sc.flatMap(s=>(s._reviews||[]).map(r=>({...r,sName:s.name,sIdx:DB.indexOf(s)}))).sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,8);
-  const R=70,cx=90,cy=90;
-  function arc(s,e,col){
-    if(e-s<=0)return'';
-    const sr=s*Math.PI/180,er=e*Math.PI/180;
-    const x1=cx+R*Math.sin(sr),y1=cy-R*Math.cos(sr),x2=cx+R*Math.sin(er),y2=cy-R*Math.cos(er);
-    return`<path d="M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${e-s>180?1:0},1 ${x2},${y2} Z" fill="${col}"/>`;
-  }
-  let d=0;
-  const svgArcs=total?arc(d,d+=pct(good)*3.6,'#16A34A')+arc(d,d+=pct(ok)*3.6,'#D97706')+arc(d,d+=pct(poor)*3.6,'#DC2626'):`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#F2F1EE"/>`;
-  const donut=`<svg width="180" height="180" viewBox="0 0 180 180">${svgArcs}<circle cx="${cx}" cy="${cy}" r="40" fill="white"/><text x="${cx}" y="86" text-anchor="middle" font-size="20" font-weight="600" fill="#1C1B18">${total}</text><text x="${cx}" y="100" text-anchor="middle" font-size="10" fill="#9B9890">reviews</text></svg>`;
+  // Flatten every review with its supplier context.
+  let rows=sc.flatMap(s=>(s._reviews||[]).map(r=>({...r,sName:s.name,sIdx:DB.indexOf(s),_s:s})));
+  const total=rows.length;
+  // Apply filters.
+  const f=_revFilter;
+  if(f.supplier) rows=rows.filter(r=>String(r.sIdx)===f.supplier);
+  if(f.dept) rows=rows.filter(r=>r.dept===f.dept);
+  if(f.dnu==='dnu') rows=rows.filter(r=>isBlocked(r._s)||r._s.soft_dnu);
+  if(f.dnu==='active') rows=rows.filter(r=>!(isBlocked(r._s)||r._s.soft_dnu));
+  if(f.from) rows=rows.filter(r=>(r.date||r.ts||'').slice(0,10)>=f.from);
+  if(f.to) rows=rows.filter(r=>(r.date||r.ts||'').slice(0,10)<=f.to);
+  if(f.band==='low') rows=rows.filter(r=>r.avgScore!=null&&r.avgScore<=2);
+  else if(f.band==='mid') rows=rows.filter(r=>r.avgScore!=null&&r.avgScore>2&&r.avgScore<=3);
+  else if(f.band==='high') rows=rows.filter(r=>r.avgScore!=null&&r.avgScore>3);
+  rows.sort((a,b)=>new Date(b.ts||b.date)-new Date(a.ts||a.date));
+  const supOpts=sc.slice().sort((a,b)=>a.name.localeCompare(b.name))
+    .map(s=>`<option value="${DB.indexOf(s)}" ${f.supplier===String(DB.indexOf(s))?'selected':''}>${esc(s.name)}</option>`).join('');
+  const deptOpts=['Design','Operations','Finance','Sales / Pre-Con','Senior Management','Other']
+    .map(d=>`<option value="${d}" ${f.dept===d?'selected':''}>${esc(d)}</option>`).join('');
+  const filterBar=`
+    <div class="card" style="margin-bottom:16px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px">
+      <span class="tlabel">Supplier</span>
+      <select class="sel" onchange="setRevFilter('supplier',this.value)"><option value="">All</option>${supOpts}</select>
+      <span class="tlabel">Dept</span>
+      <select class="sel" onchange="setRevFilter('dept',this.value)"><option value="">All</option>${deptOpts}</select>
+      <span class="tlabel">Status</span>
+      <select class="sel" onchange="setRevFilter('dnu',this.value)"><option value="">All</option><option value="active" ${f.dnu==='active'?'selected':''}>Active</option><option value="dnu" ${f.dnu==='dnu'?'selected':''}>DNU</option></select>
+      <span class="tlabel">Score</span>
+      <select class="sel" onchange="setRevFilter('band',this.value)"><option value="">All</option><option value="low" ${f.band==='low'?'selected':''}>≤2 (poor)</option><option value="mid" ${f.band==='mid'?'selected':''}>2–3</option><option value="high" ${f.band==='high'?'selected':''}>&gt;3 (good)</option></select>
+      <span class="tlabel">From</span><input type="date" class="sel" value="${f.from}" onchange="setRevFilter('from',this.value)">
+      <span class="tlabel">To</span><input type="date" class="sel" value="${f.to}" onchange="setRevFilter('to',this.value)">
+      <button class="btn btn-sm" onclick="clearRevFilter()">Clear</button>
+    </div></div>`;
+  const list=rows.length?rows.map(r=>{
+    const cls=perfScoreCls(r.performance);
+    return`<div class="review-card" style="cursor:pointer;display:flex;gap:14px;align-items:flex-start" onclick="openDrawer(${r.sIdx})">
+      ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=3?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:6px 12px;min-width:56px">
+        <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=3?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
+        <div style="font-size:8px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">avg /4</div>
+      </div>`:''}
+      <div style="flex:1;min-width:0">
+      <div class="review-hd"><strong style="font-size:13px">${esc(r.sName)}</strong><span class="review-score ${cls}">${esc(r.performance)}</span><span style="font-size:10px;color:var(--text3);margin-left:auto;font-family:'DM Mono',monospace">${fmtTs(r.ts)}</span></div>
+      <div style="font-size:12px;color:var(--text2)">By ${esc(r.reviewedBy)} · ${esc(r.dept)}${r.project?' · '+esc(r.project):''}</div>
+      ${r.improvements?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${esc(r.improvements)}</div>`:''}
+      </div>
+    </div>`;
+  }).join(''):`<div class="empty-state">${total?'No reviews match these filters.':'No reviews yet. Click "+ New Review" to start.'}</div>`;
   document.getElementById('analytics-content').innerHTML=`
-    <div class="card"><div class="card-header"><h2>Recent Reviews</h2><button class="btn btn-sm btn-primary" onclick="openReviewModal(null)">+ New Review</button></div>
-      <div style="padding:16px">${recent.length?recent.map(r=>{
-        const cls={Good:'rs-good',OK:'rs-ok',Poor:'rs-poor'}[r.performance]||'rs-ok';
-        return`<div class="review-card" style="cursor:pointer;display:flex;gap:14px;align-items:flex-start" onclick="openDrawer(${r.sIdx})">
-          ${r.avgScore!=null?`<div style="flex-shrink:0;text-align:center;background:${r.avgScore<=2?'var(--red-bg)':r.avgScore<=3?'var(--amber-bg)':'var(--green-bg)'};border-radius:8px;padding:6px 12px;min-width:56px">
-            <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:${r.avgScore<=2?'var(--red)':r.avgScore<=3?'var(--amber)':'var(--green)'}">${r.avgScore}</div>
-            <div style="font-size:8px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">avg /6</div>
-          </div>`:''}
-          <div style="flex:1;min-width:0">
-          <div class="review-hd"><strong style="font-size:13px">${esc(r.sName)}</strong><span class="review-score ${cls}">${esc(r.performance)}</span><span style="font-size:10px;color:var(--text3);margin-left:auto;font-family:'DM Mono',monospace">${fmtTs(r.ts)}</span></div>
-          <div style="font-size:12px;color:var(--text2)">By ${esc(r.reviewedBy)} · ${esc(r.dept)}${r.project?' · '+esc(r.project):''}</div>
-          ${r.improvements?`<div style="font-size:12px;color:var(--text3);margin-top:4px">${esc(r.improvements)}</div>`:''}
-          </div>
-        </div>`;
-      }).join(''):'<div class="empty-state">No reviews yet. Click "+ New Review" to start.</div>'}
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
-      <div class="card" style="margin:0"><div class="card-header"><h2>Contractor Performance</h2></div>
-        <div class="chart-area">${donut}
-          <div class="chart-legend">
-            <div class="legend-row"><div class="legend-dot" style="background:#16A34A"></div>Good — ${good} (${pct(good)}%)</div>
-            <div class="legend-row"><div class="legend-dot" style="background:#D97706"></div>OK — ${ok} (${pct(ok)}%)</div>
-            <div class="legend-row"><div class="legend-dot" style="background:#DC2626"></div>Poor — ${poor} (${pct(poor)}%)</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:6px">${total} reviews · ${sc.filter(s=>(s._reviews||[]).length>0).length} subcontractors</div>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="margin:0"><div class="card-header"><h2>Subcontractor Summary</h2></div>
-        <div style="overflow-x:auto"><table><thead><tr><th>Company</th><th>Overall</th><th>Finance</th><th>Sales</th><th>Design</th><th>Ops</th><th>Reviews</th><th>Last</th></tr></thead>
-        <tbody>${sc.map(s=>`<tr onclick="openDrawer(${DB.indexOf(s)})" style="cursor:pointer"><td style="font-size:13px">${esc(s.name)}</td><td>${rp(overallRating(s))}</td><td>${rp(financeRating(s))}</td><td>${rp(salesRating(s))}</td><td>${rp(designRating(s))}</td><td>${rp(opsRating(s))}</td><td style="font-size:12px;color:var(--text3);text-align:center">${(s._reviews||[]).length}</td><td>${lastReviewBadge(s)}</td></tr>`).join('')}</tbody></table></div>
-      </div>
+    ${filterBar}
+    <div class="card"><div class="card-header"><h2>Reviews <span style="font-weight:400;font-size:13px;color:var(--text3)">(${rows.length}${rows.length!==total?' of '+total:''})</span></h2><button class="btn btn-sm btn-primary" onclick="openReviewModal(null)">+ New Review</button></div>
+      <div style="padding:16px">${list}</div>
     </div>`;
 }
 
@@ -1588,6 +1870,18 @@ async function renderCertReview(){
     const b=first?' grp-first':'';
     if(dbIdx===undefined) return `<td class="rg-cell${b}"><span class="rg-dash">—</span></td>`;
     const s=DB[dbIdx];
+    const isOps=OPS_PILLAR_QIDS.hasOwnProperty(field);
+    // Review-driven / overridden Ops cells are locked — they show the computed
+    // value read-only and can't be typed over here (change them via a review,
+    // or a Superuser override in the drawer).
+    if(isOps){
+      const scr=opsFieldScore(s,field);
+      if(scr.source==='review'||scr.source==='override'){
+        const dv=scr.value==null?'·':(Number.isInteger(scr.value)?scr.value:scr.value.toFixed(1));
+        const tt=scr.source==='review'?`Review-driven · avg of ${scr.count}`:'Pinned override';
+        return `<td class="rg-cell rg-locked${b}" title="${esc(RATING_FIELD_LABELS[field])} — ${tt}"><span class="rg-lockval">${dv}</span></td>`;
+      }
+    }
     const val=s[field];
     const canEdit=canEditRating(field);
     if(!canEdit){
@@ -1627,6 +1921,8 @@ async function renderCertReview(){
     .rg-cell{text-align:center;padding:3px;vertical-align:middle}
     .rg-ro{font-family:'DM Mono',monospace;opacity:.5}
     .rg-dash{color:var(--text3)}
+    .rg-locked{background:rgba(7,181,155,.06)}
+    .rg-lockval{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600}
     .rg-input{width:40px;height:28px;text-align:center;padding:2px;border:1px solid var(--border2);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;background:var(--surface);transition:border-color .12s,box-shadow .12s}
     .rg-input:hover{border-color:var(--text3)}
     .rg-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--rg-focus)}
@@ -1960,9 +2256,9 @@ function buildDrawer(idx){
       <div class="field"><label>Office</label><input id="ed-office-${idx}" value="${esc(s.office_number||'')}" onblur="saveField(${idx},'office_number',this.value)"${ro()}></div>
     </div>
   </div>`;
-  // Insurance — shown for subcontractors, and for any other record that
-  // actually holds cover (hire/supply accounts such as Algeco).
-  if(showsInsurance(s)){
+  // Insurance — shown for all company types (suppliers/hire can carry insurance
+  // too). Expiry ALERTS remain subcontractor-only (see runInsuranceChecks).
+  {
     // Insurance is Finance-controlled: editable inline only when the drawer is
     // in edit mode AND the user holds a Finance role (or Superuser). Everyone
     // else sees read-only values, and editors from other departments see a
@@ -1978,6 +2274,7 @@ function buildDrawer(idx){
     };
     h+=`<div class="detail-section">
       <div class="section-hd">Insurance ${_drawerEdit&&!canEditInsurance()?'<span style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;color:var(--text3)">Finance only</span>':''}</div>
+      ${!hasInsuranceData(s)?`<div class="pending-banner" style="margin-bottom:10px"><span>&#9888; No insurance recorded${expectsInsurance(s)?'':' (no company type set)'}</span></div>`:''}
       <div class="detail-grid">
         ${insVal('EL','el_value','el_expiry')}
         ${insVal('PL','pl_value','pl_expiry')}
@@ -2024,7 +2321,7 @@ function buildDrawer(idx){
     h+=`<div class="detail-section"><div class="section-hd">Ratings ${overall!=null?`<span style="font-weight:400;text-transform:none;letter-spacing:0">overall ${rp(overall)}</span>`:''}</div>`;
     RATING_GROUPS.forEach((g,gi)=>{
       const ga=groupRating(s,g.key);
-      h+=`<div style="font-size:11px;font-weight:600;color:var(--text3);margin:${gi?'12px':'0'} 0 6px">${esc(g.label)} ${ga!=null?rp(ga):''}</div>`;
+      h+=`<div style="font-size:11px;font-weight:600;color:var(--text3);margin:${gi?'12px':'0'} 0 6px">${esc(g.label)} ${ga!=null?rp(ga):''}${groupWarn(s,g.key)}</div>`;
       g.fields.forEach(f=>{ h+=ratingRow(idx,s,f); });
     });
     h+=`</div>`;
@@ -2037,8 +2334,8 @@ function buildDrawer(idx){
   if(reviews.length){
     h+=reviews.slice().reverse().map((r,i)=>{
       const ri=reviews.length-1-i;
-      const cls={Good:'rs-good',OK:'rs-ok',Poor:'rs-poor'}[r.performance]||'rs-ok';
-      const qs=RQ.concat(RQ_SALES).map(q=>{
+      const cls=perfScoreCls(r.performance);
+      const qs=RQ.map(q=>{
         const v=r.questions?.[q.id];
         if(v===undefined)return'';
         if(typeof v==='boolean')return`<span style="font-size:11px;color:var(--text3);margin-right:8px">${esc(q.label)}: <strong style="color:${v?'var(--green)':'var(--red)'}">${v?'Y':'N'}</strong></span>`;
@@ -2065,43 +2362,18 @@ function buildDrawer(idx){
     }).join('');
   } else h+='<div class="empty-state" style="padding:16px 0">No reviews yet.</div>';
   h+=`</div>`;
-  // Comments / Notes — using LFE comment thread pattern
-  const notes=s._notes||[];
-  h+=`<div class="detail-section">
-    <div class="section-hd">Comments ${notes.length?`<span style="font-weight:400;font-size:12px;text-transform:none;letter-spacing:0">(${notes.length})</span>`:''}</div>`;
-  if(notes.length){
-    h+='<div class="comments-thread">'+notes.map((n,i)=>`
-      <div class="comment">
-        <div class="comment-meta">
-          <span class="comment-author">${esc(n.author)}</span>
-          <span class="comment-tag">${esc(n.dept)}</span>
-          <span class="comment-time">${fmtTs(n.ts)}</span>
-          ${isSuperuser()?`<button class="btn-danger" onclick="delNote(${idx},${i},event)">✕</button>`:''}
-        </div>
-        <div class="comment-text">${esc(n.text)}</div>
-      </div>`).join('')+'</div>';
-  } else h+='<div style="font-size:13px;color:var(--text3);margin-bottom:12px">No comments yet.</div>';
-  const la=localStorage.getItem('mfb_last_author')||'', ld=localStorage.getItem('mfb_last_dept')||'';
-  h+=`<div class="comment-add">
-    <div class="comment-name-row">
-      <input id="cmt-name" class="search-inp" placeholder="Your name…" style="max-width:160px;height:30px" value="${esc(la)}">
-      <select id="cmt-role" class="comment-role-sel">
-        <option value="">— Team —</option>
-        ${DEPTS.map(d=>`<option value="${d}"${d===ld?' selected':''}>${d}</option>`).join('')}
-      </select>
-    </div>
-    <div class="comment-add-row">
-      <textarea id="cmt-text" class="search-inp" rows="2" placeholder="Add a comment…" style="flex:1;height:auto;resize:vertical;line-height:1.5;padding:6px 10px"></textarea>
-      <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="addNote(${idx})">Post</button>
-    </div>
-  </div></div>`;
+  // Comments — hidden for now at Steve's request (10 Sep 2026). The data is
+  // untouched: _notes still round-trips through sbToApp/appToSb, is still
+  // searchable from the All Suppliers search box, and still shows in Recent
+  // Changes. Restore by reinstating this block; addNote/delNote are intact.
   // Change History — loaded on demand, so it only appears once fetched
   h+=`<div class="detail-section">
     <div class="section-hd">Change History <button class="btn btn-sm" onclick="loadSupplierHistory(${idx})">Show</button></div>
     <div id="hist-${idx}"><div style="font-size:12px;color:var(--text3)">Click Show to load recent changes for this supplier.</div></div>
   </div>`;
-  // Delete — Superuser only, and kept at the very bottom so it is never next
-  // to a routine control. The database enforces the same restriction.
+  // Delete — Superuser only, kept at the very bottom so it is never beside a
+  // routine control. The database enforces the same restriction via the
+  // suppliers_delete RLS policy.
   if(isSuperuser()){
     h+=`<div class="detail-section">
       <div class="section-hd" style="color:var(--red)">Delete supplier</div>
@@ -2112,8 +2384,8 @@ function buildDrawer(idx){
   document.getElementById('drawer-bd').innerHTML=h;
 }
 
-// Re-render the list plus whichever tab is currently on screen. Used after a
-// record is removed, since every table indexes into DB by position.
+// Re-render the list plus whichever tab is on screen. Needed after a record is
+// removed, since every table indexes into DB by position.
 function refreshViews(){
   updateCounts(); renderMetrics(); applyFilters();
   const active=document.querySelector('.tab.active');
@@ -2122,12 +2394,12 @@ function refreshViews(){
 // ── Delete a supplier (Superuser only) ───────────────────────────────────────
 // Permanent. The database cascades to field_history, rating_history,
 // insurance_notified, insurance_signoff and email_outbox, and enforces the
-// Superuser restriction itself via the suppliers_delete RLS policy — so this
-// check is the friendly front door, not the lock.
+// Superuser restriction itself — so this check is the friendly front door,
+// not the lock.
 async function deleteSupplier(idx){
   if(!isSuperuser()){ toast('Only a Superuser can delete a supplier','err'); return; }
   const s=DB[idx];
-  if(!s){ return; }
+  if(!s) return;
   if(!confirm(`Permanently delete "${s.name}"?\n\nThis also removes its change history, rating history, insurance alert records and any queued emails.\n\nThis cannot be undone.`)) return;
   if(!s._local){
     const {error}=await sbCall(_sb.from('suppliers').delete().eq('id',s._id),'Deleting supplier');
@@ -2196,38 +2468,65 @@ function delReview(idx,ri,e){
 }
 
 // ── Review modal ──────────────────────────────────────────────────────────────
+// Which review departments may the current user SCORE? Returns REVIEW_MODEL
+// entries. A Superuser may score any department.
+function myReviewDeptModels(){
+  if(isSuperuser()) return REVIEW_MODEL.slice();
+  return REVIEW_MODEL.filter(d=>d.roles.some(r=>myRoles.has(r)));
+}
 function openReviewModal(idx){
   rqState={};
   const sel=document.getElementById('rv-supplier');
   sel.innerHTML='<option value="">Select contractor…</option>'+DB.filter(s=>s.subbie).map(s=>`<option value="${DB.indexOf(s)}">${esc(s.name)}</option>`).join('');
   if(idx!==null) sel.value=String(idx);
-  const la=localStorage.getItem('mfb_last_author')||'', ld=localStorage.getItem('mfb_last_dept')||'';
+  const la=localStorage.getItem('mfb_last_author')||'';
   document.getElementById('rv-by').value=la;
-  if(ld) document.getElementById('rv-dept').value=ld;
   document.getElementById('rv-date').value=new Date().toISOString().slice(0,10);
   ['rv-project','rv-improvements','rv-recommendations'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('rv-questions').innerHTML=RQ.map(q=>`
-    <div class="rq-row">
-      <div><div class="rq-label">${esc(q.label)}</div><div class="rq-sub">${esc(q.sub)}</div></div>
-      <div class="rq-btns">
-        <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="4" placeholder="–" oninput="setRQ('${q.id}',this.value)">
-        <span class="rq-score-sub">/4</span>
-      </div>
-    </div>`).join('');
-  // Sales section — always shown, but editable only by Sales (Sales / Superuser).
-  const canSales=isSuperuser()||myRoles.has('Sales');
-  document.getElementById('rv-sales-section').style.display='block';
-  document.getElementById('rv-sales-lock').textContent=canSales?'':'· view only (Sales edits these)';
-  document.getElementById('rv-sales-questions').innerHTML=RQ_SALES.map(q=>`
-    <div class="rq-row">
-      <div><div class="rq-label">${esc(q.label)}</div><div class="rq-sub">${esc(q.sub)}</div></div>
-      <div class="rq-btns">
-        <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="4" placeholder="–" ${canSales?`oninput="setRQ('${q.id}',this.value)"`:'disabled style="opacity:.5;cursor:not-allowed"'}>
-        <span class="rq-score-sub">/4</span>
-      </div>
-    </div>`).join('');
+  // Role-scoped: you score only your own department's questions. Superuser can
+  // pick any department. Others are locked to the department(s) their role grants.
+  const mine=myReviewDeptModels();
+  const deptSel=document.getElementById('rv-dept');
+  if(isSuperuser()){
+    deptSel.innerHTML='<option value="">Select…</option>'+REVIEW_MODEL.map(d=>`<option value="${esc(d.dept)}">${esc(d.dept)}</option>`).join('')+'<option value="Senior Management">Senior Management</option><option value="Other">Other</option>';
+    deptSel.disabled=false;
+    const ld=localStorage.getItem('mfb_last_dept')||''; if(ld) deptSel.value=ld;
+  } else if(mine.length){
+    deptSel.innerHTML=mine.map(d=>`<option value="${esc(d.dept)}">${esc(d.dept)}</option>`).join('');
+    deptSel.disabled=mine.length===1;
+    deptSel.value=mine[0].dept;
+  } else {
+    // No reviewing role — can still log a general review under Other, no scored pillars.
+    deptSel.innerHTML='<option value="Other">Other</option>';
+    deptSel.disabled=true; deptSel.value='Other';
+  }
+  deptSel.onchange=renderReviewQuestions;
+  renderReviewQuestions();
   updateRvAvgDisplay();
   document.getElementById('review-modal').classList.add('open');
+}
+// Render the question set for the currently-selected department only.
+function renderReviewQuestions(){
+  rqState={};
+  const dept=document.getElementById('rv-dept').value;
+  const d=DEPT_BY_NAME[dept];
+  const host=document.getElementById('rv-questions');
+  // Hide the old separate Sales section — questions are now unified here.
+  const ss=document.getElementById('rv-sales-section'); if(ss) ss.style.display='none';
+  if(!d){ host.innerHTML='<div class="rq-sub" style="padding:8px 0;color:var(--text3)">No scored questions for this department — you can still add notes below.</div>'; updateRvAvgDisplay(); return; }
+  host.innerHTML=`<div style="font-size:10px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Scoring: ${esc(d.dept)}</div>`+d.pillars.map(p=>`
+    <div style="margin-top:6px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2)">${esc(p.label)}${p.questions.length>1?' <span style="font-weight:400;color:var(--text3)">· averaged</span>':''}</div>
+      ${p.questions.map(q=>`
+        <div class="rq-row">
+          <div><div class="rq-label">${esc(q.label)}</div><div class="rq-sub">${esc(q.sub)}</div></div>
+          <div class="rq-btns">
+            <input type="number" class="rq-score-input" id="rq-${q.id}" min="0" max="4" placeholder="–" oninput="setRQ('${q.id}',this.value)">
+            <span class="rq-score-sub">/4</span>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+  updateRvAvgDisplay();
 }
 function closeReviewModal(){ document.getElementById('review-modal').classList.remove('open'); }
 function setRQ(id,raw){
@@ -2239,10 +2538,19 @@ function setRQ(id,raw){
   updateRvAvgDisplay();
 }
 function rvAverage(){
-  const all=RQ.concat(RQ_SALES);
-  const vals=all.map(q=>rqState[q.id]).filter(v=>v!=null&&!isNaN(v));
-  if(!vals.length)return null;
-  return Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*10)/10;
+  // Score only the currently-selected department's pillars — never a cross-
+  // department blend. Each pillar is the mean of its answered questions; the
+  // headline is the mean of the answered pillars.
+  const dept=document.getElementById('rv-dept')?document.getElementById('rv-dept').value:'';
+  const d=DEPT_BY_NAME[dept];
+  if(!d) return null;
+  const pillarAvgs=[];
+  d.pillars.forEach(p=>{
+    const vals=p.questions.map(q=>rqState[q.id]).filter(v=>v!=null&&!isNaN(v));
+    if(vals.length) pillarAvgs.push(vals.reduce((a,b)=>a+Number(b),0)/vals.length);
+  });
+  if(!pillarAvgs.length)return null;
+  return Math.round((pillarAvgs.reduce((a,b)=>a+b,0)/pillarAvgs.length)*10)/10;
 }
 function updateRvAvgDisplay(){
   const avg=rvAverage();
@@ -2327,7 +2635,7 @@ async function saveSupplier(){
   const dateOrNull=id=>{ const v=document.getElementById(id).value; return v===''?null:v; };
   const fields={name,trade_category:cat,trade_sub:sub,city:document.getElementById('m-city').value.trim(),regions:multiVal(document.getElementById('m-regions')),subbie:isSubbie,supplier:document.getElementById('m-supplier').checked,hire:document.getElementById('m-hire').checked,xero_ref:document.getElementById('m-xero').value.trim(),contact_name:document.getElementById('m-cname').value.trim(),contact_email:document.getElementById('m-cemail').value.trim(),contact_phone:document.getElementById('m-cphone').value.trim(),office_number:document.getElementById('m-office').value.trim(),dnu:document.getElementById('m-dnu').value==='true',dnu_notes:document.getElementById('m-dnu-notes').value.trim()};
   // Insurance + ratings only captured if marked as Subcontractor — they don't apply otherwise.
-  const insuranceFields=isSubbie?{el_value:numOrNull('m-el-value'),el_expiry:dateOrNull('m-el-expiry'),pl_value:numOrNull('m-pl-value'),pl_expiry:dateOrNull('m-pl-expiry'),pi_value:numOrNull('m-pi-value'),pi_expiry:dateOrNull('m-pi-expiry')}:{el_value:null,el_expiry:null,pl_value:null,pl_expiry:null,pi_value:null,pi_expiry:null};
+  const insuranceFields={el_value:numOrNull('m-el-value'),el_expiry:dateOrNull('m-el-expiry'),pl_value:numOrNull('m-pl-value'),pl_expiry:dateOrNull('m-pl-expiry'),pi_value:numOrNull('m-pi-value'),pi_expiry:dateOrNull('m-pi-expiry')};
   const ratingFields=isSubbie?{ins_rating:numOrNull('m-r-ins'),credit_rating:numOrNull('m-r-credit'),invoice_rating:numOrNull('m-r-invoice'),hs_rating:numOrNull('m-r-hs'),quality_rating:numOrNull('m-r-quality'),time_rating:numOrNull('m-r-time'),cost_rating:numOrNull('m-r-cost')}:{ins_rating:null,credit_rating:null,invoice_rating:null,hs_rating:null,quality_rating:null,time_rating:null,cost_rating:null};
   // Build rating_meta entries for whichever ratings were actually given a value on creation.
   const ratingMeta={};
@@ -2556,7 +2864,11 @@ document.addEventListener('keydown',e=>{
     // Escape clears the query first; a second press closes the palette.
     if(e.key==='Escape'&&document.getElementById('cmdk-input').value){ e.preventDefault(); clearCmdK(); return; }
   }
-  if(e.key==='Escape'){closeCmdK();closeDrawer();closeModal();closeReviewModal();closeRolesModal();}
+  // Escape closes the command palette and the (read-only) detail drawer, but
+  // deliberately does NOT close the data-entry modals (review / add-supplier /
+  // roles) — those hold unsaved work and must be closed via their Cancel/×
+  // button so a stray keypress can't discard what you've typed.
+  if(e.key==='Escape'){closeCmdK();closeDrawer();}
 });
 
 initApp();
